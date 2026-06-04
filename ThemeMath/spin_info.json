@@ -1,0 +1,2066 @@
+[
+    {
+        "name": "ResultRecall",
+        "time": "2026-06-01T04:20:00.881Z",
+        "obj": {
+            "msgid": "eResultRecall",
+            "status_code": "kSuccess",
+            "result": {
+                "module_id": "BS",
+                "credit": "0",
+                "rng": [
+                    20,
+                    46,
+                    69,
+                    88,
+                    49
+                ],
+                "strip_index": 0,
+                "external_multiplier": 1,
+                "full_symbol_pattern": [
+                    9,
+                    6,
+                    7,
+                    5,
+                    8,
+                    8,
+                    4,
+                    5,
+                    7,
+                    8,
+                    5,
+                    8,
+                    9,
+                    5,
+                    10,
+                    7,
+                    2,
+                    5,
+                    7,
+                    6,
+                    255,
+                    8,
+                    7,
+                    3,
+                    255
+                ],
+                "mahjong_win_5dragons": {
+                    "free_spin_count": 0,
+                    "respin_multipliers": [
+                        1,
+                        2,
+                        3,
+                        5
+                    ],
+                    "respin_multiplier_index": 0,
+                    "preview_symbols": [
+                        {
+                            "symbol_ids": [
+                                2,
+                                7,
+                                3,
+                                3,
+                                2
+                            ],
+                            "is_goldens": [
+                                false,
+                                false,
+                                false,
+                                false,
+                                false
+                            ]
+                        }
+                    ]
+                },
+                "golden_info": {
+                    "layouts": [
+                        {
+                            "positions": [
+                                2,
+                                6,
+                                7,
+                                11
+                            ]
+                        }
+                    ]
+                },
+                "is_win_capped": false
+            },
+            "player_cent": "9999960",
+            "next_module": "BS",
+            "cur_module_play_times": 1,
+            "cur_module_total_times": 1
+        }
+    },
+    {
+        "name": "ResultRecall",
+        "time": "2026-06-01T04:20:25.101Z",
+        "obj": {
+            "msgid": "eResultRecall",
+            "status_code": "kSuccess",
+            "result": {
+                "module_id": "BS",
+                "credit": "0",
+                "rng": [
+                    11,
+                    72,
+                    36,
+                    151,
+                    29
+                ],
+                "win_line_group": [
+                    {
+                        "win_line_type": "kXTotalBetTrigger",
+                        "line_no": 255,
+                        "symbol_id": 10,
+                        "pos": [
+                            1,
+                            21,
+                            42
+                        ],
+                        "credit": 0,
+                        "multiplier": 1,
+                        "credit_long": "0"
+                    }
+                ],
+                "win_bonus_group": [
+                    {
+                        "module_id": "DTM",
+                        "times": 1
+                    }
+                ],
+                "strip_index": 0,
+                "bonus_multiplier_list": [
+                    0
+                ],
+                "external_multiplier": 1,
+                "full_symbol_pattern": [
+                    10,
+                    8,
+                    10,
+                    6,
+                    9,
+                    9,
+                    6,
+                    7,
+                    5,
+                    10,
+                    5,
+                    6,
+                    5,
+                    6,
+                    8,
+                    7,
+                    1,
+                    7,
+                    5,
+                    5,
+                    255,
+                    8,
+                    5,
+                    3,
+                    255
+                ],
+                "mahjong_win_5dragons": {
+                    "free_spin_count": 0,
+                    "respin_multipliers": [
+                        1,
+                        2,
+                        3,
+                        5
+                    ],
+                    "respin_multiplier_index": 0,
+                    "preview_symbols": [
+                        {
+                            "symbol_ids": [
+                                9,
+                                6,
+                                7,
+                                5,
+                                9
+                            ],
+                            "is_goldens": [
+                                false,
+                                false,
+                                false,
+                                false,
+                                false
+                            ]
+                        }
+                    ]
+                },
+                "golden_info": {
+                    "layouts": [
+                        {
+                            "positions": [
+                                22
+                            ]
+                        }
+                    ]
+                },
+                "is_win_capped": false
+            },
+            "player_cent": "9996960",
+            "next_module": "DTM",
+            "cur_module_play_times": 1,
+            "cur_module_total_times": 1
+        }
+    },
+    {
+        "name": "ResultRecall",
+        "time": "2026-06-01T04:20:37.240Z",
+        "obj": {
+            "msgid": "eResultRecall",
+            "status_code": "kSuccess",
+            "result": {
+                "module_id": "BFS",
+                "credit": "0",
+                "rng": [
+                    11,
+                    108,
+                    134,
+                    108,
+                    51
+                ],
+                "strip_index": 0,
+                "external_multiplier": 4,
+                "full_symbol_pattern": [
+                    7,
+                    8,
+                    6,
+                    1,
+                    4,
+                    9,
+                    9,
+                    7,
+                    6,
+                    7,
+                    4,
+                    1,
+                    3,
+                    1,
+                    8,
+                    9,
+                    4,
+                    7,
+                    9,
+                    6,
+                    255,
+                    4,
+                    2,
+                    5,
+                    255
+                ],
+                "mahjong_win_5dragons": {
+                    "free_spin_count": 6,
+                    "respin_multipliers": [
+                        4,
+                        8,
+                        12,
+                        20
+                    ],
+                    "respin_multiplier_index": 3,
+                    "preview_symbols": [
+                        {
+                            "symbol_ids": [
+                                3,
+                                6,
+                                1,
+                                8,
+                                7
+                            ],
+                            "is_goldens": [
+                                false,
+                                false,
+                                true,
+                                false,
+                                false
+                            ]
+                        }
+                    ]
+                },
+                "golden_info": {
+                    "layouts": [
+                        {
+                            "positions": [
+                                2,
+                                7,
+                                12,
+                                17,
+                                22
+                            ]
+                        }
+                    ]
+                },
+                "is_win_capped": false
+            },
+            "player_cent": "0",
+            "next_module": "BFS",
+            "cur_module_play_times": 1,
+            "cur_module_total_times": 6
+        }
+    },
+    {
+        "name": "ResultRecall",
+        "time": "2026-06-01T04:20:44.875Z",
+        "obj": {
+            "msgid": "eResultRecall",
+            "status_code": "kSuccess",
+            "result": {
+                "module_id": "BFS",
+                "credit": "1068",
+                "rng": [
+                    10,
+                    101,
+                    128,
+                    138,
+                    12
+                ],
+                "win_line_group": [
+                    {
+                        "win_line_type": "kCommon",
+                        "line_no": 255,
+                        "symbol_id": 3,
+                        "pos": [
+                            1,
+                            12,
+                            22,
+                            32
+                        ],
+                        "credit": 15,
+                        "multiplier": 4,
+                        "credit_long": "60"
+                    },
+                    {
+                        "win_line_type": "kCommon",
+                        "line_no": 255,
+                        "symbol_id": 3,
+                        "pos": [
+                            1,
+                            15,
+                            22,
+                            32
+                        ],
+                        "credit": 15,
+                        "multiplier": 4,
+                        "credit_long": "60"
+                    }
+                ],
+                "sub_result": [
+                    {
+                        "sub_game_id": 0,
+                        "credit": "40",
+                        "win_line_group": [
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 4,
+                                "pos": [
+                                    4,
+                                    14,
+                                    22
+                                ],
+                                "credit": 5,
+                                "multiplier": 8,
+                                "credit_long": "40"
+                            }
+                        ]
+                    },
+                    {
+                        "sub_game_id": 0,
+                        "credit": "108",
+                        "win_line_group": [
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 5,
+                                "pos": [
+                                    1,
+                                    13,
+                                    23
+                                ],
+                                "credit": 3,
+                                "multiplier": 12,
+                                "credit_long": "36"
+                            },
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 5,
+                                "pos": [
+                                    1,
+                                    14,
+                                    23
+                                ],
+                                "credit": 3,
+                                "multiplier": 12,
+                                "credit_long": "36"
+                            },
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 5,
+                                "pos": [
+                                    1,
+                                    15,
+                                    23
+                                ],
+                                "credit": 3,
+                                "multiplier": 12,
+                                "credit_long": "36"
+                            }
+                        ]
+                    },
+                    {
+                        "sub_game_id": 0,
+                        "credit": "680",
+                        "win_line_group": [
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 9,
+                                "pos": [
+                                    1,
+                                    14,
+                                    23,
+                                    34
+                                ],
+                                "credit": 3,
+                                "multiplier": 20,
+                                "credit_long": "60"
+                            },
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 9,
+                                "pos": [
+                                    4,
+                                    14,
+                                    23,
+                                    34
+                                ],
+                                "credit": 3,
+                                "multiplier": 20,
+                                "credit_long": "60"
+                            },
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 9,
+                                "pos": [
+                                    1,
+                                    15,
+                                    23,
+                                    34
+                                ],
+                                "credit": 3,
+                                "multiplier": 20,
+                                "credit_long": "60"
+                            },
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 9,
+                                "pos": [
+                                    4,
+                                    15,
+                                    23,
+                                    34
+                                ],
+                                "credit": 3,
+                                "multiplier": 20,
+                                "credit_long": "60"
+                            },
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 8,
+                                "pos": [
+                                    2,
+                                    14,
+                                    23
+                                ],
+                                "credit": 1,
+                                "multiplier": 20,
+                                "credit_long": "20"
+                            },
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 8,
+                                "pos": [
+                                    2,
+                                    15,
+                                    23
+                                ],
+                                "credit": 1,
+                                "multiplier": 20,
+                                "credit_long": "20"
+                            },
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 7,
+                                "pos": [
+                                    3,
+                                    14,
+                                    23,
+                                    33,
+                                    41
+                                ],
+                                "credit": 10,
+                                "multiplier": 20,
+                                "credit_long": "200"
+                            },
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 7,
+                                "pos": [
+                                    3,
+                                    15,
+                                    23,
+                                    33,
+                                    41
+                                ],
+                                "credit": 10,
+                                "multiplier": 20,
+                                "credit_long": "200"
+                            }
+                        ]
+                    },
+                    {
+                        "sub_game_id": 0,
+                        "credit": "120",
+                        "win_line_group": [
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 3,
+                                "pos": [
+                                    1,
+                                    15,
+                                    22
+                                ],
+                                "credit": 6,
+                                "multiplier": 20,
+                                "credit_long": "120"
+                            }
+                        ]
+                    },
+                    {
+                        "sub_game_id": 0,
+                        "credit": "0"
+                    }
+                ],
+                "strip_index": 0,
+                "external_multiplier": 4,
+                "full_symbol_pattern": [
+                    3,
+                    5,
+                    1,
+                    6,
+                    7,
+                    7,
+                    3,
+                    3,
+                    3,
+                    8,
+                    9,
+                    4,
+                    5,
+                    7,
+                    1,
+                    4,
+                    5,
+                    6,
+                    9,
+                    10,
+                    255,
+                    3,
+                    1,
+                    6,
+                    255
+                ],
+                "total_star_times": [
+                    {
+                        "times": [
+                            8,
+                            2,
+                            1,
+                            2,
+                            7,
+                            7,
+                            3,
+                            0,
+                            6,
+                            8,
+                            9,
+                            5,
+                            5,
+                            7,
+                            1,
+                            4,
+                            4,
+                            6,
+                            9,
+                            10,
+                            255,
+                            5,
+                            1,
+                            6,
+                            255
+                        ]
+                    },
+                    {
+                        "times": [
+                            5,
+                            2,
+                            3,
+                            2,
+                            7,
+                            8,
+                            3,
+                            1,
+                            6,
+                            8,
+                            7,
+                            5,
+                            5,
+                            7,
+                            1,
+                            9,
+                            0,
+                            6,
+                            9,
+                            10,
+                            255,
+                            5,
+                            1,
+                            6,
+                            255
+                        ]
+                    },
+                    {
+                        "times": [
+                            9,
+                            6,
+                            3,
+                            2,
+                            7,
+                            8,
+                            2,
+                            1,
+                            6,
+                            8,
+                            7,
+                            3,
+                            0,
+                            7,
+                            1,
+                            9,
+                            0,
+                            6,
+                            9,
+                            10,
+                            255,
+                            0,
+                            1,
+                            6,
+                            255
+                        ]
+                    },
+                    {
+                        "times": [
+                            3,
+                            8,
+                            1,
+                            1,
+                            5,
+                            9,
+                            6,
+                            3,
+                            1,
+                            8,
+                            7,
+                            6,
+                            1,
+                            2,
+                            1,
+                            7,
+                            2,
+                            6,
+                            6,
+                            10,
+                            255,
+                            3,
+                            1,
+                            6,
+                            255
+                        ]
+                    },
+                    {
+                        "times": [
+                            7,
+                            5,
+                            1,
+                            1,
+                            5,
+                            9,
+                            8,
+                            0,
+                            1,
+                            8,
+                            7,
+                            6,
+                            1,
+                            2,
+                            1,
+                            7,
+                            6,
+                            6,
+                            6,
+                            10,
+                            255,
+                            2,
+                            1,
+                            6,
+                            255
+                        ]
+                    }
+                ],
+                "mahjong_win_5dragons": {
+                    "free_spin_count": 6,
+                    "respin_multipliers": [
+                        4,
+                        8,
+                        12,
+                        20
+                    ],
+                    "respin_multiplier_index": 3,
+                    "preview_symbols": [
+                        {
+                            "symbol_ids": [
+                                8,
+                                3,
+                                3,
+                                2,
+                                5
+                            ],
+                            "is_goldens": [
+                                false,
+                                false,
+                                true,
+                                false,
+                                false
+                            ]
+                        },
+                        {
+                            "symbol_ids": [
+                                5,
+                                6,
+                                3,
+                                1,
+                                5
+                            ],
+                            "is_goldens": [
+                                false,
+                                false,
+                                true,
+                                false,
+                                false
+                            ]
+                        },
+                        {
+                            "symbol_ids": [
+                                9,
+                                6,
+                                1,
+                                1,
+                                5
+                            ],
+                            "is_goldens": [
+                                false,
+                                false,
+                                true,
+                                false,
+                                false
+                            ]
+                        },
+                        {
+                            "symbol_ids": [
+                                7,
+                                6,
+                                1,
+                                1,
+                                5
+                            ],
+                            "is_goldens": [
+                                false,
+                                true,
+                                true,
+                                false,
+                                false
+                            ]
+                        },
+                        {
+                            "symbol_ids": [
+                                7,
+                                5,
+                                3,
+                                7,
+                                6
+                            ],
+                            "is_goldens": [
+                                false,
+                                false,
+                                true,
+                                false,
+                                false
+                            ]
+                        },
+                        {
+                            "symbol_ids": [
+                                6,
+                                4,
+                                3,
+                                7,
+                                6
+                            ],
+                            "is_goldens": [
+                                false,
+                                false,
+                                true,
+                                false,
+                                false
+                            ]
+                        }
+                    ]
+                },
+                "golden_info": {
+                    "layouts": [
+                        {
+                            "positions": [
+                                1,
+                                2,
+                                7,
+                                11,
+                                12,
+                                16,
+                                17,
+                                22
+                            ]
+                        },
+                        {
+                            "positions": [
+                                2,
+                                11,
+                                12,
+                                16,
+                                17,
+                                21,
+                                22
+                            ]
+                        },
+                        {
+                            "positions": [
+                                2,
+                                7,
+                                11,
+                                12,
+                                17,
+                                21,
+                                22
+                            ]
+                        },
+                        {
+                            "positions": [
+                                2,
+                                7,
+                                17,
+                                22
+                            ]
+                        },
+                        {
+                            "positions": [
+                                2,
+                                6,
+                                7,
+                                12,
+                                17,
+                                22
+                            ]
+                        },
+                        {
+                            "positions": [
+                                2,
+                                11,
+                                12,
+                                17,
+                                22
+                            ]
+                        }
+                    ]
+                },
+                "is_win_capped": false
+            },
+            "player_cent": "0",
+            "next_module": "BFS",
+            "cur_module_play_times": 2,
+            "cur_module_total_times": 6
+        }
+    },
+    {
+        "name": "ResultRecall",
+        "time": "2026-06-01T04:21:05.386Z",
+        "obj": {
+            "msgid": "eResultRecall",
+            "status_code": "kSuccess",
+            "result": {
+                "module_id": "BFS",
+                "credit": "340",
+                "rng": [
+                    122,
+                    89,
+                    67,
+                    43,
+                    91
+                ],
+                "win_line_group": [
+                    {
+                        "win_line_type": "kCommon",
+                        "line_no": 255,
+                        "symbol_id": 6,
+                        "pos": [
+                            1,
+                            11,
+                            22,
+                            31
+                        ],
+                        "credit": 5,
+                        "multiplier": 4,
+                        "credit_long": "20"
+                    },
+                    {
+                        "win_line_type": "kCommon",
+                        "line_no": 255,
+                        "symbol_id": 6,
+                        "pos": [
+                            3,
+                            11,
+                            22,
+                            31
+                        ],
+                        "credit": 5,
+                        "multiplier": 4,
+                        "credit_long": "20"
+                    },
+                    {
+                        "win_line_type": "kCommon",
+                        "line_no": 255,
+                        "symbol_id": 6,
+                        "pos": [
+                            1,
+                            13,
+                            22,
+                            31
+                        ],
+                        "credit": 5,
+                        "multiplier": 4,
+                        "credit_long": "20"
+                    },
+                    {
+                        "win_line_type": "kCommon",
+                        "line_no": 255,
+                        "symbol_id": 6,
+                        "pos": [
+                            3,
+                            13,
+                            22,
+                            31
+                        ],
+                        "credit": 5,
+                        "multiplier": 4,
+                        "credit_long": "20"
+                    },
+                    {
+                        "win_line_type": "kCommon",
+                        "line_no": 255,
+                        "symbol_id": 6,
+                        "pos": [
+                            1,
+                            15,
+                            22,
+                            31
+                        ],
+                        "credit": 5,
+                        "multiplier": 4,
+                        "credit_long": "20"
+                    },
+                    {
+                        "win_line_type": "kCommon",
+                        "line_no": 255,
+                        "symbol_id": 6,
+                        "pos": [
+                            3,
+                            15,
+                            22,
+                            31
+                        ],
+                        "credit": 5,
+                        "multiplier": 4,
+                        "credit_long": "20"
+                    }
+                ],
+                "sub_result": [
+                    {
+                        "sub_game_id": 0,
+                        "credit": "208",
+                        "win_line_group": [
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 8,
+                                "pos": [
+                                    1,
+                                    13,
+                                    22,
+                                    33,
+                                    42
+                                ],
+                                "credit": 6,
+                                "multiplier": 8,
+                                "credit_long": "48"
+                            },
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 8,
+                                "pos": [
+                                    2,
+                                    13,
+                                    22,
+                                    33,
+                                    42
+                                ],
+                                "credit": 6,
+                                "multiplier": 8,
+                                "credit_long": "48"
+                            },
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 8,
+                                "pos": [
+                                    1,
+                                    15,
+                                    22,
+                                    33,
+                                    42
+                                ],
+                                "credit": 6,
+                                "multiplier": 8,
+                                "credit_long": "48"
+                            },
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 8,
+                                "pos": [
+                                    2,
+                                    15,
+                                    22,
+                                    33,
+                                    42
+                                ],
+                                "credit": 6,
+                                "multiplier": 8,
+                                "credit_long": "48"
+                            },
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 9,
+                                "pos": [
+                                    3,
+                                    11,
+                                    21
+                                ],
+                                "credit": 1,
+                                "multiplier": 8,
+                                "credit_long": "8"
+                            },
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 9,
+                                "pos": [
+                                    3,
+                                    11,
+                                    22
+                                ],
+                                "credit": 1,
+                                "multiplier": 8,
+                                "credit_long": "8"
+                            }
+                        ]
+                    },
+                    {
+                        "sub_game_id": 0,
+                        "credit": "12",
+                        "win_line_group": [
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 8,
+                                "pos": [
+                                    2,
+                                    12,
+                                    22
+                                ],
+                                "credit": 1,
+                                "multiplier": 12,
+                                "credit_long": "12"
+                            }
+                        ]
+                    },
+                    {
+                        "sub_game_id": 0,
+                        "credit": "0"
+                    }
+                ],
+                "strip_index": 0,
+                "external_multiplier": 4,
+                "full_symbol_pattern": [
+                    6,
+                    6,
+                    9,
+                    6,
+                    5,
+                    9,
+                    3,
+                    6,
+                    2,
+                    8,
+                    6,
+                    6,
+                    7,
+                    8,
+                    3,
+                    5,
+                    8,
+                    5,
+                    7,
+                    7,
+                    255,
+                    6,
+                    4,
+                    4,
+                    255
+                ],
+                "total_star_times": [
+                    {
+                        "times": [
+                            8,
+                            9,
+                            9,
+                            7,
+                            5,
+                            8,
+                            3,
+                            0,
+                            2,
+                            8,
+                            9,
+                            8,
+                            7,
+                            8,
+                            3,
+                            5,
+                            3,
+                            5,
+                            7,
+                            7,
+                            255,
+                            8,
+                            4,
+                            4,
+                            255
+                        ]
+                    },
+                    {
+                        "times": [
+                            4,
+                            3,
+                            7,
+                            6,
+                            8,
+                            8,
+                            8,
+                            0,
+                            7,
+                            5,
+                            9,
+                            1,
+                            7,
+                            2,
+                            3,
+                            5,
+                            3,
+                            5,
+                            7,
+                            7,
+                            255,
+                            3,
+                            4,
+                            4,
+                            255
+                        ]
+                    },
+                    {
+                        "times": [
+                            7,
+                            8,
+                            1,
+                            6,
+                            8,
+                            4,
+                            3,
+                            7,
+                            7,
+                            5,
+                            9,
+                            1,
+                            7,
+                            2,
+                            3,
+                            5,
+                            3,
+                            5,
+                            7,
+                            7,
+                            255,
+                            3,
+                            4,
+                            4,
+                            255
+                        ]
+                    }
+                ],
+                "mahjong_win_5dragons": {
+                    "free_spin_count": 6,
+                    "respin_multipliers": [
+                        4,
+                        8,
+                        12,
+                        20
+                    ],
+                    "respin_multiplier_index": 3,
+                    "preview_symbols": [
+                        {
+                            "symbol_ids": [
+                                8,
+                                8,
+                                7,
+                                7,
+                                8
+                            ],
+                            "is_goldens": [
+                                false,
+                                false,
+                                true,
+                                false,
+                                false
+                            ]
+                        },
+                        {
+                            "symbol_ids": [
+                                9,
+                                1,
+                                7,
+                                6,
+                                8
+                            ],
+                            "is_goldens": [
+                                false,
+                                false,
+                                true,
+                                false,
+                                false
+                            ]
+                        },
+                        {
+                            "symbol_ids": [
+                                7,
+                                8,
+                                1,
+                                7,
+                                6
+                            ],
+                            "is_goldens": [
+                                false,
+                                true,
+                                true,
+                                false,
+                                false
+                            ]
+                        },
+                        {
+                            "symbol_ids": [
+                                6,
+                                4,
+                                3,
+                                7,
+                                6
+                            ],
+                            "is_goldens": [
+                                false,
+                                true,
+                                true,
+                                false,
+                                false
+                            ]
+                        }
+                    ]
+                },
+                "golden_info": {
+                    "layouts": [
+                        {
+                            "positions": [
+                                2,
+                                7,
+                                12,
+                                17,
+                                22
+                            ]
+                        },
+                        {
+                            "positions": [
+                                2,
+                                12,
+                                17,
+                                22
+                            ]
+                        },
+                        {
+                            "positions": [
+                                2,
+                                12,
+                                17,
+                                22
+                            ]
+                        },
+                        {
+                            "positions": [
+                                1,
+                                2,
+                                7,
+                                12,
+                                17,
+                                22
+                            ]
+                        }
+                    ]
+                },
+                "is_win_capped": false
+            },
+            "player_cent": "0",
+            "next_module": "BFS",
+            "cur_module_play_times": 3,
+            "cur_module_total_times": 6
+        }
+    },
+    {
+        "name": "ResultRecall",
+        "time": "2026-06-01T04:21:22.923Z",
+        "obj": {
+            "msgid": "eResultRecall",
+            "status_code": "kSuccess",
+            "result": {
+                "module_id": "BFS",
+                "credit": "216",
+                "rng": [
+                    87,
+                    87,
+                    92,
+                    53,
+                    13
+                ],
+                "win_line_group": [
+                    {
+                        "win_line_type": "kCommon",
+                        "line_no": 255,
+                        "symbol_id": 8,
+                        "pos": [
+                            2,
+                            12,
+                            22,
+                            31,
+                            41
+                        ],
+                        "credit": 6,
+                        "multiplier": 4,
+                        "credit_long": "24"
+                    }
+                ],
+                "sub_result": [
+                    {
+                        "sub_game_id": 0,
+                        "credit": "192",
+                        "win_line_group": [
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 6,
+                                "pos": [
+                                    2,
+                                    13,
+                                    22
+                                ],
+                                "credit": 3,
+                                "multiplier": 8,
+                                "credit_long": "24"
+                            },
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 6,
+                                "pos": [
+                                    4,
+                                    13,
+                                    22
+                                ],
+                                "credit": 3,
+                                "multiplier": 8,
+                                "credit_long": "24"
+                            },
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 6,
+                                "pos": [
+                                    2,
+                                    15,
+                                    22
+                                ],
+                                "credit": 3,
+                                "multiplier": 8,
+                                "credit_long": "24"
+                            },
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 6,
+                                "pos": [
+                                    4,
+                                    15,
+                                    22
+                                ],
+                                "credit": 3,
+                                "multiplier": 8,
+                                "credit_long": "24"
+                            },
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 3,
+                                "pos": [
+                                    3,
+                                    12,
+                                    22
+                                ],
+                                "credit": 6,
+                                "multiplier": 8,
+                                "credit_long": "48"
+                            },
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 3,
+                                "pos": [
+                                    3,
+                                    14,
+                                    22
+                                ],
+                                "credit": 6,
+                                "multiplier": 8,
+                                "credit_long": "48"
+                            }
+                        ]
+                    },
+                    {
+                        "sub_game_id": 0,
+                        "credit": "0"
+                    }
+                ],
+                "strip_index": 0,
+                "external_multiplier": 4,
+                "full_symbol_pattern": [
+                    6,
+                    3,
+                    7,
+                    8,
+                    8,
+                    8,
+                    8,
+                    8,
+                    2,
+                    1,
+                    3,
+                    6,
+                    5,
+                    7,
+                    10,
+                    6,
+                    3,
+                    7,
+                    1,
+                    1,
+                    255,
+                    6,
+                    7,
+                    2,
+                    255
+                ],
+                "total_star_times": [
+                    {
+                        "times": [
+                            8,
+                            9,
+                            7,
+                            1,
+                            7,
+                            6,
+                            3,
+                            0,
+                            2,
+                            1,
+                            3,
+                            6,
+                            5,
+                            7,
+                            10,
+                            6,
+                            3,
+                            7,
+                            1,
+                            1,
+                            255,
+                            6,
+                            7,
+                            2,
+                            255
+                        ]
+                    },
+                    {
+                        "times": [
+                            3,
+                            3,
+                            7,
+                            1,
+                            7,
+                            2,
+                            8,
+                            7,
+                            2,
+                            1,
+                            6,
+                            1,
+                            5,
+                            7,
+                            10,
+                            8,
+                            9,
+                            7,
+                            1,
+                            1,
+                            255,
+                            0,
+                            7,
+                            2,
+                            255
+                        ]
+                    }
+                ],
+                "mahjong_win_5dragons": {
+                    "free_spin_count": 6,
+                    "respin_multipliers": [
+                        4,
+                        8,
+                        12,
+                        20
+                    ],
+                    "respin_multiplier_index": 3,
+                    "preview_symbols": [
+                        {
+                            "symbol_ids": [
+                                8,
+                                9,
+                                7,
+                                1,
+                                7
+                            ],
+                            "is_goldens": [
+                                false,
+                                false,
+                                true,
+                                false,
+                                false
+                            ]
+                        },
+                        {
+                            "symbol_ids": [
+                                6,
+                                1,
+                                7,
+                                7,
+                                6
+                            ],
+                            "is_goldens": [
+                                false,
+                                false,
+                                true,
+                                false,
+                                false
+                            ]
+                        },
+                        {
+                            "symbol_ids": [
+                                6,
+                                4,
+                                3,
+                                7,
+                                6
+                            ],
+                            "is_goldens": [
+                                false,
+                                false,
+                                true,
+                                false,
+                                false
+                            ]
+                        }
+                    ]
+                },
+                "golden_info": {
+                    "layouts": [
+                        {
+                            "positions": [
+                                2,
+                                7,
+                                8,
+                                12,
+                                16,
+                                17,
+                                22
+                            ]
+                        },
+                        {
+                            "positions": [
+                                2,
+                                8,
+                                12,
+                                16,
+                                17,
+                                22
+                            ]
+                        },
+                        {
+                            "positions": [
+                                2,
+                                7,
+                                8,
+                                12,
+                                17,
+                                22
+                            ]
+                        }
+                    ]
+                },
+                "is_win_capped": false
+            },
+            "player_cent": "0",
+            "next_module": "BFS",
+            "cur_module_play_times": 4,
+            "cur_module_total_times": 6
+        }
+    },
+    {
+        "name": "ResultRecall",
+        "time": "2026-06-01T04:21:33.153Z",
+        "obj": {
+            "msgid": "eResultRecall",
+            "status_code": "kSuccess",
+            "result": {
+                "module_id": "BFS",
+                "credit": "96",
+                "rng": [
+                    75,
+                    96,
+                    73,
+                    48,
+                    38
+                ],
+                "win_line_group": [
+                    {
+                        "win_line_type": "kCommon",
+                        "line_no": 255,
+                        "symbol_id": 6,
+                        "pos": [
+                            3,
+                            12,
+                            23
+                        ],
+                        "credit": 3,
+                        "multiplier": 4,
+                        "credit_long": "12"
+                    },
+                    {
+                        "win_line_type": "kCommon",
+                        "line_no": 255,
+                        "symbol_id": 6,
+                        "pos": [
+                            3,
+                            13,
+                            23
+                        ],
+                        "credit": 3,
+                        "multiplier": 4,
+                        "credit_long": "12"
+                    },
+                    {
+                        "win_line_type": "kCommon",
+                        "line_no": 255,
+                        "symbol_id": 8,
+                        "pos": [
+                            4,
+                            11,
+                            25,
+                            31,
+                            42
+                        ],
+                        "credit": 6,
+                        "multiplier": 4,
+                        "credit_long": "24"
+                    }
+                ],
+                "sub_result": [
+                    {
+                        "sub_game_id": 0,
+                        "credit": "48",
+                        "win_line_group": [
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 6,
+                                "pos": [
+                                    2,
+                                    11,
+                                    23
+                                ],
+                                "credit": 3,
+                                "multiplier": 8,
+                                "credit_long": "24"
+                            },
+                            {
+                                "win_line_type": "kCommon",
+                                "line_no": 255,
+                                "symbol_id": 6,
+                                "pos": [
+                                    2,
+                                    11,
+                                    25
+                                ],
+                                "credit": 3,
+                                "multiplier": 8,
+                                "credit_long": "24"
+                            }
+                        ]
+                    },
+                    {
+                        "sub_game_id": 0,
+                        "credit": "0"
+                    }
+                ],
+                "strip_index": 0,
+                "external_multiplier": 4,
+                "full_symbol_pattern": [
+                    9,
+                    8,
+                    7,
+                    8,
+                    5,
+                    9,
+                    6,
+                    7,
+                    2,
+                    8,
+                    6,
+                    6,
+                    6,
+                    9,
+                    6,
+                    8,
+                    2,
+                    5,
+                    7,
+                    5,
+                    255,
+                    3,
+                    8,
+                    1,
+                    255
+                ],
+                "total_star_times": [
+                    {
+                        "times": [
+                            1,
+                            6,
+                            7,
+                            4,
+                            6,
+                            6,
+                            8,
+                            7,
+                            2,
+                            5,
+                            9,
+                            5,
+                            0,
+                            9,
+                            6,
+                            9,
+                            2,
+                            5,
+                            7,
+                            5,
+                            255,
+                            3,
+                            0,
+                            1,
+                            255
+                        ]
+                    },
+                    {
+                        "times": [
+                            8,
+                            8,
+                            4,
+                            4,
+                            6,
+                            1,
+                            8,
+                            7,
+                            2,
+                            5,
+                            9,
+                            5,
+                            7,
+                            9,
+                            6,
+                            9,
+                            2,
+                            7,
+                            7,
+                            5,
+                            255,
+                            3,
+                            5,
+                            1,
+                            255
+                        ]
+                    }
+                ],
+                "mahjong_win_5dragons": {
+                    "free_spin_count": 6,
+                    "respin_multipliers": [
+                        4,
+                        8,
+                        12,
+                        20
+                    ],
+                    "respin_multiplier_index": 3,
+                    "preview_symbols": [
+                        {
+                            "symbol_ids": [
+                                6,
+                                5,
+                                7,
+                                4,
+                                6
+                            ],
+                            "is_goldens": [
+                                false,
+                                false,
+                                true,
+                                false,
+                                false
+                            ]
+                        },
+                        {
+                            "symbol_ids": [
+                                8,
+                                8,
+                                7,
+                                7,
+                                6
+                            ],
+                            "is_goldens": [
+                                false,
+                                false,
+                                true,
+                                false,
+                                false
+                            ]
+                        },
+                        {
+                            "symbol_ids": [
+                                6,
+                                4,
+                                3,
+                                7,
+                                6
+                            ],
+                            "is_goldens": [
+                                false,
+                                false,
+                                true,
+                                false,
+                                false
+                            ]
+                        }
+                    ]
+                },
+                "golden_info": {
+                    "layouts": [
+                        {
+                            "positions": [
+                                2,
+                                7,
+                                12,
+                                17,
+                                22
+                            ]
+                        },
+                        {
+                            "positions": [
+                                2,
+                                7,
+                                17
+                            ]
+                        },
+                        {
+                            "positions": [
+                                2,
+                                7,
+                                12,
+                                17,
+                                22
+                            ]
+                        }
+                    ]
+                },
+                "is_win_capped": false
+            },
+            "player_cent": "0",
+            "next_module": "BFS",
+            "cur_module_play_times": 5,
+            "cur_module_total_times": 6
+        }
+    },
+    {
+        "name": "ResultRecall",
+        "time": "2026-06-01T04:21:43.368Z",
+        "obj": {
+            "msgid": "eResultRecall",
+            "status_code": "kSuccess",
+            "result": {
+                "module_id": "BFS",
+                "credit": "0",
+                "rng": [
+                    121,
+                    131,
+                    54,
+                    80,
+                    83
+                ],
+                "strip_index": 0,
+                "external_multiplier": 4,
+                "full_symbol_pattern": [
+                    8,
+                    8,
+                    7,
+                    2,
+                    9,
+                    6,
+                    1,
+                    3,
+                    5,
+                    3,
+                    9,
+                    6,
+                    3,
+                    9,
+                    6,
+                    6,
+                    1,
+                    5,
+                    2,
+                    4,
+                    255,
+                    6,
+                    1,
+                    9,
+                    255
+                ],
+                "mahjong_win_5dragons": {
+                    "free_spin_count": 6,
+                    "respin_multipliers": [
+                        4,
+                        8,
+                        12,
+                        20
+                    ],
+                    "respin_multiplier_index": 3,
+                    "preview_symbols": [
+                        {
+                            "symbol_ids": [
+                                8,
+                                1,
+                                7,
+                                8,
+                                10
+                            ],
+                            "is_goldens": [
+                                false,
+                                false,
+                                true,
+                                false,
+                                false
+                            ]
+                        }
+                    ]
+                },
+                "golden_info": {
+                    "layouts": [
+                        {
+                            "positions": [
+                                2,
+                                7,
+                                12,
+                                17,
+                                22
+                            ]
+                        }
+                    ]
+                },
+                "is_win_capped": false
+            },
+            "player_cent": "0",
+            "next_module": "BS",
+            "cur_module_play_times": 6,
+            "cur_module_total_times": 6
+        }
+    }
+]
+
