@@ -1,4 +1,4 @@
-"""mjwl 模拟入口。
+"""当前主题模拟入口。
 
 直接运行本文件会模拟普通游戏；如果普通游戏触发 free，就按照
 choose_index 对应的 free 选择进入免费游戏，并把普通游戏和免费游戏的赢钱合并统计。
@@ -13,14 +13,14 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
 try:
-    # 支持以 python -m mjwl.simulation 或包 import 的方式使用。
+    # 支持以 python -m theme.simulation 或包 import 的方式使用。
     from .theme_math import ThemeMath
 except ImportError:
-    # 支持直接运行 python .\mjwl\simulation.py。
+    # 支持直接运行 python .\theme\simulation.py。
     from theme_math import ThemeMath
 
 
-# ThemeMath 会默认读取当前 mjwl 文件夹下的 game_config.conf、reel_config 和 free_reel_config。
+# ThemeMath 会默认读取当前主题文件夹下的 game_config.conf、reel_config 和 free_reel_config。
 m = ThemeMath()
 
 SPIN_TIMES = 1000000

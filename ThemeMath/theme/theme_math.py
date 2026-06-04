@@ -1,4 +1,4 @@
-"""mjwl 主题数学入口。
+"""当前主题数学入口。
 
 ThemeMath 继承通用 WaysGame，负责串起本主题自己的流程：
 普通 spin、金色 symbol、ways 算奖、消除补牌、free 选择和 free spin。
@@ -11,7 +11,7 @@ import sys
 from configparser import ConfigParser
 
 
-# 直接运行 mjwl/simulation.py 时，Python 默认只把 mjwl 加到 sys.path。
+# 直接运行当前主题 simulation.py 时，Python 默认只把主题目录加到 sys.path。
 # 这里把项目根目录加入搜索路径，才能导入上一层的 slots_math.py。
 ROOT_DIR = Path(__file__).resolve().parent.parent
 if str(ROOT_DIR) not in sys.path:
@@ -21,7 +21,7 @@ from slots_math import WaysGame
 
 
 class ThemeMath(WaysGame):
-    """mjwl 主题的数学封装。"""
+    """当前主题的数学封装。"""
 
     # 配置里的 GoldSymbolWeight 对应第 2、3、4 列，内部下标是 1、2、3。
     GOLD_COLUMNS = (1, 2, 3)
@@ -33,10 +33,10 @@ class ThemeMath(WaysGame):
     RANDOM_CHOOSE_INDEX = 5
 
     def __init__(self, base_bet: int = 10000, **kwargs):
-        # 默认项目目录就是当前 theme_math.py 所在的 mjwl 文件夹。
+        # 默认项目目录就是当前 theme_math.py 所在的主题文件夹。
         project_dir = kwargs.pop("project_dir", Path(__file__).resolve().parent)
         game_config_file = kwargs.get("game_config_file", self.DEFAULT_GAME_CONFIG_FILE)
-        self.game_server_config_file = kwargs.pop("game_server_config_file", "mjwl_game_server.conf")
+        self.game_server_config_file = kwargs.pop("game_server_config_file", "game_server.conf")
         super().__init__(base_bet=base_bet, project_dir=project_dir, **kwargs)
         self.game_config_file = game_config_file
         self.game_server_config = self._load_game_server_config(self.project_dir / self.game_server_config_file)
