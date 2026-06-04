@@ -24,6 +24,7 @@ class SlotGameConfig:
     base_nums: list[int]
     item_prizes: list[list[int]]
     line_mode: int
+    line_rules: list[list[tuple[int, int]]]
     grid_disables: list[int]
     grid_disables_free: list[int]
     wild_id: int = 1
@@ -183,11 +184,13 @@ class SlotsGame:
 
         main = parser["MAIN"]
         item_count = int(main["ITEM_COUNT"])
+        col_count = int(main["COL_COUNT"])
+        row_count = int(main["ROW_COUNT"])
         config = SlotGameConfig(
             project_dir=path.parent,
             version=int(main.get("VERSION", "0")),
-            col_count=int(main["COL_COUNT"]),
-            row_count=int(main["ROW_COUNT"]),
+            col_count=col_count,
+            row_count=row_count,
             item_count=item_count,
             prize_rate=int(main.get("PRIZE_RATE", "1")),
             use_wilds=cls._parse_int_list(main.get("USE_WILDS", "")),
@@ -197,6 +200,7 @@ class SlotsGame:
                 for item_id in range(item_count)
             ],
             line_mode=int(main.get("LINE_MODE", "1")),
+            line_rules=cls._parse_line_rules(main, col_count=col_count, row_count=row_count),
             grid_disables=cls._parse_int_list(main.get("GRID_DISABLES", "")),
             grid_disables_free=cls._parse_int_list(main.get("GRID_DISABLES_FREE", "")),
             wild_id=int(main.get("WILD_ID", "1")),
@@ -476,6 +480,70 @@ class SlotsGame:
 
         return [int(item.strip()) for item in value.split(",") if item.strip()]
 
+    @classmethod
+    def _parse_line_rules(cls, section, col_count: int, row_count: int) -> list[list[tuple[int, int]]]:
+        """读取固定线规则，并把配置里的格子编号转成 (col, row) 坐标。"""
+
+        raw_rules = cls._collect_line_rule_values(section)
+        if not raw_rules:
+            return []
+
+        flat_count = col_count * row_count
+        zero_based = any(index == 0 for rule in raw_rules for index in rule)
+        line_rules = []
+        for rule_index, rule in enumerate(raw_rules):
+            if len(rule) != col_count:
+                raise ValueError(f"LINE_RULES_{rule_index} length must be COL_COUNT={col_count}")
+
+            positions = []
+            for item_index in rule:
+                flat_index = item_index if zero_based else item_index - 1
+                if flat_index < 0 or flat_index >= flat_count:
+                    raise ValueError(
+                        f"LINE_RULES_{rule_index} contains out-of-range cell index: {item_index}"
+                    )
+                positions.append((flat_index // row_count, flat_index % row_count))
+            line_rules.append(positions)
+        return line_rules
+
+    @classmethod
+    def _collect_line_rule_values(cls, section) -> list[list[int]]:
+        """按编号顺序收集 LINE_RULES_n / Line_Rules_n。"""
+
+        rule_count = int(section.get("RULE_COUNT", "0") or 0)
+        prefixes = ("LINE_RULES_", "Line_Rules_", "LINE_RULE_", "Line_Rule_")
+        if rule_count > 0:
+            rules = []
+            for rule_index in range(rule_count):
+                key = cls._find_first_section_key(section, [f"{prefix}{rule_index}" for prefix in prefixes])
+                if key is None:
+                    raise ValueError(f"missing LINE_RULES_{rule_index}")
+                rules.append(cls._parse_int_list(section[key]))
+            return rules
+
+        values = []
+        for key in section:
+            for prefix in prefixes:
+                if not key.startswith(prefix):
+                    continue
+
+                suffix = key[len(prefix) :]
+                if suffix.isdigit():
+                    values.append((int(suffix), cls._parse_int_list(section[key])))
+                break
+
+        values.sort(key=lambda item: item[0])
+        return [value for _, value in values]
+
+    @staticmethod
+    def _find_first_section_key(section, keys: list[str]) -> str | None:
+        """返回 section 中第一个存在的 key。"""
+
+        for key in keys:
+            if key in section:
+                return key
+        return None
+
     def _count_col_matches(
         self,
         board_cols: list[list[int | None]],
@@ -649,8 +717,8 @@ class WaysGame(SlotsGame):
         """
 
         config = self.config
-        if config.line_mode != 1:
-            raise NotImplementedError("WaysGame only supports LINE_MODE=1 now")
+        if config.line_mode not in (1, 2, 3):
+            raise NotImplementedError("WaysGame only supports LINE_MODE=1, 2, or 3")
 
         board_cols, col_count, row_count = self._normalize_item_list(item_list, row=row, col=col)
         grid_disables = self._get_grid_disables(free_game, col_count, row_count)
@@ -659,11 +727,10 @@ class WaysGame(SlotsGame):
         win_items = []
         # 对每个 symbol 单独计算 ways；中奖明细里会带出命中坐标。
         for item_id in range(config.item_count):
-            item_win = self._cal_one_item(board_cols, grid_disables, item_id, col_count, row_count)
-            if item_win is None:
-                continue
-            total_win += item_win["win"]
-            win_items.append(item_win)
+            item_wins = self._cal_one_item(board_cols, grid_disables, item_id, col_count, row_count)
+            for item_win in item_wins:
+                total_win += item_win["win"]
+                win_items.append(item_win)
 
         win_positions = sorted({position for item in win_items for position in item["positions"]})
         self.last_win_items = win_items
@@ -683,27 +750,83 @@ class WaysGame(SlotsGame):
         """计算单个 symbol 在当前牌面上的 ways 中奖信息。"""
 
         config = self.config
+        if config.line_mode == 1:
+            return self._cal_one_item_direction(
+                board_cols,
+                grid_disables,
+                item_id,
+                range(col_count),
+                row_count,
+                direction="left",
+            )
+        if config.line_mode == 2:
+            return self._cal_one_item_direction(
+                board_cols,
+                grid_disables,
+                item_id,
+                range(col_count - 1, -1, -1),
+                row_count,
+                direction="right",
+            )
+
+        wins = []
+        wins.extend(
+            self._cal_one_item_direction(
+                board_cols,
+                grid_disables,
+                item_id,
+                range(col_count),
+                row_count,
+                direction="left",
+            )
+        )
+        wins.extend(
+            self._cal_one_item_direction(
+                board_cols,
+                grid_disables,
+                item_id,
+                range(col_count - 1, -1, -1),
+                row_count,
+                direction="right",
+            )
+        )
+        return wins
+
+    def _cal_one_item_direction(
+        self,
+        board_cols: list[list[int | None]],
+        grid_disables: list[int],
+        item_id: int,
+        col_indexes,
+        row_count: int,
+        direction: str,
+    ) -> list[dict]:
+        """计算单个 symbol 沿指定方向连续命中的 ways 中奖信息。"""
+
+        config = self.config
         base_num = self._get_or_default(config.base_nums, item_id, 0)
         if base_num <= 0:
-            return None
+            return []
 
         counts = []
         positions_by_col = []
-        # LINE_MODE=1：从最左列开始连续命中，一旦某列没有命中就停止。
-        for col in range(col_count):
+        hit_cols = []
+        # 从指定起点开始连续命中，一旦某列没有命中就停止。
+        for col in col_indexes:
             match_positions = self._get_col_match_positions(board_cols, grid_disables, col, item_id, row_count)
             if not match_positions:
                 break
             counts.append(len(match_positions))
             positions_by_col.append(match_positions)
+            hit_cols.append(col)
 
         hit_num = len(counts)
         if hit_num < base_num:
-            return None
+            return []
 
         prize = self._get_or_default(config.item_prizes[item_id], hit_num - 1, 0)
         if prize <= 0:
-            return None
+            return []
 
         ways = 1
         for count in counts:
@@ -712,13 +835,235 @@ class WaysGame(SlotsGame):
         # 配置中的奖值以 BET_UNIT 为倍率基准，最终再按 PRIZE_RATE 修正。
         win = self.base_bet * prize * ways // self.BET_UNIT // max(config.prize_rate, 1)
         positions = [position for col_positions in positions_by_col for position in col_positions]
+        return [
+            {
+                "item_id": item_id,
+                "hit_num": hit_num,
+                "counts": counts,
+                "positions_by_col": positions_by_col,
+                "positions": positions,
+                "ways": ways,
+                "prize": prize,
+                "win": win,
+                "direction": direction,
+                "columns": hit_cols,
+            }
+        ]
+
+
+class LinesGame(SlotsGame):
+    """通用固定线玩法计算类。"""
+
+    def cal_item_list(
+        self,
+        item_list,
+        return_detail: bool = False,
+        free_game: bool = False,
+        row: int | None = None,
+        col: int | None = None,
+    ):
+        """按 game_config.conf 中的 LINE_RULES_n 计算固定线赢钱。"""
+
+        config = self.config
+        if config.line_mode not in (1, 2, 3):
+            raise NotImplementedError("LinesGame only supports LINE_MODE=1, 2, or 3")
+        if not config.line_rules:
+            raise ValueError("LinesGame requires LINE_RULES_n in game_config.conf")
+
+        board_cols, col_count, row_count = self._normalize_item_list(item_list, row=row, col=col)
+        if col_count != config.col_count or row_count != config.row_count:
+            raise ValueError("LinesGame board size must match COL_COUNT and ROW_COUNT")
+
+        grid_disables = self._get_grid_disables(free_game, col_count, row_count)
+        total_win = 0
+        win_items = []
+        for line_index, line_rule in enumerate(config.line_rules):
+            for direction, ordered_positions in self._iter_line_directions(line_rule):
+                line_win = self._cal_one_line_direction(
+                    board_cols,
+                    grid_disables,
+                    line_index=line_index,
+                    ordered_positions=ordered_positions,
+                    row_count=row_count,
+                    direction=direction,
+                )
+                if line_win is None:
+                    continue
+                total_win += line_win["win"]
+                win_items.append(line_win)
+
+        win_positions = sorted({position for item in win_items for position in item["positions"]})
+        self.last_win_items = win_items
+        self.last_win_positions = win_positions
+        if return_detail:
+            return {"total_win": total_win, "items": win_items, "win_positions": win_positions}
+        return total_win
+
+    def _iter_line_directions(self, line_rule: list[tuple[int, int]]):
+        """按 LINE_MODE 返回当前线需要计算的方向。"""
+
+        line_mode = self.config.line_mode
+        if line_mode == 1:
+            yield "left", line_rule
+        elif line_mode == 2:
+            yield "right", list(reversed(line_rule))
+        else:
+            yield "left", line_rule
+            yield "right", list(reversed(line_rule))
+
+    def _cal_one_line_direction(
+        self,
+        board_cols: list[list[int | None]],
+        grid_disables: list[int],
+        line_index: int,
+        ordered_positions: list[tuple[int, int]],
+        row_count: int,
+        direction: str,
+    ) -> dict | None:
+        """计算一条固定线在指定方向上的中奖。"""
+
+        item_id = self._get_line_target_item(board_cols, grid_disables, ordered_positions, row_count)
+        if item_id is None:
+            return None
+
+        config = self.config
+        base_num = self._get_or_default(config.base_nums, item_id, 0)
+        if base_num <= 0:
+            return None
+
+        use_wild = self._get_or_default(config.use_wilds, item_id, 0) == 1
+        hit_positions = []
+        hit_symbols = []
+        for col, row in ordered_positions:
+            cell_item = self._get_line_cell(board_cols, grid_disables, col, row, row_count)
+            if cell_item is None:
+                break
+            if cell_item == item_id or (use_wild and cell_item == self.wild_id):
+                hit_positions.append((col, row))
+                hit_symbols.append(cell_item)
+                continue
+            break
+
+        hit_num = len(hit_positions)
+        if hit_num < base_num:
+            return None
+
+        prize = self._get_or_default(config.item_prizes[item_id], hit_num - 1, 0)
+        if prize <= 0:
+            return None
+
+        win = self.base_bet * prize // self.BET_UNIT // max(config.prize_rate, 1)
         return {
+            "line_index": line_index,
             "item_id": item_id,
             "hit_num": hit_num,
-            "counts": counts,
-            "positions_by_col": positions_by_col,
-            "positions": positions,
-            "ways": ways,
+            "positions": hit_positions,
+            "symbols": hit_symbols,
             "prize": prize,
             "win": win,
+            "direction": direction,
         }
+
+    def _get_line_target_item(
+        self,
+        board_cols: list[list[int | None]],
+        grid_disables: list[int],
+        ordered_positions: list[tuple[int, int]],
+        row_count: int,
+    ) -> int | None:
+        """确定一条线当前方向的目标 symbol；起始 wild 使用后续首个非 wild。"""
+
+        has_wild = False
+        for col, row in ordered_positions:
+            cell_item = self._get_line_cell(board_cols, grid_disables, col, row, row_count)
+            if cell_item is None:
+                return None
+            if cell_item == self.wild_id:
+                has_wild = True
+                continue
+            return cell_item
+
+        return self.wild_id if has_wild else None
+
+    def _get_line_cell(
+        self,
+        board_cols: list[list[int | None]],
+        grid_disables: list[int],
+        col: int,
+        row: int,
+        row_count: int,
+    ) -> int | None:
+        """读取固定线上的一个格子；无效格或越界返回 None。"""
+
+        if self._is_disabled(grid_disables, col, row, row_count):
+            return None
+        if col < 0 or col >= len(board_cols):
+            return None
+        if row < 0 or row >= len(board_cols[col]):
+            return None
+        return board_cols[col][row]
+
+
+class CountGame(SlotsGame):
+    """通用按 symbol 数量算奖的玩法计算类。"""
+
+    def cal_item_list(
+        self,
+        item_list,
+        return_detail: bool = False,
+        free_game: bool = False,
+        row: int | None = None,
+        col: int | None = None,
+    ):
+        """按牌面上每种 symbol 的数量计算赢钱。"""
+
+        config = self.config
+        if config.line_mode != 4:
+            raise NotImplementedError("CountGame only supports LINE_MODE=4")
+
+        board_cols, col_count, row_count = self._normalize_item_list(item_list, row=row, col=col)
+        grid_disables = self._get_grid_disables(free_game, col_count, row_count)
+        positions_by_item: dict[int, list[tuple[int, int]]] = {
+            item_id: [] for item_id in range(config.item_count)
+        }
+
+        for col_index in range(col_count):
+            for row_index in range(min(row_count, len(board_cols[col_index]))):
+                if self._is_disabled(grid_disables, col_index, row_index, row_count):
+                    continue
+
+                item_id = board_cols[col_index][row_index]
+                if item_id is None or item_id < 0 or item_id >= config.item_count:
+                    continue
+                positions_by_item[item_id].append((col_index, row_index))
+
+        total_win = 0
+        win_items = []
+        for item_id, positions in positions_by_item.items():
+            count = len(positions)
+            base_num = self._get_or_default(config.base_nums, item_id, 0)
+            if count < base_num or base_num <= 0:
+                continue
+
+            prize = self._get_or_default(config.item_prizes[item_id], count - 1, 0)
+            if prize <= 0:
+                continue
+
+            win = self.base_bet * prize // self.BET_UNIT // max(config.prize_rate, 1)
+            win_item = {
+                "item_id": item_id,
+                "count": count,
+                "hit_num": count,
+                "positions": positions,
+                "prize": prize,
+                "win": win,
+            }
+            total_win += win
+            win_items.append(win_item)
+
+        win_positions = sorted({position for item in win_items for position in item["positions"]})
+        self.last_win_items = win_items
+        self.last_win_positions = win_positions
+        if return_detail:
+            return {"total_win": total_win, "items": win_items, "win_positions": win_positions}
+        return total_win
