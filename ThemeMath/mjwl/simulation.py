@@ -1,38 +1,42 @@
-"""当前主题模拟入口。
+"""Simulation entry for the mjwl ways game."""
 
-直接运行本文件会模拟普通游戏；如果普通游戏触发 free，就按照
-choose_index 对应的 free 选择进入免费游戏，并把普通游戏和免费游戏的赢钱合并统计。
-"""
+from __future__ import annotations
 
-import sys
+import argparse
+from pathlib import Path
 import re
+import sys
 
 
-# Windows 控制台和工具读取 Python 输出时编码可能不一致，这里统一按 UTF-8 输出中文摘要。
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+from slots_simulation import simulation as SlotsSimulation
+
 try:
-    # 支持以 python -m theme.simulation 或包 import 的方式使用。
     from .theme_math import ThemeMath
 except ImportError:
-    # 支持直接运行 python .\theme\simulation.py。
     from theme_math import ThemeMath
 
 
-# ThemeMath 会默认读取当前主题文件夹下的 game_config.conf、reel_config 和 free_reel_config。
 m = ThemeMath()
 
 SPIN_TIMES = 1000000
 INDEX = 0
 GENERAL_INDEX = 1
+REPORT_INTERVAL = 5000
+THRESHOLDS = (5, 10, 20, 50, 100, 1000)
 CHOOSE_INDEXES = [1]
 TARGET_INDEXES = [0]
 GENERAL_SECTION_RE = re.compile(r"^\s*\[GENERAL_(\d+)\]\s*$", re.MULTILINE)
 
 
 def discover_indexes() -> list[int]:
-    """从 reel_config 文件名中自动发现所有 index。"""
+    """Discover all reel indexes from reel_config file names."""
 
     indexes = []
     for path in m.reel_config_dir.glob("*.conf"):
@@ -43,11 +47,103 @@ def discover_indexes() -> list[int]:
 
 
 def discover_general_indexes(index: int) -> list[int]:
-    """读取指定 index 的普通轴文件，自动发现其中所有 GENERAL_n。"""
+    """Discover GENERAL_n sections from the normal reel file."""
 
     path = m._find_reel_config_path(index)
     text = path.read_text(encoding="utf-8-sig")
     return sorted({int(match.group(1)) for match in GENERAL_SECTION_RE.finditer(text)})
+
+
+def record_win_info(status: dict, win_info: dict, mode_key: str) -> int:
+    """Record one ng/fg ways win into status and return total win."""
+
+    total_win = int(win_info.get("total_win", 0))
+    status_handler.update_feature_win(status, mode_key, "ways", total_win)
+    return total_win
+
+
+def run_free_spins(
+    status: dict,
+    index: int,
+    general_index: int,
+    choose_index: int,
+    free_choice: dict | None,
+    free_times: int,
+) -> int:
+    """Consume free spins and return total free win."""
+
+    remaining_free_times = free_times
+    free_total_win = 0
+    while remaining_free_times > 0:
+        remaining_free_times -= 1
+        status_handler.add_status_value(status, 1, "free", "spin")
+        fg_result = m.fg_spin(
+            index,
+            general_index,
+            choose_index=choose_index,
+            free_choice=free_choice,
+        )
+        free_total_win += record_win_info(status, fg_result, "free")
+
+        retrigger_times = int(fg_result.get("free_times", 0))
+        status_handler.update_free_trigger(status, "free", retrigger_times)
+        remaining_free_times += retrigger_times
+
+    return free_total_win
+
+
+def build_simulation_row(
+    status: dict,
+    index: int,
+    general_index: int,
+    choose_index: int,
+) -> dict:
+    """Build one mjwl report row from current status."""
+
+    row = status_handler.build_report_row(status)
+    row["INDEX"] = index
+    row["GENERAL"] = general_index
+    row["CHOOSE"] = choose_index
+    row["错误"] = ""
+
+    base_spin = status["base"]["spin"]
+    base_bet = status["bet"] / base_spin if base_spin else 0
+    free_trigger_count = status["base"]["free"]
+    row["总押注"] = status["bet"]
+    row["Free平均次数"] = status["free_times"] / free_trigger_count if free_trigger_count else 0
+    row["Free平均倍"] = (
+        status["free"]["ways"][1] / free_trigger_count / base_bet
+        if free_trigger_count and base_bet
+        else 0
+    )
+
+    row["spin_times"] = row["SPIN"]
+    row["index"] = index
+    row["general_index"] = general_index
+    row["choose_index"] = choose_index
+    row["total_bet"] = status["bet"]
+    row["main_win"] = status["base"]["ways"][1]
+    row["free_win"] = status["free"]["ways"][1]
+    row["total_win"] = status["wins"]
+    row["total_win_times"] = status["hit"]
+    row["main_win_times"] = status["base"]["ways"][0]
+    row["free_win_times"] = status["free"]["ways"][0]
+    row["main_rtp"] = row["base_rtp"]
+    row["total_rtp"] = row["rtp"]
+    row["win_rate"] = row["Hit率"]
+    row["main_win_rate"] = status["base"]["ways"][0] / base_spin if base_spin else 0
+    row["free_win_rate"] = (
+        status["free"]["ways"][0] / status["free"]["spin"]
+        if status["free"]["spin"]
+        else 0
+    )
+    row["trigger_free_times"] = status["base"]["free"]
+    row["free_retrigger_times"] = status["free"]["free"]
+    row["trigger_free_rate"] = row["Free频率"]
+    row["free_spin_times"] = status["free"]["spin"]
+    row["avg_free_spins_per_trigger"] = row["Free平均次数"]
+    row["avg_free_win_multiplier_per_trigger"] = row["Free平均倍"]
+    return row
 
 
 def simulation(
@@ -55,89 +151,45 @@ def simulation(
     index: int = INDEX,
     general_index: int = GENERAL_INDEX,
     choose_index: int = 1,
-) -> dict:
-    """模拟指定次数普通游戏；触发 free 后继续模拟对应次数的免费游戏。"""
+    report_interval: int = REPORT_INTERVAL,
+    print_updates: bool = False,
+) -> list[dict]:
+    """Run N base spins and return cumulative checkpoint rows."""
 
-    main_win = 0
-    free_win = 0
-    total_win_times = 0
-    main_win_times = 0
-    free_win_times = 0
-    trigger_free_times = 0
-    free_retrigger_times = 0
-    free_spin_times = 0
+    status = status_handler.new_status()
+    rows = []
 
     for _ in range(spin_times):
+        status_handler.update_spin_start(status, m.base_bet)
         spin_total_win = 0
+
         ng_result = m.ng_spin(index, general_index, choose_index=choose_index)
-        ng_win = ng_result["total_win"]
-        main_win += ng_win
-        spin_total_win += ng_win
-        if ng_win > 0:
-            main_win_times += 1
+        spin_total_win += record_win_info(status, ng_result, "base")
 
-        if not ng_result.get("is_trigger_free"):
-            if spin_total_win > 0:
-                total_win_times += 1
-            continue
-
-        trigger_free_times += 1
-        current_free_choice = ng_result.get("free_choice")
-        remaining_free_times = ng_result.get("free_times", 0)
-        free_spin_times += remaining_free_times
-        while remaining_free_times > 0:
-            remaining_free_times -= 1
-            fg_result = m.fg_spin(
-                index,
-                general_index,
+        free_times = int(ng_result.get("free_times", 0)) if ng_result.get("is_trigger_free") else 0
+        status_handler.update_free_trigger(status, "base", free_times)
+        if free_times > 0:
+            spin_total_win += run_free_spins(
+                status=status,
+                index=index,
+                general_index=general_index,
                 choose_index=choose_index,
-                free_choice=current_free_choice,
+                free_choice=ng_result.get("free_choice"),
+                free_times=free_times,
             )
-            fg_win = fg_result["total_win"]
-            free_win += fg_win
-            spin_total_win += fg_win
-            if fg_win > 0:
-                free_win_times += 1
 
-            # free 中如果再次出现 3 个及以上 scatter，按当前 free 选择追加 free 次数。
-            retrigger_free_times = fg_result.get("free_times", 0)
-            if retrigger_free_times > 0:
-                free_retrigger_times += 1
-                remaining_free_times += retrigger_free_times
-                free_spin_times += retrigger_free_times
+        status_handler.update_spin_result(status, spin_total_win, m.base_bet)
 
-        if spin_total_win > 0:
-            total_win_times += 1
+        base_spin = status["base"]["spin"]
+        if report_interval > 0 and base_spin % report_interval == 0:
+            row = build_simulation_row(status, index, general_index, choose_index)
+            rows.append(row)
+            if print_updates:
+                status_handler.print_table([row])
 
-    total_bet = spin_times * m.base_bet
-    total_win = main_win + free_win
-    return {
-        "spin_times": spin_times,
-        "index": index,
-        "general_index": general_index,
-        "choose_index": choose_index,
-        "total_bet": total_bet,
-        "main_win": main_win,
-        "free_win": free_win,
-        "total_win": total_win,
-        "total_win_times": total_win_times,
-        "main_win_times": main_win_times,
-        "free_win_times": free_win_times,
-        "main_rtp": main_win / total_bet if total_bet else 0,
-        "free_rtp": free_win / total_bet if total_bet else 0,
-        "total_rtp": total_win / total_bet if total_bet else 0,
-        "win_rate": total_win_times / spin_times if spin_times else 0,
-        "main_win_rate": main_win_times / spin_times if spin_times else 0,
-        "free_win_rate": free_win_times / free_spin_times if free_spin_times else 0,
-        "trigger_free_times": trigger_free_times,
-        "free_retrigger_times": free_retrigger_times,
-        "trigger_free_rate": trigger_free_times / spin_times if spin_times else 0,
-        "free_spin_times": free_spin_times,
-        "avg_free_spins_per_trigger": free_spin_times / trigger_free_times if trigger_free_times else 0,
-        "avg_free_win_multiplier_per_trigger": (
-            free_win / trigger_free_times / m.base_bet if trigger_free_times else 0
-        ),
-    }
+    if not rows or rows[-1]["SPIN"] != status["base"]["spin"]:
+        rows.append(build_simulation_row(status, index, general_index, choose_index))
+    return rows
 
 
 def simulation_all(
@@ -145,8 +197,10 @@ def simulation_all(
     indexes: list[int] | None = None,
     general_indexes: list[int] | None = None,
     choose_indexes: list[int] | None = None,
+    report_interval: int = REPORT_INTERVAL,
+    print_updates: bool = False,
 ) -> list[dict]:
-    """一次运行所有 index、general_index 和 choose_index 组合的模拟。"""
+    """Run all index/general/choose combinations."""
 
     results = []
     target_indexes = TARGET_INDEXES if indexes is None else indexes
@@ -158,123 +212,219 @@ def simulation_all(
         for general_index in target_general_indexes:
             for choose_index in target_choose_indexes:
                 try:
-                    result = simulation(
+                    rows = simulation(
                         spin_times=spin_times,
                         index=index,
                         general_index=general_index,
                         choose_index=choose_index,
+                        report_interval=report_interval,
+                        print_updates=print_updates,
                     )
-                    result["ok"] = True
+                    for row in rows:
+                        row["ok"] = True
+                    results.extend(rows)
                 except Exception as exc:
-                    result = {
-                        "ok": False,
-                        "spin_times": spin_times,
-                        "index": index,
-                        "general_index": general_index,
-                        "choose_index": choose_index,
-                        "error": str(exc),
-                    }
-                results.append(result)
+                    results.append(
+                        {
+                            "ok": False,
+                            "INDEX": index,
+                            "GENERAL": general_index,
+                            "CHOOSE": choose_index,
+                            "SPIN": spin_times,
+                            "错误": str(exc),
+                        }
+                    )
     return results
 
 
-def print_summary(result: dict) -> None:
-    """打印模拟结果摘要。"""
+def print_summary(result: dict | list[dict]) -> None:
+    """Print a summary for the final row of one simulation."""
 
-    print(f"模拟次数: {result['spin_times']}")
-    print(f"index: {result['index']}, GENERAL_{result['general_index']}, choose_index: {result['choose_index']}")
-    print(f"总押注: {result['total_bet']}")
-    print(f"普通游戏赢钱: {result['main_win']}")
-    print(f"免费游戏赢钱: {result['free_win']}")
-    print(f"总赢钱: {result['total_win']}")
-    print(f"普通游戏 RTP: {result['main_rtp']:.3f}")
+    if isinstance(result, list):
+        result = result[-1] if result else {}
+    if not result:
+        return
+
+    print(f"模拟次数: {result['SPIN']}")
+    print(f"index: {result['INDEX']}, GENERAL_{result['GENERAL']}, choose_index: {result['CHOOSE']}")
+    print(f"总押注: {result['总押注']}")
+    print(f"普通游戏赢钱: {result['BaseWays']}")
+    print(f"免费游戏赢钱: {result['FreeWays']}")
+    print(f"总赢钱: {result['总赢钱']}")
+    print(f"普通游戏 RTP: {result['base_rtp']:.3f}")
     print(f"免费游戏 RTP: {result['free_rtp']:.3f}")
-    print(f"总 RTP: {result['total_rtp']:.3f}")
-    print(f"赢钱次数: {result['total_win_times']}")
-    print(f"赢钱率: {result['win_rate']:.3f}")
+    print(f"总 RTP: {result['rtp']:.3f}")
+    print(f"RTP 校验: {result['rtp_check']:.3f}")
+    print(f"赢钱次数: {result['Hit']}")
+    print(f"赢钱率: {result['Hit率']:.3f}")
     print(f"普通游戏赢钱次数: {result['main_win_times']}")
     print(f"普通游戏赢钱率: {result['main_win_rate']:.3f}")
     print(f"免费游戏赢钱次数: {result['free_win_times']}")
     print(f"免费游戏赢钱率: {result['free_win_rate']:.3f}")
-    print(f"触发 free 次数: {result['trigger_free_times']}")
-    print(f"free 中再次触发 free 次数: {result['free_retrigger_times']}")
-    print(f"触发 free 概率: {result['trigger_free_rate']:.3%}")
-    print(f"免费游戏总次数: {result['free_spin_times']}")
-    print(f"平均每次触发 free 次数: {result['avg_free_spins_per_trigger']:.6f}")
-    print(f"平均每次 free 赢钱倍数: {result['avg_free_win_multiplier_per_trigger']:.3f}")
+    print(f"触发 free 次数: {result['触发Free']}")
+    print(f"free 中再次触发 free 次数: {result['Free重触发']}")
+    print(f"触发 free 概率: {result['Free频率']:.3%}")
+    print(f"免费游戏总次数: {result['FreeSpin']}")
+    print(f"平均每次触发 free 次数: {result['Free平均次数']:.6f}")
+    print(f"平均每次 free 赢钱倍数: {result['Free平均倍']:.3f}")
 
 
 def print_table(results: list[dict]) -> None:
-    """打印批量模拟结果表格。"""
+    """Print simulation rows as a table."""
 
-    headers = [
-        "INDEX",
-        "GENERAL",
-        "CHOOSE",
-        "普通RTP",
-        "FreeRTP",
-        "总RTP",
-        "赢钱率",
-        "主赢率",
-        "Free赢率",
-        "触发Free",
-        "触发率",
-        "Free次数",
-        "平均Free倍",
-        "错误",
-    ]
-    rows = []
-    for result in results:
-        if not result.get("ok", True):
-            rows.append(
-                [
-                    result["index"],
-                    result["general_index"],
-                    result["choose_index"],
-                    "-",
-                    "-",
-                    "-",
-                    "-",
-                    "-",
-                    "-",
-                    "-",
-                    "-",
-                    "-",
-                    "-",
-                    result["error"],
-                ]
-            )
-            continue
+    status_handler.print_table(results)
 
-        rows.append(
-            [
-                result["index"],
-                result["general_index"],
-                result["choose_index"],
-                f"{result['main_rtp']:.3f}",
-                f"{result['free_rtp']:.3f}",
-                f"{result['total_rtp']:.3f}",
-                f"{result['win_rate']:.3f}",
-                f"{result['main_win_rate']:.3f}",
-                f"{result['free_win_rate']:.3f}",
-                result["trigger_free_times"],
-                f"{result['trigger_free_rate']:.3%}",
-                result["free_spin_times"],
-                f"{result['avg_free_win_multiplier_per_trigger']:.3f}",
-                "",
-            ]
-        )
 
-    col_widths = [
-        max(len(str(row[col_index])) for row in [headers] + rows)
-        for col_index in range(len(headers))
-    ]
-    print(" | ".join(str(value).ljust(col_widths[index]) for index, value in enumerate(headers)))
-    print("-+-".join("-" * width for width in col_widths))
-    for row in rows:
-        print(" | ".join(str(value).ljust(col_widths[index]) for index, value in enumerate(row)))
+def parse_int_list(value: str | None) -> list[int] | None:
+    """Parse comma-separated ints from CLI options."""
+
+    if value is None:
+        return None
+    value = value.strip()
+    if not value:
+        return []
+    return [int(item.strip()) for item in value.split(",") if item.strip()]
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run mjwl ways-game simulation.")
+    parser.add_argument("--spins", type=int, default=SPIN_TIMES, help="Base ng_spin count.")
+    parser.add_argument("--indexes", default=None, help="Comma-separated reel indexes.")
+    parser.add_argument("--generals", default=None, help="Comma-separated GENERAL indexes.")
+    parser.add_argument("--choose-indexes", default=None, help="Comma-separated choose indexes.")
+    parser.add_argument("--report-interval", type=int, default=REPORT_INTERVAL)
+    return parser.parse_args()
+
+
+status_model = {
+    "base": {
+        "spin": 0,
+        "ways": [0, 0],
+        "free": 0,
+    },
+    "free": {
+        "spin": 0,
+        "ways": [0, 0],
+        "free": 0,
+    },
+    "bet": 0,
+    "wins": 0,
+    "hit": 0,
+    "free_times": 0,
+    "gt_5x": 0,
+    "gt_10x": 0,
+    "gt_20x": 0,
+    "gt_50x": 0,
+    "gt_100x": 0,
+    "gt_1000x": 0,
+}
+
+table_headers = [
+    "INDEX",
+    "GENERAL",
+    "CHOOSE",
+    "SPIN",
+    "rtp",
+    "rtp_check",
+    "base_rtp",
+    "free_rtp",
+    "base_ways_rtp",
+    "free_ways_rtp",
+    "总赢钱",
+    "Ways赢钱",
+    "BaseWays",
+    "FreeWays",
+    "Hit",
+    "Hit率",
+    ">5x",
+    ">10x",
+    ">20x",
+    ">50x",
+    ">100x",
+    ">1000x",
+    "触发Free",
+    "Free频率",
+    "Free次数",
+    "FreeSpin",
+    "Free重触发",
+    "Free平均次数",
+    "Free平均倍",
+    "错误",
+]
+
+statics_columns = [
+    {
+        "title": "基础信息",
+        "fields": [
+            "INDEX",
+            "GENERAL",
+            "CHOOSE",
+            "SPIN",
+            "总押注",
+            "rtp",
+            "rtp_check",
+            "总赢钱",
+            "Ways赢钱",
+            "Hit",
+            "Hit率",
+            ">5x",
+            ">10x",
+            ">20x",
+            ">50x",
+            ">100x",
+            ">1000x",
+            "错误",
+        ],
+    },
+    {
+        "title": "Base",
+        "fields": [
+            "base_rtp",
+            "base_ways_rtp",
+            "BaseWays",
+            "main_win_times",
+            "main_win_rate",
+        ],
+    },
+    {
+        "title": "Free",
+        "fields": [
+            "free_rtp",
+            "free_ways_rtp",
+            "FreeWays",
+            "free_win_times",
+            "free_win_rate",
+            "触发Free",
+            "Free频率",
+            "Free次数",
+            "FreeSpin",
+            "Free重触发",
+            "Free平均次数",
+            "Free平均倍",
+        ],
+    },
+]
+
+status_handler = SlotsSimulation(
+    status_model=status_model,
+    thresholds=THRESHOLDS,
+    headers=table_headers,
+    feature_key="ways",
+    feature_label="Ways",
+    print_mode="statics",
+    statics_columns=statics_columns,
+)
 
 
 if __name__ == "__main__":
-    # 直接运行时自动跑完 TARGET_INDEXES 和 CHOOSE_INDEXES 中配置的组合。
-    print_table(simulation_all())
+    args = parse_args()
+    print_table(
+        simulation_all(
+            spin_times=args.spins,
+            indexes=parse_int_list(args.indexes),
+            general_indexes=parse_int_list(args.generals),
+            choose_indexes=parse_int_list(args.choose_indexes),
+            report_interval=args.report_interval,
+            print_updates=True,
+        )
+    )
