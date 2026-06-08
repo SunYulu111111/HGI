@@ -35,17 +35,6 @@ TARGET_INDEXES = [0]
 GENERAL_SECTION_RE = re.compile(r"^\s*\[GENERAL_(\d+)\]\s*$", re.MULTILINE)
 
 
-def discover_indexes() -> list[int]:
-    """Discover all reel indexes from reel_config file names."""
-
-    indexes = []
-    for path in m.reel_config_dir.glob("*.conf"):
-        suffix = path.stem.rsplit("_", 1)[-1]
-        if suffix.isdigit():
-            indexes.append(int(suffix))
-    return sorted(set(indexes))
-
-
 def discover_general_indexes(index: int) -> list[int]:
     """Discover GENERAL_n sections from the normal reel file."""
 
@@ -116,33 +105,14 @@ def build_simulation_row(
         if free_trigger_count and base_bet
         else 0
     )
-
-    row["spin_times"] = row["SPIN"]
-    row["index"] = index
-    row["general_index"] = general_index
-    row["choose_index"] = choose_index
-    row["total_bet"] = status["bet"]
-    row["main_win"] = status["base"]["ways"][1]
-    row["free_win"] = status["free"]["ways"][1]
-    row["total_win"] = status["wins"]
-    row["total_win_times"] = status["hit"]
     row["main_win_times"] = status["base"]["ways"][0]
     row["free_win_times"] = status["free"]["ways"][0]
-    row["main_rtp"] = row["base_rtp"]
-    row["total_rtp"] = row["rtp"]
-    row["win_rate"] = row["Hit率"]
     row["main_win_rate"] = status["base"]["ways"][0] / base_spin if base_spin else 0
     row["free_win_rate"] = (
         status["free"]["ways"][0] / status["free"]["spin"]
         if status["free"]["spin"]
         else 0
     )
-    row["trigger_free_times"] = status["base"]["free"]
-    row["free_retrigger_times"] = status["free"]["free"]
-    row["trigger_free_rate"] = row["Free频率"]
-    row["free_spin_times"] = status["free"]["spin"]
-    row["avg_free_spins_per_trigger"] = row["Free平均次数"]
-    row["avg_free_win_multiplier_per_trigger"] = row["Free平均倍"]
     return row
 
 
@@ -198,9 +168,9 @@ def simulation_all(
     general_indexes: list[int] | None = None,
     choose_indexes: list[int] | None = None,
     report_interval: int = REPORT_INTERVAL,
-    print_updates: bool = False,
+    print_updates: bool = True,
 ) -> list[dict]:
-    """Run all index/general/choose combinations."""
+    """Run all index/general/choose combinations and return each final row."""
 
     results = []
     target_indexes = TARGET_INDEXES if indexes is None else indexes
@@ -217,12 +187,13 @@ def simulation_all(
                         index=index,
                         general_index=general_index,
                         choose_index=choose_index,
-                        report_interval=report_interval,
+                        report_interval=report_interval if print_updates else 0,
                         print_updates=print_updates,
                     )
-                    for row in rows:
-                        row["ok"] = True
-                    results.extend(rows)
+                    if rows:
+                        final_row = rows[-1]
+                        final_row["ok"] = True
+                        results.append(final_row)
                 except Exception as exc:
                     results.append(
                         {
@@ -293,6 +264,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--generals", default=None, help="Comma-separated GENERAL indexes.")
     parser.add_argument("--choose-indexes", default=None, help="Comma-separated choose indexes.")
     parser.add_argument("--report-interval", type=int, default=REPORT_INTERVAL)
+    parser.add_argument(
+        "--no-print-updates",
+        action="store_false",
+        dest="print_updates",
+        help="Skip interval statics tables while running.",
+    )
+    parser.set_defaults(print_updates=True)
     return parser.parse_args()
 
 
@@ -318,39 +296,6 @@ status_model = {
     "gt_100x": 0,
     "gt_1000x": 0,
 }
-
-table_headers = [
-    "INDEX",
-    "GENERAL",
-    "CHOOSE",
-    "SPIN",
-    "rtp",
-    "rtp_check",
-    "base_rtp",
-    "free_rtp",
-    "base_ways_rtp",
-    "free_ways_rtp",
-    "总赢钱",
-    "Ways赢钱",
-    "BaseWays",
-    "FreeWays",
-    "Hit",
-    "Hit率",
-    ">5x",
-    ">10x",
-    ">20x",
-    ">50x",
-    ">100x",
-    ">1000x",
-    "触发Free",
-    "Free频率",
-    "Free次数",
-    "FreeSpin",
-    "Free重触发",
-    "Free平均次数",
-    "Free平均倍",
-    "错误",
-]
 
 statics_columns = [
     {
@@ -408,7 +353,6 @@ statics_columns = [
 status_handler = SlotsSimulation(
     status_model=status_model,
     thresholds=THRESHOLDS,
-    headers=table_headers,
     feature_key="ways",
     feature_label="Ways",
     print_mode="statics",
@@ -425,6 +369,6 @@ if __name__ == "__main__":
             general_indexes=parse_int_list(args.generals),
             choose_indexes=parse_int_list(args.choose_indexes),
             report_interval=args.report_interval,
-            print_updates=True,
+            print_updates=args.print_updates,
         )
     )

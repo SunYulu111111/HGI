@@ -58,6 +58,7 @@ class simulation:
         "FreeSpin",
         "Free重触发",
     ]
+    _MISSING = object()
 
     def __init__(
         self,
@@ -195,6 +196,14 @@ class simulation:
                 return
         raise KeyError(f"unknown statics column: {column_title}")
 
+    def iter_report_keys(self) -> list[str]:
+        """Return all configured report keys from headers and statics fields."""
+
+        keys = list(self.headers)
+        for column in self.statics_columns:
+            keys.extend(field["key"] for field in column["fields"])
+        return keys
+
     def new_status(self) -> dict:
         """Create a fresh status dict from the configured status model."""
 
@@ -252,9 +261,25 @@ class simulation:
     def get_list_rtp(self, value: list, bet: int) -> float:
         """Use the second list item as win amount and calculate its RTP."""
 
-        if not bet or len(value) < 2:
+        if not bet or not isinstance(value, list) or len(value) < 2:
             return 0
         return value[1] / bet
+
+    @staticmethod
+    def get_list_count(value) -> int:
+        """Return the first list item when a status entry is [count, win]."""
+
+        if isinstance(value, list) and len(value) > 0:
+            return value[0]
+        return 0
+
+    @staticmethod
+    def get_list_win(value) -> int:
+        """Return the second list item when a status entry is [count, win]."""
+
+        if isinstance(value, list) and len(value) > 1:
+            return value[1]
+        return 0
 
     def get_status_rtp(self, value, bet: int) -> float:
         """Calculate RTP from all list win values under a status value."""
@@ -275,39 +300,127 @@ class simulation:
             if isinstance(value, dict)
         )
 
+    def get_status_value_by_name(self, status: dict, name: str):
+        """Resolve a status value from an underscore-joined path name."""
+
+        if not isinstance(name, str) or not name:
+            return self._MISSING
+        return self.resolve_status_path(status, name.split("_"))
+
+    def resolve_status_path(self, value, parts: list[str]):
+        """Resolve path parts while allowing real status keys to contain underscores."""
+
+        if not parts:
+            return value
+        if not isinstance(value, dict):
+            return self._MISSING
+
+        for prefix_length in range(len(parts), 0, -1):
+            key = "_".join(parts[:prefix_length])
+            if key in value:
+                return self.resolve_status_path(value[key], parts[prefix_length:])
+        return self._MISSING
+
+    def get_dynamic_report_value(self, status: dict, key: str):
+        """Calculate report values that can be derived from arbitrary status fields."""
+
+        bet = status.get("bet", 0)
+        if key == "rtp":
+            return self.get_total_rtp(status)
+        if key == "rtp_check":
+            return status.get("wins", 0) / bet if bet else 0
+        if key.endswith("_rtp"):
+            value = self.get_status_value_by_name(status, key[:-4])
+            if value is self._MISSING:
+                return self._MISSING
+            return self.get_status_rtp(value, bet)
+        return self._MISSING
+
+    def add_dynamic_report_values(self, row: dict, status: dict) -> None:
+        """Fill configured report keys that can be calculated from status."""
+
+        for key in self.iter_report_keys():
+            if not isinstance(key, str) or key in row:
+                continue
+            value = self.get_dynamic_report_value(status, key)
+            if value is not self._MISSING:
+                row[key] = value
+
+    def iter_status_rtp_entries(self, value, prefix: list[str] | None = None):
+        """Yield RTP-capable status paths for every nested dict/list value."""
+
+        if prefix is None:
+            prefix = []
+        if not isinstance(value, dict):
+            return
+
+        for key, child_value in value.items():
+            if not isinstance(key, str):
+                continue
+            child_prefix = [*prefix, key]
+            if isinstance(child_value, (dict, list)):
+                yield "_".join(child_prefix), child_value
+            if isinstance(child_value, dict):
+                yield from self.iter_status_rtp_entries(child_value, child_prefix)
+
+    def add_status_rtp_report_values(self, row: dict, status: dict) -> None:
+        """Add *_rtp row values for all RTP-capable paths in status."""
+
+        bet = status.get("bet", 0)
+        for name, value in self.iter_status_rtp_entries(status):
+            row.setdefault(f"{name}_rtp", self.get_status_rtp(value, bet))
+
     def build_report_row(self, status: dict) -> dict:
         """Build one cumulative report row from status."""
 
-        base_spin = status["base"]["spin"]
-        bet = status["bet"]
-        base_feature = status["base"].get(self.feature_key, [0, 0])
-        free_feature = status["free"].get(self.feature_key, [0, 0])
+        base_status = status.get("base", {})
+        free_status = status.get("free", {})
+        base_spin = base_status.get("spin", 0) if isinstance(base_status, dict) else 0
+        bet = status.get("bet", 0)
+        base_feature = (
+            base_status.get(self.feature_key, [0, 0])
+            if isinstance(base_status, dict)
+            else [0, 0]
+        )
+        free_feature = (
+            free_status.get(self.feature_key, [0, 0])
+            if isinstance(free_status, dict)
+            else [0, 0]
+        )
+        base_feature_win = self.get_list_win(base_feature)
+        free_feature_win = self.get_list_win(free_feature)
         base_feature_rtp = self.get_list_rtp(base_feature, bet)
         free_feature_rtp = self.get_list_rtp(free_feature, bet)
-        base_rtp = self.get_status_rtp(status["base"], bet)
-        free_rtp = self.get_status_rtp(status["free"], bet)
+        base_rtp = self.get_status_rtp(base_status, bet)
+        free_rtp = self.get_status_rtp(free_status, bet)
         row = {
             "SPIN": base_spin,
             "rtp": self.get_total_rtp(status),
-            "rtp_check": status["wins"] / bet if bet else 0,
+            "rtp_check": status.get("wins", 0) / bet if bet else 0,
             "base_rtp": base_rtp,
             "free_rtp": free_rtp,
             f"base_{self.feature_key}_rtp": base_feature_rtp,
             f"free_{self.feature_key}_rtp": free_feature_rtp,
-            "总赢钱": status["wins"],
-            f"{self.feature_label}赢钱": base_feature[1] + free_feature[1],
-            f"Base{self.feature_label}": base_feature[1],
-            f"Free{self.feature_label}": free_feature[1],
-            "Hit": status["hit"],
-            "Hit率": status["hit"] / base_spin if base_spin else 0,
-            "触发Free": status["base"]["free"],
-            "Free频率": status["base"]["free"] / base_spin if base_spin else 0,
-            "Free次数": status["free_times"],
-            "FreeSpin": status["free"]["spin"],
-            "Free重触发": status["free"]["free"],
+            "总赢钱": status.get("wins", 0),
+            f"{self.feature_label}赢钱": base_feature_win + free_feature_win,
+            f"Base{self.feature_label}": base_feature_win,
+            f"Free{self.feature_label}": free_feature_win,
+            "Hit": status.get("hit", 0),
+            "Hit率": status.get("hit", 0) / base_spin if base_spin else 0,
+            "触发Free": base_status.get("free", 0) if isinstance(base_status, dict) else 0,
+            "Free频率": (
+                base_status.get("free", 0) / base_spin
+                if isinstance(base_status, dict) and base_spin
+                else 0
+            ),
+            "Free次数": status.get("free_times", 0),
+            "FreeSpin": free_status.get("spin", 0) if isinstance(free_status, dict) else 0,
+            "Free重触发": free_status.get("free", 0) if isinstance(free_status, dict) else 0,
         }
         for threshold in self.thresholds:
-            row[f">{threshold}x"] = status[f"gt_{threshold}x"]
+            row[f">{threshold}x"] = status.get(f"gt_{threshold}x", 0)
+        self.add_status_rtp_report_values(row, status)
+        self.add_dynamic_report_values(row, status)
         return row
 
     def print_table(self, rows: list[dict]) -> None:
