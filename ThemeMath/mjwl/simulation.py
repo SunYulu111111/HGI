@@ -25,13 +25,12 @@ except ImportError:
 
 m = ThemeMath()
 
-SPIN_TIMES = 1000000
+SPIN_TIMES = 10000000
 INDEX = 0
 GENERAL_INDEX = 1
 REPORT_INTERVAL = 5000
 THRESHOLDS = (5, 10, 20, 50, 100, 1000)
 CHOOSE_INDEXES = [1]
-TARGET_INDEXES = [0]
 GENERAL_SECTION_RE = re.compile(r"^\s*\[GENERAL_(\d+)\]\s*$", re.MULTILINE)
 
 
@@ -173,7 +172,7 @@ def simulation_all(
     """Run all index/general/choose combinations and return each final row."""
 
     results = []
-    target_indexes = TARGET_INDEXES if indexes is None else indexes
+    target_indexes = [INDEX] if indexes is None else indexes
     target_choose_indexes = CHOOSE_INDEXES if choose_indexes is None else choose_indexes
     for index in target_indexes:
         target_general_indexes = (
