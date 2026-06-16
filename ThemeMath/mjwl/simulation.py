@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import argparse
+import csv
+import json
 from pathlib import Path
 import re
 import sys
@@ -25,13 +27,72 @@ except ImportError:
 
 m = ThemeMath()
 
-SPIN_TIMES = 10000000
-INDEX = 0
-GENERAL_INDEX = 1
+SPIN_TIMES = 1000000
+INDEX = [0]
+GENERAL_INDEX = [1]
 REPORT_INTERVAL = 5000
 THRESHOLDS = (5, 10, 20, 50, 100, 1000)
 CHOOSE_INDEXES = [1]
 GENERAL_SECTION_RE = re.compile(r"^\s*\[GENERAL_(\d+)\]\s*$", re.MULTILINE)
+RESULT_CSV = Path(__file__).resolve().with_name("simulate_result.csv")
+RESULT_CSV_FIELDS = [
+    "INDEX",
+    "GENERAL",
+    "FREE_GENERAL",
+    "CHOOSE",
+    "SPIN",
+    "总押注",
+    "rtp",
+    "rtp_check",
+    "base_rtp",
+    "base_ways_rtp",
+    "free_rtp",
+    "free_ways_rtp",
+    "总赢钱",
+    "Ways赢钱",
+    "BaseWays",
+    "FreeWays",
+    "Hit",
+    "Hit率",
+    ">5x",
+    ">10x",
+    ">20x",
+    ">50x",
+    ">100x",
+    ">1000x",
+    "触发Free",
+    "Free频率",
+    "Free次数",
+    "FreeSpin",
+    "Free重触发",
+    "Free平均次数",
+    "Free平均倍",
+    "main_win_times",
+    "main_win_rate",
+    "free_win_times",
+    "free_win_rate",
+    "ok",
+    "错误",
+    "status",
+]
+
+
+def first_config_value(value):
+    """Return the first value from a scalar-or-list default config."""
+
+    if isinstance(value, (list, tuple)):
+        if not value:
+            raise ValueError("default config list cannot be empty")
+        return value[0]
+    return value
+
+
+def list_config_values(value) -> list:
+    """Return a list from a scalar-or-list default config."""
+
+    if isinstance(value, (list, tuple)):
+        return list(value)
+    return [value]
 
 
 def discover_general_indexes(index: int) -> list[int]:
@@ -53,7 +114,7 @@ def record_win_info(status: dict, win_info: dict, mode_key: str) -> int:
 def run_free_spins(
     status: dict,
     index: int,
-    general_index: int,
+    free_general_index: int,
     choose_index: int,
     free_choice: dict | None,
     free_times: int,
@@ -67,7 +128,7 @@ def run_free_spins(
         status_handler.add_status_value(status, 1, "free", "spin")
         fg_result = m.fg_spin(
             index,
-            general_index,
+            free_general_index=free_general_index,
             choose_index=choose_index,
             free_choice=free_choice,
         )
@@ -85,12 +146,15 @@ def build_simulation_row(
     index: int,
     general_index: int,
     choose_index: int,
+    free_general_index: int | None = None,
 ) -> dict:
     """Build one mjwl report row from current status."""
 
+    free_general_index = choose_index if free_general_index is None else free_general_index
     row = status_handler.build_report_row(status)
     row["INDEX"] = index
     row["GENERAL"] = general_index
+    row["FREE_GENERAL"] = free_general_index
     row["CHOOSE"] = choose_index
     row["错误"] = ""
 
@@ -117,14 +181,18 @@ def build_simulation_row(
 
 def simulation(
     spin_times: int = SPIN_TIMES,
-    index: int = INDEX,
-    general_index: int = GENERAL_INDEX,
+    index: int | None = None,
+    general_index: int | None = None,
     choose_index: int = 1,
+    free_general_index: int | None = None,
     report_interval: int = REPORT_INTERVAL,
     print_updates: bool = False,
 ) -> list[dict]:
     """Run N base spins and return cumulative checkpoint rows."""
 
+    index = first_config_value(INDEX) if index is None else index
+    general_index = first_config_value(GENERAL_INDEX) if general_index is None else general_index
+    free_general_index = choose_index if free_general_index is None else free_general_index
     status = status_handler.new_status()
     rows = []
 
@@ -141,7 +209,7 @@ def simulation(
             spin_total_win += run_free_spins(
                 status=status,
                 index=index,
-                general_index=general_index,
+                free_general_index=free_general_index,
                 choose_index=choose_index,
                 free_choice=ng_result.get("free_choice"),
                 free_times=free_times,
@@ -151,13 +219,14 @@ def simulation(
 
         base_spin = status["base"]["spin"]
         if report_interval > 0 and base_spin % report_interval == 0:
-            row = build_simulation_row(status, index, general_index, choose_index)
+            row = build_simulation_row(status, index, general_index, choose_index, free_general_index)
             rows.append(row)
             if print_updates:
                 status_handler.print_table([row])
 
     if not rows or rows[-1]["SPIN"] != status["base"]["spin"]:
-        rows.append(build_simulation_row(status, index, general_index, choose_index))
+        rows.append(build_simulation_row(status, index, general_index, choose_index, free_general_index))
+    rows[-1]["status"] = status
     return rows
 
 
@@ -166,44 +235,49 @@ def simulation_all(
     indexes: list[int] | None = None,
     general_indexes: list[int] | None = None,
     choose_indexes: list[int] | None = None,
+    free_general_indexes: list[int] | None = None,
     report_interval: int = REPORT_INTERVAL,
     print_updates: bool = True,
 ) -> list[dict]:
     """Run all index/general/choose combinations and return each final row."""
 
     results = []
-    target_indexes = [INDEX] if indexes is None else indexes
+    target_indexes = list_config_values(INDEX) if indexes is None else indexes
     target_choose_indexes = CHOOSE_INDEXES if choose_indexes is None else choose_indexes
     for index in target_indexes:
-        target_general_indexes = (
-            discover_general_indexes(index) if general_indexes is None else general_indexes
-        )
+        target_general_indexes = list_config_values(GENERAL_INDEX) if general_indexes is None else general_indexes
         for general_index in target_general_indexes:
             for choose_index in target_choose_indexes:
-                try:
-                    rows = simulation(
-                        spin_times=spin_times,
-                        index=index,
-                        general_index=general_index,
-                        choose_index=choose_index,
-                        report_interval=report_interval if print_updates else 0,
-                        print_updates=print_updates,
-                    )
-                    if rows:
-                        final_row = rows[-1]
-                        final_row["ok"] = True
-                        results.append(final_row)
-                except Exception as exc:
-                    results.append(
-                        {
-                            "ok": False,
-                            "INDEX": index,
-                            "GENERAL": general_index,
-                            "CHOOSE": choose_index,
-                            "SPIN": spin_times,
-                            "错误": str(exc),
-                        }
-                    )
+                target_free_general_indexes = (
+                    [choose_index] if free_general_indexes is None else free_general_indexes
+                )
+                for free_general_index in target_free_general_indexes:
+                    try:
+                        rows = simulation(
+                            spin_times=spin_times,
+                            index=index,
+                            general_index=general_index,
+                            choose_index=choose_index,
+                            free_general_index=free_general_index,
+                            report_interval=report_interval if print_updates else 0,
+                            print_updates=print_updates,
+                        )
+                        if rows:
+                            final_row = rows[-1]
+                            final_row["ok"] = True
+                            results.append(final_row)
+                    except Exception as exc:
+                        results.append(
+                            {
+                                "ok": False,
+                                "INDEX": index,
+                                "GENERAL": general_index,
+                                "FREE_GENERAL": free_general_index,
+                                "CHOOSE": choose_index,
+                                "SPIN": spin_times,
+                                "错误": str(exc),
+                            }
+                        )
     return results
 
 
@@ -216,7 +290,10 @@ def print_summary(result: dict | list[dict]) -> None:
         return
 
     print(f"模拟次数: {result['SPIN']}")
-    print(f"index: {result['INDEX']}, GENERAL_{result['GENERAL']}, choose_index: {result['CHOOSE']}")
+    print(
+        f"index: {result['INDEX']}, GENERAL_{result['GENERAL']}, "
+        f"FREE_GENERAL_{result['FREE_GENERAL']}, choose_index: {result['CHOOSE']}"
+    )
     print(f"总押注: {result['总押注']}")
     print(f"普通游戏赢钱: {result['BaseWays']}")
     print(f"免费游戏赢钱: {result['FreeWays']}")
@@ -245,6 +322,76 @@ def print_table(results: list[dict]) -> None:
     status_handler.print_table(results)
 
 
+def format_csv_value(value):
+    """Convert nested values into stable CSV cell text."""
+
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False, sort_keys=True)
+    return value
+
+
+def get_result_csv_fields(rows: list[dict], path: Path) -> list[str]:
+    """Return the CSV field order, extending an existing file header if needed."""
+
+    extra_fields = sorted(
+        {
+            key
+            for row in rows
+            for key in row
+            if key not in RESULT_CSV_FIELDS
+        }
+    )
+    default_fields = RESULT_CSV_FIELDS + extra_fields
+
+    if path.exists() and path.stat().st_size > 0:
+        with path.open("r", newline="", encoding="utf-8-sig") as file_obj:
+            reader = csv.reader(file_obj)
+            for header in reader:
+                if header:
+                    return header + [field for field in default_fields if field not in header]
+
+    return default_fields
+
+
+def update_result_csv_header(path: Path, fieldnames: list[str]) -> None:
+    """Rewrite an existing CSV only when new fields need to be added."""
+
+    if not path.exists() or path.stat().st_size == 0:
+        return
+
+    with path.open("r", newline="", encoding="utf-8-sig") as file_obj:
+        reader = csv.DictReader(file_obj)
+        existing_fieldnames = reader.fieldnames or []
+        if existing_fieldnames == fieldnames:
+            return
+        rows = list(reader)
+
+    with path.open("w", newline="", encoding="utf-8-sig") as file_obj:
+        writer = csv.DictWriter(file_obj, fieldnames=fieldnames, extrasaction="ignore")
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({key: row.get(key, "") for key in fieldnames})
+
+
+def append_simulation_results(rows: list[dict], path: Path = RESULT_CSV) -> None:
+    """Append completed simulation final rows to simulate_result.csv."""
+
+    if not rows:
+        return
+
+    write_header = not path.exists() or path.stat().st_size == 0
+    fieldnames = get_result_csv_fields(rows, path)
+    if not write_header:
+        update_result_csv_header(path, fieldnames)
+    encoding = "utf-8-sig" if write_header else "utf-8"
+    with path.open("a", newline="", encoding=encoding) as file_obj:
+        writer = csv.DictWriter(file_obj, fieldnames=fieldnames, extrasaction="ignore")
+        if write_header:
+            writer.writeheader()
+        for row in rows:
+            writer.writerow({key: format_csv_value(row.get(key, "")) for key in fieldnames})
+
+
 def parse_int_list(value: str | None) -> list[int] | None:
     """Parse comma-separated ints from CLI options."""
 
@@ -261,6 +408,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--spins", type=int, default=SPIN_TIMES, help="Base ng_spin count.")
     parser.add_argument("--indexes", default=None, help="Comma-separated reel indexes.")
     parser.add_argument("--generals", default=None, help="Comma-separated GENERAL indexes.")
+    parser.add_argument("--free-generals", default=None, help="Comma-separated free GENERAL indexes.")
     parser.add_argument("--choose-indexes", default=None, help="Comma-separated choose indexes.")
     parser.add_argument("--report-interval", type=int, default=REPORT_INTERVAL)
     parser.add_argument(
@@ -302,6 +450,7 @@ statics_columns = [
         "fields": [
             "INDEX",
             "GENERAL",
+            "FREE_GENERAL",
             "CHOOSE",
             "SPIN",
             "总押注",
@@ -361,13 +510,14 @@ status_handler = SlotsSimulation(
 
 if __name__ == "__main__":
     args = parse_args()
-    print_table(
-        simulation_all(
-            spin_times=args.spins,
-            indexes=parse_int_list(args.indexes),
-            general_indexes=parse_int_list(args.generals),
-            choose_indexes=parse_int_list(args.choose_indexes),
-            report_interval=args.report_interval,
-            print_updates=args.print_updates,
-        )
+    results = simulation_all(
+        spin_times=args.spins,
+        indexes=parse_int_list(args.indexes),
+        general_indexes=parse_int_list(args.generals),
+        choose_indexes=parse_int_list(args.choose_indexes),
+        free_general_indexes=parse_int_list(args.free_generals),
+        report_interval=args.report_interval,
+        print_updates=args.print_updates,
     )
+    print_table(results)
+    append_simulation_results(results)

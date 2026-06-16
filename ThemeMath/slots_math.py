@@ -125,7 +125,9 @@ class SlotsGame:
             "reel_config_file": reel_config_path.name,
             "reel_config_index_fallback": not self._matches_reel_index(reel_config_path, index),
             "index": index,
-            "general_index": general_index,
+            "requested_general_index": reel_config.get("requested_general_index", general_index),
+            "general_index": reel_config.get("general_index", general_index),
+            "general_index_fallback": reel_config.get("general_index_fallback", False),
             "spin_type": spin_type,
             "source_type": spin_state["source_type"],
             "top_indexes": spin_state["top_indexes"][:],
@@ -228,13 +230,21 @@ class SlotsGame:
 
         parser = self._read_config_file(path)
 
-        section_name = f"GENERAL_{general_index}"
+        requested_section_name = f"GENERAL_{general_index}"
+        section_name = requested_section_name
+        actual_general_index = general_index
         if not parser.has_section(section_name):
-            raise ValueError(f"{path.name} has no section [{section_name}]")
+            section_name = "GENERAL_1"
+            actual_general_index = 1
+            if not parser.has_section(section_name):
+                raise ValueError(f"{path.name} has no section [{requested_section_name}] or [GENERAL_1]")
 
         section = parser[section_name]
         config = {
             "reel_config_path": str(path),
+            "requested_general_index": general_index,
+            "general_index": actual_general_index,
+            "general_index_fallback": actual_general_index != general_index,
             "base_rate": self._parse_int_list(section.get("BASE_RATE", "")),
             "normal_rolls": self._collect_rolls(section, "NORMAL_ROLL_", col_count=self.config.col_count),
             "special_rolls": self._collect_rolls(section, "SP_ROLL_", col_count=self.config.col_count),

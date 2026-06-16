@@ -74,17 +74,21 @@ class ThemeMath(WaysGame):
     def fg_spin(
         self,
         index: int,
-        general_index: int,
+        general_index: int | None = None,
         choose_index: int = 1,
         free_choice: dict | None = None,
+        free_general_index: int | None = None,
         return_detail: bool = False,
         max_cascades: int = 100,
     ) -> dict:
         """免费游戏 spin，读取 free_reel_config 并执行完整消除算奖流程。"""
 
+        if free_general_index is None:
+            free_general_index = 1 if general_index is None else general_index
+
         result = self._spin_and_evaluate(
             index=index,
-            general_index=general_index,
+            general_index=free_general_index,
             choose_index=choose_index,
             reel_config_dir=self.FREE_REEL_CONFIG_DIR,
             free_game=True,
