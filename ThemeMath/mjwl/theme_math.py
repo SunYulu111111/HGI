@@ -40,7 +40,8 @@ class ThemeMath(WaysGame):
         super().__init__(base_bet=base_bet, project_dir=project_dir, **kwargs)
         self.game_config_file = game_config_file
         self.game_server_config = self._load_game_server_config(self.project_dir / self.game_server_config_file)
-        self.base_win_multipliers = self.get_win_box_level_multipliers()
+        self.win_box_level_up_rates, self.win_box_level_multipliers = self.load_win_box_level_config()
+        self.base_win_multipliers = self.win_box_level_multipliers[0]
         (
             self.free_count_list,
             self.free_multi_list,
@@ -83,8 +84,11 @@ class ThemeMath(WaysGame):
     ) -> dict:
         """免费游戏 spin，读取 free_reel_config 并执行完整消除算奖流程。"""
 
+        active_free_choice = self.normalize_free_choice(free_choice) if free_choice is not None else None
+        if active_free_choice is None:
+            active_free_choice = self.get_free_choice(choose_index)
         if free_general_index is None:
-            free_general_index = 1 if general_index is None else general_index
+            free_general_index = active_free_choice["free_index"] if general_index is None else general_index
 
         result = self._spin_and_evaluate(
             index=index,
@@ -92,7 +96,7 @@ class ThemeMath(WaysGame):
             choose_index=choose_index,
             reel_config_dir=self.FREE_REEL_CONFIG_DIR,
             free_game=True,
-            free_choice=free_choice,
+            free_choice=active_free_choice,
             return_detail=return_detail,
             max_cascades=max_cascades,
         )
@@ -116,11 +120,22 @@ class ThemeMath(WaysGame):
         col = self.config.col_count
 
         game_server_section = self.get_game_server_section(index)
-        gold_weights = self.get_gold_symbol_weights(game_server_section, free_game=free_game)
         max_round_num = self.get_max_round_num(free_game=free_game)
         active_free_choice = self.normalize_free_choice(free_choice) if free_game else None
         if free_game and active_free_choice is None:
             active_free_choice = self.get_free_choice(choose_index)
+        if free_game:
+            win_multiplier_index = active_free_choice.get("free_index", 1) if active_free_choice else 1
+            win_multipliers = list(active_free_choice["multipliers"]) if active_free_choice else list(self.free_multi_list[0])
+            gold_weight_index = general_index
+        else:
+            win_multiplier_index, win_multipliers = self.choose_base_win_multipliers()
+            gold_weight_index = None
+        gold_weights = self.get_gold_symbol_weights(
+            game_server_section,
+            free_game=free_game,
+            free_general_index=gold_weight_index,
+        )
 
         item_list = self.spin(
             index=index,
@@ -150,6 +165,8 @@ class ThemeMath(WaysGame):
         spin_info["col"] = col
         spin_info["col_heights"] = [len(col_items) for col_items in item_list]
         spin_info["choose_index"] = choose_index
+        spin_info["win_multiplier_index"] = win_multiplier_index
+        spin_info["win_multipliers"] = list(win_multipliers)
         spin_state = self.clone_spin_state(self.last_spin_state)
         return self.evaluate_cascades(
             item_list=item_list,
@@ -164,6 +181,7 @@ class ThemeMath(WaysGame):
             max_cascades=max_cascades,
             free_game=free_game,
             max_round_num=max_round_num,
+            win_multipliers=win_multipliers,
         )
 
     def get_free_choice(self, choose_index: int = 1) -> dict:
@@ -182,7 +200,9 @@ class ThemeMath(WaysGame):
             "choose_index": choose_index,
             "times_index": times_index,
             "multiplier_index": multiplier_index,
+            "free_index": multiplier_index + 1,
             "free_times": self.free_count_list[times_index],
+            "free_count_max": self.free_count_list[times_index],
             "multipliers": list(self.free_multi_list[multiplier_index]),
         }
 
@@ -191,12 +211,20 @@ class ThemeMath(WaysGame):
 
         if free_choice is None:
             return None
+        free_times = int(free_choice.get("free_count_max", free_choice.get("free_times", 0)))
+        multipliers = free_choice.get("multipliers", free_choice.get("free_multi_list", []))
+        if isinstance(multipliers, str):
+            multipliers = self._parse_config_int_list(multipliers, "free_choice multipliers")
+        if not multipliers:
+            raise ValueError("free_choice multipliers cannot be empty")
         return {
             "choose_index": free_choice.get("choose_index", 1),
             "times_index": free_choice.get("times_index", 0),
             "multiplier_index": free_choice.get("multiplier_index", 0),
-            "free_times": int(free_choice["free_times"]),
-            "multipliers": list(free_choice["multipliers"]),
+            "free_times": free_times,
+            "free_count_max": free_times,
+            "multipliers": list(multipliers),
+            "free_index": int(free_choice.get("free_index", int(free_choice.get("multiplier_index", 0)) + 1)),
         }
 
     def build_effective_board(self, item_list, free_game: bool = False) -> list[list[int]]:
@@ -329,6 +357,7 @@ class ThemeMath(WaysGame):
         max_cascades: int = 100,
         free_game: bool = False,
         max_round_num: int | None = None,
+        win_multipliers: list[int] | tuple[int, ...] | None = None,
     ) -> dict:
         """循环执行“算奖 -> 消除 -> 下落补牌”，直到没有新的中奖。"""
 
@@ -352,6 +381,7 @@ class ThemeMath(WaysGame):
             win_multiplier = self.get_cascade_win_multiplier(
                 cascade_index,
                 free_game=free_game,
+                win_multipliers=win_multipliers,
                 free_multipliers=active_free_choice["multipliers"] if active_free_choice else None,
             )
             raw_total_win = round_info["total_win"]
@@ -419,16 +449,20 @@ class ThemeMath(WaysGame):
         cascade_index: int,
         free_game: bool = False,
         free_multipliers: list[int] | tuple[int, ...] | None = None,
+        win_multipliers: list[int] | tuple[int, ...] | None = None,
     ) -> int:
         """获取当前消除轮次的赢钱倍数。"""
 
         if cascade_index <= 0:
             raise ValueError("cascade_index must be positive")
 
-        if free_game:
+        if win_multipliers is not None:
+            multipliers = list(win_multipliers)
+        elif free_game:
             multipliers = list(free_multipliers or self.free_multi_list[0])
-            return self._get_or_default(multipliers, cascade_index - 1, multipliers[-1])
-        return self._get_or_default(self.base_win_multipliers, cascade_index - 1, self.base_win_multipliers[-1])
+        else:
+            multipliers = list(self.base_win_multipliers)
+        return self._get_or_default(multipliers, cascade_index - 1, multipliers[-1])
 
     @staticmethod
     def apply_win_multiplier(win_items, win_multiplier: int) -> list[dict]:
@@ -537,8 +571,14 @@ class ThemeMath(WaysGame):
             raise ValueError(f"{path.name} has no [MAIN] section")
 
         main = parser["MAIN"]
-        free_count_list = self._parse_literal_int_list(main.get("FREE_COUNT_LIST", "[]"), "FREE_COUNT_LIST")
-        free_multi_list = self._parse_literal_nested_int_list(main.get("FREE_MULTI_LIST", "[]"), "FREE_MULTI_LIST")
+        free_count_list = self._parse_config_int_list(main.get("FREE_COUNT_LIST", ""), "FREE_COUNT_LIST")
+        if "FREE_MULTI_LIST" in main:
+            free_multi_list = self._parse_literal_nested_int_list(main.get("FREE_MULTI_LIST", "[]"), "FREE_MULTI_LIST")
+        else:
+            free_multi_list = [
+                self._parse_config_int_list(main.get(f"FREE_MULTI_LIST_{index}", ""), f"FREE_MULTI_LIST_{index}")
+                for index in range(1, len(free_count_list) + 1)
+            ]
         if not free_count_list:
             raise ValueError("FREE_COUNT_LIST cannot be empty")
         if len(free_count_list) != len(free_multi_list):
@@ -556,15 +596,38 @@ class ThemeMath(WaysGame):
         )
         return free_count_list, free_multi_list, free_random_count_weights, free_random_multi_weights
 
+    def load_win_box_level_config(self) -> tuple[list[int], list[list[int]]]:
+        """Load base cascade multiplier weights and multiplier lists."""
+
+        if not self.game_server_config.has_section("Game Info"):
+            return [1], [[1]]
+
+        game_info = self.game_server_config["Game Info"]
+        rates = self._parse_config_int_list(game_info.get("WinBoxLevelUpRate", "1"), "WinBoxLevelUpRate")
+        multiplier_lists = []
+        if "WinBoxLevelMultiple" in game_info:
+            multiplier_lists.append(self._parse_config_int_list(game_info.get("WinBoxLevelMultiple"), "WinBoxLevelMultiple"))
+        else:
+            for index in range(1, len(rates) + 1):
+                key = f"WinBoxLevelMultiple_{index}"
+                multiplier_lists.append(self._parse_config_int_list(game_info.get(key, ""), key))
+
+        if not rates:
+            raise ValueError("WinBoxLevelUpRate cannot be empty")
+        if len(rates) != len(multiplier_lists):
+            raise ValueError("WinBoxLevelUpRate and WinBoxLevelMultiple_n must have the same length")
+        return rates, multiplier_lists
+
+    def choose_base_win_multipliers(self) -> tuple[int, list[int]]:
+        """Choose one base cascade multiplier list for this paid spin."""
+
+        multiplier_index = self.weighted_random_index(self.win_box_level_up_rates)
+        return multiplier_index + 1, list(self.win_box_level_multipliers[multiplier_index])
+
     def get_win_box_level_multipliers(self) -> list[int]:
         """从 game server 的 WinBoxLevelMultiple 读取普通游戏消除倍数。"""
 
-        if not self.game_server_config.has_section("Game Info"):
-            return [1]
-
-        value = self.game_server_config["Game Info"].get("WinBoxLevelMultiple", "1")
-        multipliers = self._parse_int_list(value)
-        return multipliers or [1]
+        return list(self.win_box_level_multipliers[0])
 
     def get_game_server_section(self, index: int):
         """根据 spin 的 index 选择 game_server 配置段。"""
@@ -590,11 +653,66 @@ class ThemeMath(WaysGame):
                 return index
         return len(weights) - 1
 
-    def get_gold_symbol_weights(self, game_server_section, free_game: bool = False) -> list[int]:
+    def get_gold_symbol_weights(
+        self,
+        game_server_section,
+        free_game: bool = False,
+        free_general_index: int | None = None,
+    ) -> list[int]:
         """从当前 game_server 配置段读取第 2/3/4 列的金色 symbol 生成权重。"""
 
-        key = "FreeGoldSymbolWeight" if free_game else "GoldSymbolWeight"
-        return self._parse_int_list(game_server_section.get(key))
+        if free_game:
+            return self.get_free_gold_symbol_weights(game_server_section, free_general_index)
+        value = game_server_section.get("GoldSymbolWeight")
+        return self._parse_int_list(value)
+
+    def get_free_gold_symbol_weights(
+        self,
+        value,
+        free_general_index: int | None = None,
+    ) -> list[int]:
+        """Read free gold weights, supporting one list per free GENERAL index."""
+
+        if hasattr(value, "get") and not isinstance(value, str):
+            weight_index = 1 if free_general_index is None else max(int(free_general_index), 1)
+            indexed_value = value.get(f"FreeGoldSymbolWeight_{weight_index}")
+            if indexed_value is not None:
+                return self._parse_config_int_list(indexed_value, f"FreeGoldSymbolWeight_{weight_index}")
+            fallback_value = value.get("FreeGoldSymbolWeight_1")
+            if fallback_value is not None:
+                return self._parse_config_int_list(fallback_value, "FreeGoldSymbolWeight_1")
+            value = value.get("FreeGoldSymbolWeight")
+
+        parsed_value = self.parse_gold_symbol_weight_value(value)
+        if not parsed_value:
+            return []
+
+        if isinstance(parsed_value[0], list):
+            weight_index = 0 if free_general_index is None else max(int(free_general_index) - 1, 0)
+            if weight_index >= len(parsed_value):
+                weight_index = 0
+            return parsed_value[weight_index]
+
+        return parsed_value
+
+    def parse_gold_symbol_weight_value(self, value: str):
+        """Parse flat or nested GoldSymbolWeight values."""
+
+        if value is None:
+            return []
+        stripped_value = value.strip()
+        try:
+            parsed_value = ast.literal_eval(stripped_value)
+        except (SyntaxError, ValueError):
+            return self._parse_int_list(value)
+
+        if not isinstance(parsed_value, (list, tuple)):
+            raise ValueError("GoldSymbolWeight must be a list or comma-separated ints")
+        if not parsed_value:
+            return []
+        if all(isinstance(item, (list, tuple)) for item in parsed_value):
+            return [[int(weight) for weight in item] for item in parsed_value]
+        return [int(weight) for weight in parsed_value]
 
     def count_scatter(self, item_list, row: int | None = None, col: int | None = None, free_game: bool = False) -> int:
         """统计最终牌面上的普通 scatter 数量。"""
@@ -698,11 +816,23 @@ class ThemeMath(WaysGame):
     def _parse_literal_int_list(value: str, key: str) -> list[int]:
         """解析形如 [24, 12, 8, 6] 的整数列表配置。"""
 
+        return ThemeMath._parse_config_int_list(value, key)
+
+    @staticmethod
+    def _parse_config_int_list(value: str | None, key: str) -> list[int]:
+        """Parse comma-separated or Python-style integer lists."""
+
+        if value is None or not str(value).strip():
+            raise ValueError(f"{key} cannot be empty")
+        stripped_value = str(value).strip()
         try:
-            result = ast.literal_eval(value)
+            result = ast.literal_eval(stripped_value)
         except (SyntaxError, ValueError) as exc:
-            raise ValueError(f"{key} must be a Python-style list") from exc
-        if not isinstance(result, list):
+            try:
+                return [int(item.strip()) for item in stripped_value.split(",") if item.strip()]
+            except ValueError as parse_exc:
+                raise ValueError(f"{key} must be comma-separated ints or a Python-style list") from parse_exc
+        if not isinstance(result, (list, tuple)):
             raise ValueError(f"{key} must be a list")
         return [int(item) for item in result]
 
@@ -713,7 +843,7 @@ class ThemeMath(WaysGame):
         if not value or not value.strip():
             return [1 for _ in range(expected_length)]
 
-        weights = cls._parse_literal_int_list(value, key)
+        weights = cls._parse_config_int_list(value, key)
         if len(weights) != expected_length:
             raise ValueError(f"{key} length must be {expected_length}")
         if any(weight < 0 for weight in weights):

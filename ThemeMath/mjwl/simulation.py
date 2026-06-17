@@ -32,7 +32,7 @@ INDEX = [0]
 GENERAL_INDEX = [1]
 REPORT_INTERVAL = 5000
 THRESHOLDS = (5, 10, 20, 50, 100, 1000)
-CHOOSE_INDEXES = [1]
+CHOOSE_INDEXES = [4]
 GENERAL_SECTION_RE = re.compile(r"^\s*\[GENERAL_(\d+)\]\s*$", re.MULTILINE)
 RESULT_CSV = Path(__file__).resolve().with_name("simulate_result.csv")
 RESULT_CSV_FIELDS = [
@@ -95,6 +95,37 @@ def list_config_values(value) -> list:
     return [value]
 
 
+def resolve_free_general_index(
+    choose_index: int,
+    free_choice: dict | None = None,
+    free_general_index: int | None = None,
+) -> int:
+    """Choose which free GENERAL to use for the current free trigger."""
+
+    if free_general_index is not None:
+        return int(free_general_index)
+    if choose_index == m.RANDOM_CHOOSE_INDEX and free_choice is not None:
+        return int(free_choice.get("free_index", int(free_choice.get("multiplier_index", 0)) + 1))
+    return int(choose_index)
+
+
+def format_free_general_index(
+    choose_index: int,
+    free_general_index: int | None = None,
+    used_free_general_indexes: list[int] | None = None,
+):
+    """Format the free GENERAL value shown in reports."""
+
+    if free_general_index is not None:
+        return free_general_index
+    if choose_index == m.RANDOM_CHOOSE_INDEX:
+        if used_free_general_indexes:
+            used_values = sorted(set(used_free_general_indexes))
+            return "|".join(str(value) for value in used_values)
+        return "random_multiplier"
+    return choose_index
+
+
 def discover_general_indexes(index: int) -> list[int]:
     """Discover GENERAL_n sections from the normal reel file."""
 
@@ -147,14 +178,18 @@ def build_simulation_row(
     general_index: int,
     choose_index: int,
     free_general_index: int | None = None,
+    used_free_general_indexes: list[int] | None = None,
 ) -> dict:
     """Build one mjwl report row from current status."""
 
-    free_general_index = choose_index if free_general_index is None else free_general_index
     row = status_handler.build_report_row(status)
     row["INDEX"] = index
     row["GENERAL"] = general_index
-    row["FREE_GENERAL"] = free_general_index
+    row["FREE_GENERAL"] = format_free_general_index(
+        choose_index,
+        free_general_index=free_general_index,
+        used_free_general_indexes=used_free_general_indexes,
+    )
     row["CHOOSE"] = choose_index
     row["错误"] = ""
 
@@ -192,7 +227,8 @@ def simulation(
 
     index = first_config_value(INDEX) if index is None else index
     general_index = first_config_value(GENERAL_INDEX) if general_index is None else general_index
-    free_general_index = choose_index if free_general_index is None else free_general_index
+    configured_free_general_index = free_general_index
+    used_free_general_indexes = []
     status = status_handler.new_status()
     rows = []
 
@@ -206,10 +242,16 @@ def simulation(
         free_times = int(ng_result.get("free_times", 0)) if ng_result.get("is_trigger_free") else 0
         status_handler.update_free_trigger(status, "base", free_times)
         if free_times > 0:
+            current_free_general_index = resolve_free_general_index(
+                choose_index,
+                free_choice=ng_result.get("free_choice"),
+                free_general_index=configured_free_general_index,
+            )
+            used_free_general_indexes.append(current_free_general_index)
             spin_total_win += run_free_spins(
                 status=status,
                 index=index,
-                free_general_index=free_general_index,
+                free_general_index=current_free_general_index,
                 choose_index=choose_index,
                 free_choice=ng_result.get("free_choice"),
                 free_times=free_times,
@@ -219,13 +261,29 @@ def simulation(
 
         base_spin = status["base"]["spin"]
         if report_interval > 0 and base_spin % report_interval == 0:
-            row = build_simulation_row(status, index, general_index, choose_index, free_general_index)
+            row = build_simulation_row(
+                status,
+                index,
+                general_index,
+                choose_index,
+                configured_free_general_index,
+                used_free_general_indexes,
+            )
             rows.append(row)
             if print_updates:
                 status_handler.print_table([row])
 
     if not rows or rows[-1]["SPIN"] != status["base"]["spin"]:
-        rows.append(build_simulation_row(status, index, general_index, choose_index, free_general_index))
+        rows.append(
+            build_simulation_row(
+                status,
+                index,
+                general_index,
+                choose_index,
+                configured_free_general_index,
+                used_free_general_indexes,
+            )
+        )
     rows[-1]["status"] = status
     return rows
 
@@ -249,7 +307,7 @@ def simulation_all(
         for general_index in target_general_indexes:
             for choose_index in target_choose_indexes:
                 target_free_general_indexes = (
-                    [choose_index] if free_general_indexes is None else free_general_indexes
+                    [None] if free_general_indexes is None else free_general_indexes
                 )
                 for free_general_index in target_free_general_indexes:
                     try:
@@ -272,7 +330,10 @@ def simulation_all(
                                 "ok": False,
                                 "INDEX": index,
                                 "GENERAL": general_index,
-                                "FREE_GENERAL": free_general_index,
+                                "FREE_GENERAL": format_free_general_index(
+                                    choose_index,
+                                    free_general_index=free_general_index,
+                                ),
                                 "CHOOSE": choose_index,
                                 "SPIN": spin_times,
                                 "错误": str(exc),
