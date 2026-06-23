@@ -28,7 +28,7 @@ except ImportError:
 m = ThemeMath()
 
 SPIN_TIMES = 100000
-INDEX = [8]
+INDEX = [17]
 GENERAL_INDEX = [1]
 REPORT_INTERVAL = 5000
 THRESHOLDS = (5, 10, 20, 50, 100, 1000)
