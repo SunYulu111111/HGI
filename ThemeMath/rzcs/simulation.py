@@ -206,7 +206,6 @@ def run_free_spins(
     m: ThemeMath,
     status: dict,
     index: int,
-    free_general_index: int,
     free_times: int,
     free_mode: str = "free",
 ) -> int:
@@ -217,7 +216,7 @@ def run_free_spins(
     while remaining_free_times > 0:
         remaining_free_times -= 1
         status_handler.add_status_value(status, 1, "free", "spin")
-        fg_info = m.fg_spin(index, free_general_index, return_detail=True, free_mode=free_mode)
+        fg_info = m.fg_spin(index, return_detail=True, free_mode=free_mode)
         free_total_win += record_win_info(status, fg_info, "free")
 
         retrigger_times = get_free_times(fg_info)
@@ -231,7 +230,6 @@ def apply_base_trigger_choice(
     m: ThemeMath,
     status: dict,
     index: int,
-    free_general_index: int,
     win_info: dict,
     choice_type: str,
 ) -> int:
@@ -241,11 +239,11 @@ def apply_base_trigger_choice(
     if choice_result["type"] == "free":
         free_times = int(choice_result.get("free_times", 0))
         status_handler.update_free_trigger(status, "base", free_times)
-        return run_free_spins(m, status, index, free_general_index, free_times, free_mode="free")
+        return run_free_spins(m, status, index, free_times, free_mode="free")
     if choice_result["type"] == "super_free":
         free_times = int(choice_result.get("free_times", 0))
         status_handler.update_free_trigger(status, "base", free_times)
-        return run_free_spins(m, status, index, free_general_index, free_times, free_mode="super_free")
+        return run_free_spins(m, status, index, free_times, free_mode="super_free")
     if choice_result["type"] == "random_win":
         win = int(choice_result.get("win", 0))
         status_handler.update_feature_win(status, "base", "random_win", win)
@@ -313,15 +311,15 @@ def simulation(
     """Run N base spins and return cumulative checkpoint rows."""
 
     index = first_config_value(INDEX) if index is None else index
-    general_index = first_config_value(GENERAL_INDEX) if general_index is None else general_index
     base_bet = first_config_value(BASE_BETS) if base_bet is None else base_bet
     if free_choose_index is None:
         free_choose_index = free_choose_index_from_choice_type(choice_type)
     else:
         free_choose_index = normalize_free_choose_index(free_choose_index)
     choice_type = choice_type_from_free_choose_index(free_choose_index)
-    current_free_general_index = general_index if free_general_index is None else free_general_index
     m = ThemeMath(base_bet=base_bet)
+    general_index = m.get_base_general_index()
+    current_free_general_index = m.get_free_general_index(choice_type)
     status = status_handler.new_status()
     rows = []
 
@@ -329,13 +327,12 @@ def simulation(
         status_handler.update_spin_start(status, m.base_bet)
         spin_total_win = 0
 
-        win_info = m.ng_spin(index, general_index, return_detail=True)
+        win_info = m.ng_spin(index, return_detail=True)
         spin_total_win += record_win_info(status, win_info, "base")
         spin_total_win += apply_base_trigger_choice(
             m,
             status,
             index,
-            current_free_general_index,
             win_info,
             choice_type,
         )
@@ -351,7 +348,7 @@ def simulation(
                 free_choose_index,
                 choice_type,
                 base_bet,
-                free_general_index,
+                current_free_general_index,
             )
             rows.append(row)
             if print_updates:
@@ -366,7 +363,7 @@ def simulation(
                 free_choose_index,
                 choice_type,
                 base_bet,
-                free_general_index,
+                current_free_general_index,
             )
         )
     rows[-1]["status"] = status
@@ -399,13 +396,11 @@ def simulation_all(
     target_base_bets = list_config_values(BASE_BETS) if base_bets is None else base_bets
     for base_bet in target_base_bets:
         for index in target_indexes:
-            target_general_indexes = list_config_values(GENERAL_INDEX) if general_indexes is None else general_indexes
+            target_general_indexes = [None]
             for general_index in target_general_indexes:
                 for free_choose_index in target_free_choose_indexes:
                     choice_type = ""
-                    target_free_general_indexes = (
-                        [None] if free_general_indexes is None else free_general_indexes
-                    )
+                    target_free_general_indexes = [None]
                     for free_general_index in target_free_general_indexes:
                         try:
                             choice_type = choice_type_from_free_choose_index(free_choose_index)

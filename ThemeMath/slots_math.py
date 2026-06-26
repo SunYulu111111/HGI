@@ -188,6 +188,7 @@ class SlotsGame:
         item_count = int(main["ITEM_COUNT"])
         col_count = int(main["COL_COUNT"])
         row_count = int(main["ROW_COUNT"])
+        wild_ids = cls._parse_int_list(main.get("WILD_ID", "1"))
         config = SlotGameConfig(
             project_dir=path.parent,
             version=int(main.get("VERSION", "0")),
@@ -205,7 +206,7 @@ class SlotsGame:
             line_rules=cls._parse_line_rules(main, col_count=col_count, row_count=row_count),
             grid_disables=cls._parse_int_list(main.get("GRID_DISABLES", "")),
             grid_disables_free=cls._parse_int_list(main.get("GRID_DISABLES_FREE", "")),
-            wild_id=int(main.get("WILD_ID", "1")),
+            wild_id=wild_ids[0] if wild_ids else 1,
         )
         cls._game_config_cache[path] = config
         return config
