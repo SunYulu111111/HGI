@@ -563,20 +563,24 @@ class ThemeMath(WaysGame):
         return parser
 
     def load_free_choice_config(self) -> tuple[list[int], list[list[int]], list[int], list[int]]:
-        """从 game_config.conf 读取 1-4 类 free 的次数和消除倍数。"""
+        """从 game_server.conf 读取 1-4 类 free 的次数和消除倍数。"""
 
-        path = self.project_dir / self.game_config_file
-        parser = self._read_config_file(path)
-        if not parser.has_section("MAIN"):
-            raise ValueError(f"{path.name} has no [MAIN] section")
+        if not self.game_server_config.has_section("Game Info"):
+            raise ValueError(f"{self.game_server_config_file} has no [Game Info] section")
 
-        main = parser["MAIN"]
-        free_count_list = self._parse_config_int_list(main.get("FREE_COUNT_LIST", ""), "FREE_COUNT_LIST")
-        if "FREE_MULTI_LIST" in main:
-            free_multi_list = self._parse_literal_nested_int_list(main.get("FREE_MULTI_LIST", "[]"), "FREE_MULTI_LIST")
+        game_info = self.game_server_config["Game Info"]
+        free_count_list = self._parse_config_int_list(game_info.get("FREE_COUNT_LIST", ""), "FREE_COUNT_LIST")
+        if "FREE_MULTI_LIST" in game_info:
+            free_multi_list = self._parse_literal_nested_int_list(
+                game_info.get("FREE_MULTI_LIST", "[]"),
+                "FREE_MULTI_LIST",
+            )
         else:
             free_multi_list = [
-                self._parse_config_int_list(main.get(f"FREE_MULTI_LIST_{index}", ""), f"FREE_MULTI_LIST_{index}")
+                self._parse_config_int_list(
+                    game_info.get(f"FREE_MULTI_LIST_{index}", ""),
+                    f"FREE_MULTI_LIST_{index}",
+                )
                 for index in range(1, len(free_count_list) + 1)
             ]
         if not free_count_list:
@@ -585,12 +589,12 @@ class ThemeMath(WaysGame):
             raise ValueError("FREE_COUNT_LIST and FREE_MULTI_LIST must have the same length")
 
         free_random_count_weights = self._parse_optional_weight_list(
-            main.get("FREE_RANDOM_COUNT_WEIGHTS", ""),
+            game_info.get("FREE_RANDOM_COUNT_WEIGHTS", ""),
             "FREE_RANDOM_COUNT_WEIGHTS",
             len(free_count_list),
         )
         free_random_multi_weights = self._parse_optional_weight_list(
-            main.get("FREE_RANDOM_MULTI_WEIGHTS", ""),
+            game_info.get("FREE_RANDOM_MULTI_WEIGHTS", ""),
             "FREE_RANDOM_MULTI_WEIGHTS",
             len(free_multi_list),
         )

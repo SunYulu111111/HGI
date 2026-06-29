@@ -30,7 +30,6 @@ class ThemeMath(LinesGame):
         self.game_config_file = game_config_file
         self.game_server_config = self._read_config_file(self.project_dir / self.game_server_config_file)
         self.scatter_id, self.scatter_cols, self.scatter_multiples = self._load_win_free_config()
-        self.random_win_multiples, self.random_win_multiple_probability = self._load_random_win_config()
         (
             self.special_type_need_bet,
             self.grid_disables_by_type,
@@ -297,13 +296,6 @@ class ThemeMath(LinesGame):
         return [
             free_choice,
             {"type": "super_free", "free_times": free_times // 4},
-            {
-                "type": "random_win",
-                "min_multiple": free_times,
-                "max_multiple": free_times * 5,
-                "multiple_options": self.random_win_multiples,
-                "multiple_weights": self.random_win_multiple_probability,
-            },
         ]
 
     def resolve_free_trigger_choice(self, win_free_info: dict, choice_type: str = "free") -> dict:
@@ -322,23 +314,7 @@ class ThemeMath(LinesGame):
                 "free_mode": "super_free",
                 "is_super": 1,
             }
-        if choice_type == "random_win":
-            multiple_index, random_win_factor, multiple = self.choose_random_win_multiple(free_times)
-            return {
-                "type": "random_win",
-                "win_free": False,
-                "is_super": 0,
-                "multiple_index": multiple_index,
-                "random_win_factor": random_win_factor,
-                "multiple": multiple,
-                "win": int(multiple * self.base_bet),
-            }
         raise ValueError(f"unknown free trigger choice: {choice_type}")
-
-    def choose_random_win_multiple(self, free_times: int) -> tuple[int, float, float]:
-        multiple_index = self.weighted_random_index(self.random_win_multiple_probability)
-        factor = self._get_or_default(self.random_win_multiples, multiple_index, 1)
-        return multiple_index, factor, free_times * factor
 
     def choose_free_win_multiplier(self, free_mode: str) -> tuple[int | None, int]:
         if free_mode == "super_free":
@@ -462,21 +438,6 @@ class ThemeMath(LinesGame):
             self._parse_int_list(main.get("SCATTER_COLS", "")),
             self._parse_int_list(main.get("SCATTER_MULTIPLES", "")),
         )
-
-    def _load_random_win_config(self) -> tuple[list[float], list[int]]:
-        parser = self._read_config_file(self.project_dir / self.game_config_file)
-        main = parser["MAIN"]
-        multiples = self._parse_float_list(
-            main.get("RANDOM_WIN_MULTIPLE", "1,1.5,2,2.5,3,3.5,4,4.5,5")
-        )
-        probabilities = self._parse_int_list(
-            main.get("RANDOM_WIN_MULTIPLE_PROBABILITY", "1,1,1,1,1,1,1,1,1")
-        )
-        return multiples or [1], probabilities or [1]
-
-    @staticmethod
-    def _parse_float_list(value: str) -> list[float]:
-        return [float(item.strip()) for item in value.split(",") if item.strip()]
 
     def _load_jp_config(self, index: int | None = None) -> tuple[int, list[int], list[int], list[int]]:
         main = self._get_runtime_config_section(index)

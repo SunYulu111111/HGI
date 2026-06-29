@@ -27,14 +27,17 @@ except ImportError:
 
 m = ThemeMath()
 
-SPIN_TIMES = 1000000
-INDEX = [8]
+SPIN_TIMES = 10000000
+INDEX = [0]
 GENERAL_INDEX = [1]
 REPORT_INTERVAL = 5000
 THRESHOLDS = (5, 10, 20, 50, 100, 1000)
 CHOOSE_INDEXES = [3]
 GENERAL_SECTION_RE = re.compile(r"^\s*\[GENERAL_(\d+)\]\s*$", re.MULTILINE)
 RESULT_CSV = Path(__file__).resolve().with_name("simulate_result.csv")
+MAIN_CASCADE_BUCKETS = tuple(range(10))
+MAIN_CASCADE_OVERFLOW_LABEL = "10+"
+MAIN_CASCADE_BUCKET_COUNT = len(MAIN_CASCADE_BUCKETS) + 1
 RESULT_CSV_FIELDS = [
     "INDEX",
     "GENERAL",
@@ -69,6 +72,17 @@ RESULT_CSV_FIELDS = [
     "Free平均倍",
     "main_win_times",
     "main_win_rate",
+    "连消0次",
+    "连消1次",
+    "连消2次",
+    "连消3次",
+    "连消4次",
+    "连消5次",
+    "连消6次",
+    "连消7次",
+    "连消8次",
+    "连消9次",
+    "连消10+次",
     "free_win_times",
     "free_win_rate",
     "ok",
@@ -142,6 +156,40 @@ def record_win_info(status: dict, win_info: dict, mode_key: str) -> int:
     return total_win
 
 
+def main_cascade_bucket(cascade_count: int) -> int:
+    """Return the status bucket index for a main-game cascade count."""
+
+    return cascade_count if cascade_count < len(MAIN_CASCADE_BUCKETS) else len(MAIN_CASCADE_BUCKETS)
+
+
+def main_cascade_label(bucket_index: int) -> str:
+    """Return the report label for a main-game cascade bucket."""
+
+    if bucket_index < len(MAIN_CASCADE_BUCKETS):
+        return str(bucket_index)
+    return MAIN_CASCADE_OVERFLOW_LABEL
+
+
+def record_main_cascade_count(status: dict, ng_result: dict) -> None:
+    """Record one base spin's cascade-count bucket."""
+
+    cascade_count = int(ng_result.get("cascade_count", 0))
+    bucket_index = main_cascade_bucket(cascade_count)
+    status["base"]["main_cascade_counts"][bucket_index] += 1
+
+
+def add_main_cascade_report_values(row: dict, status: dict) -> None:
+    """Add main-game cascade-count counts and ratios to a report row."""
+
+    base_status = status.get("base", {})
+    base_spin = base_status.get("spin", 0) if isinstance(base_status, dict) else 0
+    counts = base_status.get("main_cascade_counts", []) if isinstance(base_status, dict) else []
+    for bucket_index in range(MAIN_CASCADE_BUCKET_COUNT):
+        count = counts[bucket_index] if bucket_index < len(counts) else 0
+        label = main_cascade_label(bucket_index)
+        row[f"连消{label}次"] = count
+
+
 def run_free_spins(
     status: dict,
     index: int,
@@ -211,6 +259,7 @@ def build_simulation_row(
         if status["free"]["spin"]
         else 0
     )
+    add_main_cascade_report_values(row, status)
     return row
 
 
@@ -237,6 +286,7 @@ def simulation(
         spin_total_win = 0
 
         ng_result = m.ng_spin(index, general_index, choose_index=choose_index)
+        record_main_cascade_count(status, ng_result)
         spin_total_win += record_win_info(status, ng_result, "base")
 
         free_times = int(ng_result.get("free_times", 0)) if ng_result.get("is_trigger_free") else 0
@@ -487,6 +537,7 @@ status_model = {
         "spin": 0,
         "ways": [0, 0],
         "free": 0,
+        "main_cascade_counts": [0 for _ in range(MAIN_CASCADE_BUCKET_COUNT)],
     },
     "free": {
         "spin": 0,
@@ -538,6 +589,17 @@ statics_columns = [
             "BaseWays",
             "main_win_times",
             "main_win_rate",
+            "连消0次",
+            "连消1次",
+            "连消2次",
+            "连消3次",
+            "连消4次",
+            "连消5次",
+            "连消6次",
+            "连消7次",
+            "连消8次",
+            "连消9次",
+            "连消10+次",
         ],
     },
     {

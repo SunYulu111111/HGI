@@ -13,7 +13,7 @@
 
 - 0：Scatter
 - 1：Wild
-- 2~10：普通符号
+- 2~11：普通符号
 
 当前配置中不再区分分裂 symbol 和非分裂 symbol，计算时直接使用配置中的 symbol id。
 
@@ -69,34 +69,18 @@
   - 5连：16次
 - 多条线触发时，free 次数累加
 
-## 3.3 三选一规则
+## 3.3 选择规则
 
 Base 中触发 free 后：
 
-- scatter/wild 触发线数量 `>= 2`：进入三选一
+- scatter/wild 触发线数量 `>= 2`：进入选择玩法
 - scatter/wild 触发线数量 `= 1`：直接进入普通 free
-- 是否进入三选一不再根据触发线中是否包含 Wild 判断
+- 是否进入选择玩法不再根据触发线中是否包含 Wild 判断
 
-三选一选项：
+选择选项：
 
 1. 普通 free：合计 free 次数
 2. Super free：合计 free 次数 / 4
-3. Random win：直接赢钱
-
-## 3.4 Random Win
-
-Random win 使用 `game_config.conf` 中配置：
-
-- `RANDOM_WIN_MULTIPLE=1,1.5,2,2.5,3,3.5,4,4.5,5`
-- `RANDOM_WIN_MULTIPLE_PROBABILITY=1,1,1,1,1,1,1,1,1`
-
-计算方式：
-
-```text
-random_win_factor = 按权重从 RANDOM_WIN_MULTIPLE 中抽取
-最终倍数 = 合计 free 次数 * random_win_factor
-random_win = int(最终倍数 * base_bet)
-```
 
 ---
 
@@ -251,7 +235,7 @@ Free 中同样遍历所有中奖线：
 - 连续 scatter/wild 长度 >= 3 才触发
 - 每条线按 8/12/16 次计算
 - 多条线累加额外 free 次数
-- Free 中不进入三选一，只增加额外 free 次数
+- Free 中不进入选择玩法，只增加额外 free 次数
 
 ---
 
@@ -269,7 +253,7 @@ Free 中同样遍历所有中奖线：
 | --- | --- |
 | 0 | Scatter |
 | 1 | Wild |
-| 2~10 | 普通 symbol |
+| 2~11 | 普通 symbol |
 
 ---
 
@@ -285,8 +269,6 @@ Free 中同样遍历所有中奖线：
 - `SCATTER_ID`
 - `WILD_ID`
 - `SCATTER_MULTIPLES`
-- `RANDOM_WIN_MULTIPLE`
-- `RANDOM_WIN_MULTIPLE_PROBABILITY`
 
 ## 7.2 game_server.conf
 
@@ -312,10 +294,9 @@ Free 中同样遍历所有中奖线：
 3. 根据 bet 应用 `GRID_DISABLES`
 4. 计算 Line 中奖
 5. 计算 scatter/wild free 触发
-6. 若触发 free，判断是否三选一
-7. 若选择 random win，按配置权重计算直接赢钱
-8. 若未触发 free，判断 JP
-9. 若进入 JP，按类型概率判断是否翻倍
+6. 若触发 free，判断是否进入选择玩法
+7. 若未触发 free，判断 JP
+8. 若进入 JP，按类型概率判断是否翻倍
 
 ## Free
 
@@ -331,15 +312,14 @@ Free 中同样遍历所有中奖线：
 
 # 9. Simulation 参数
 
-`simulation.py` 中可通过 `FREE_CHOOSE_INDEX` 控制三选一选择：
+`simulation.py` 中可通过 `FREE_CHOOSE_INDEX` 控制选择玩法：
 
 | FREE_CHOOSE_INDEX | 选择 |
 | --- | --- |
 | 1 | 普通 free |
 | 2 | super free |
-| 3 | random win |
 
-如果当前触发不满足三选一条件，则无论传入哪个 `FREE_CHOOSE_INDEX`，都会按普通 free 处理。
+如果当前触发不满足选择条件，则无论传入哪个 `FREE_CHOOSE_INDEX`，都会按普通 free 处理。
 
 默认仿真配置：
 
@@ -357,14 +337,13 @@ Free 中同样遍历所有中奖线：
 2. Base 高 bet 使用 `GENERAL_1`，低 bet 使用 `GENERAL_2`
 3. 高 bet 使用 33633，低 bet 使用 33333
 4. Free general 由 bet 和 `is_super` 共同决定
-5. Base 中两条及以上 scatter/wild 触发线才进入三选一
+5. Base 中两条及以上 scatter/wild 触发线才进入选择玩法
 6. Base 中单条触发线直接进入普通 free
-7. Random win 按配置权重抽取 `1~5` 的半档倍数
-8. Free 中不进入三选一，只累加额外 free 次数
-9. 普通 free 在 33333 中必定 `*2`，在 33633 中按 `FREE_MULTIPLE_TRIGGER_PROBABILITY` 判断是否 `*2`
-10. Super free 在 33333 中必定随机倍乘，在 33633 中按 `SUPER_FREE_MULTIPLE_TRIGGER_PROBABILITY` 判断是否随机倍乘
-11. JP 只在 Base 未触发 free 时判断
-12. JP pick 后会按 JP 类型概率判断是否翻倍
-13. 当前 symbol id 已压缩，不再区分分裂和非分裂 symbol
-14. 所有直接概率配置均使用万分比；`RANDOM_WIN_MULTIPLE` 中的 `1.5/2.5` 是倍数，不是概率
-15. `WIN_JP_TYPE_PROBABILITY`、`FREE_MULTIPLE_PROBABILITY`、`SUPER_FREE_MULTIPLE_PROBABILITY` 是权重，不是万分比概率
+7. Free 中不进入选择玩法，只累加额外 free 次数
+8. 普通 free 在 33333 中必定 `*2`，在 33633 中按 `FREE_MULTIPLE_TRIGGER_PROBABILITY` 判断是否 `*2`
+9. Super free 在 33333 中必定随机倍乘，在 33633 中按 `SUPER_FREE_MULTIPLE_TRIGGER_PROBABILITY` 判断是否随机倍乘
+10. JP 只在 Base 未触发 free 时判断
+11. JP pick 后会按 JP 类型概率判断是否翻倍
+12. 当前 symbol id 已压缩，不再区分分裂和非分裂 symbol
+13. 所有直接概率配置均使用万分比
+14. `WIN_JP_TYPE_PROBABILITY`、`FREE_MULTIPLE_PROBABILITY`、`SUPER_FREE_MULTIPLE_PROBABILITY` 是权重，不是万分比概率

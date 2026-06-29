@@ -35,10 +35,9 @@ FREE_CHOOSE_INDEX = [1]
 FREE_CHOOSE_TYPE_BY_INDEX = {
     1: "free",
     2: "super_free",
-    3: "random_win",
 }
 FREE_CHOOSE_INDEX_BY_TYPE = {value: key for key, value in FREE_CHOOSE_TYPE_BY_INDEX.items()}
-FREE_TRIGGER_CHOICES = ("free", "super_free", "super_wild", "random_win")
+FREE_TRIGGER_CHOICES = ("free", "super_free", "super_wild")
 GENERAL_SECTION_RE = re.compile(r"^\s*\[GENERAL_(\d+)\]\s*$", re.MULTILINE)
 RESULT_CSV = Path(__file__).resolve().with_name("simulate_result.csv")
 RESULT_CSV_FIELDS = [
@@ -56,7 +55,6 @@ RESULT_CSV_FIELDS = [
     "base_rtp",
     "base_lines_rtp",
     "base_jp_rtp",
-    "base_random_win_rtp",
     "free_rtp",
     "free_lines_rtp",
     "free_jp_rtp",
@@ -66,7 +64,6 @@ RESULT_CSV_FIELDS = [
     "FreeLine",
     "BaseJP",
     "FreeJP",
-    "BaseRandomWin",
     "Hit",
     "Hit率",
     ">5x",
@@ -122,7 +119,7 @@ def normalize_choice_type(choice_type: str) -> str:
 
 
 def normalize_free_choose_index(free_choose_index: int) -> int:
-    """Validate FREE_CHOOSE_INDEX where 1=free, 2=super free, 3=random win."""
+    """Validate FREE_CHOOSE_INDEX where 1=free, 2=super free."""
 
     if free_choose_index not in FREE_CHOOSE_TYPE_BY_INDEX:
         choices = ", ".join(str(index) for index in FREE_CHOOSE_TYPE_BY_INDEX)
@@ -244,10 +241,6 @@ def apply_base_trigger_choice(
         free_times = int(choice_result.get("free_times", 0))
         status_handler.update_free_trigger(status, "base", free_times)
         return run_free_spins(m, status, index, free_times, free_mode="super_free")
-    if choice_result["type"] == "random_win":
-        win = int(choice_result.get("win", 0))
-        status_handler.update_feature_win(status, "base", "random_win", win)
-        return win
     return 0
 
 
@@ -279,7 +272,6 @@ def build_simulation_row(
     row["总押注"] = status["bet"]
     row["BaseJP"] = base_status["jp"][1]
     row["FreeJP"] = free_status["jp"][1]
-    row["BaseRandomWin"] = base_status["random_win"][1]
     row["Free平均次数"] = status["free_times"] / free_trigger_count if free_trigger_count else 0
     row["Free平均倍"] = (
         free_status["lines"][1] / free_trigger_count / base_bet
@@ -456,7 +448,6 @@ def print_summary(result: dict | list[dict]) -> None:
     print(f"普通游戏赢钱: {result['BaseLine']}")
     print(f"免费游戏赢钱: {result['FreeLine']}")
     print(f"JP赢钱: {result['BaseJP'] + result['FreeJP']}")
-    print(f"随机赢钱: {result['BaseRandomWin']}")
     print(f"总赢钱: {result['总赢钱']}")
     print(f"普通游戏 RTP: {result['base_rtp']:.3f}")
     print(f"免费游戏 RTP: {result['free_rtp']:.3f}")
@@ -583,9 +574,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--free-choose-indexes",
         default=None,
-        help="Comma-separated free choices: 1=free, 2=super free, 3=random win.",
+        help="Comma-separated free choices: 1=free, 2=super free.",
     )
-    parser.add_argument("--choices", default=None, help="Comma-separated choices: free,super_free,random_win.")
+    parser.add_argument("--choices", default=None, help="Comma-separated choices: free,super_free.")
     parser.add_argument("--base-bets", default=None, help="Comma-separated base bets.")
     parser.add_argument("--base-bet", type=int, default=None, help="Single base bet, kept for compatibility.")
     parser.add_argument("--report-interval", type=int, default=REPORT_INTERVAL)
@@ -604,7 +595,6 @@ status_model = {
         "spin": 0,
         "lines": [0, 0],
         "jp": [0, 0],
-        "random_win": [0, 0],
         "free": 0,
     },
     "free": {
@@ -659,10 +649,8 @@ statics_columns = [
             "base_rtp",
             "base_lines_rtp",
             "base_jp_rtp",
-            "base_random_win_rtp",
             "BaseLine",
             "BaseJP",
-            "BaseRandomWin",
             "main_win_times",
             "main_win_rate",
         ],
