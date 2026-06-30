@@ -69,7 +69,16 @@
   - 5连：16次
 - 多条线触发时，free 次数累加
 
-## 3.3 选择规则
+## 3.3 Scatter 非中奖线替换规则
+
+当牌面出现 scatter/wild 连线并触发 free 时，需要处理牌面上额外出现的 Scatter：
+
+- 先记录所有触发 free 的 scatter/wild 中奖线位置。
+- 牌面上如果还有 Scatter，但该 Scatter 不在任何一条触发 free 的中奖线上，则将该位置替换成不赢钱的普通 symbol。
+- 位于触发 free 中奖线上的 Scatter 不替换。
+- 该规则只用于避免非中奖线 Scatter 额外参与展示或结算，不改变已经判定出的 free 触发次数。
+
+## 3.4 选择规则
 
 Base 中触发 free 后：
 
