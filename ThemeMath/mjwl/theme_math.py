@@ -131,11 +131,15 @@ class ThemeMath(WaysGame):
         else:
             win_multiplier_index, win_multipliers = self.choose_base_win_multipliers()
             gold_weight_index = None
-        gold_weights = self.get_gold_symbol_weights(
-            game_server_section,
-            free_game=free_game,
-            free_general_index=gold_weight_index,
-        )
+        use_level_up_gold_weights = not free_game and win_multiplier_index > 1
+        if use_level_up_gold_weights:
+            gold_weights = self.get_level_up_gold_symbol_weights(game_server_section)
+        else:
+            gold_weights = self.get_gold_symbol_weights(
+                game_server_section,
+                free_game=free_game,
+                free_general_index=gold_weight_index,
+            )
 
         item_list = self.spin(
             index=index,
@@ -167,6 +171,8 @@ class ThemeMath(WaysGame):
         spin_info["choose_index"] = choose_index
         spin_info["win_multiplier_index"] = win_multiplier_index
         spin_info["win_multipliers"] = list(win_multipliers)
+        spin_info["gold_weight_type"] = "level_up" if use_level_up_gold_weights else "normal"
+        spin_info["gold_weights"] = list(gold_weights)
         spin_state = self.clone_spin_state(self.last_spin_state)
         return self.evaluate_cascades(
             item_list=item_list,
@@ -669,6 +675,16 @@ class ThemeMath(WaysGame):
             return self.get_free_gold_symbol_weights(game_server_section, free_general_index)
         value = game_server_section.get("GoldSymbolWeight")
         return self._parse_int_list(value)
+
+    def get_level_up_gold_symbol_weights(self, game_server_section) -> list[int]:
+        """读取 base 倍乘框升级时第 2/3/4 列的金色 symbol 生成权重。"""
+
+        value = game_server_section.get("LevelUpGoldWeight")
+        if value is None and self.game_server_config.has_section("Game Info"):
+            value = self.game_server_config["Game Info"].get("LevelUpGoldWeight")
+        if value is None:
+            return self.get_gold_symbol_weights(game_server_section, free_game=False)
+        return self._parse_config_int_list(value, "LevelUpGoldWeight")
 
     def get_free_gold_symbol_weights(
         self,
