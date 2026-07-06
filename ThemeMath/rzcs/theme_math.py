@@ -236,7 +236,7 @@ class ThemeMath(LinesGame):
         free_times = sum(trigger["free_times"] for trigger in triggers)
         max_trigger = max(triggers, key=lambda trigger: trigger["trigger_count"])
         has_wild = any(self.wild_id in trigger["trigger_symbols"] for trigger in triggers)
-        need_choice = (not free_game) and len(triggers) > 1 and free_times > 0
+        need_choice = (not free_game) and free_times >= 16
         return {
             "win_free": free_times > 0,
             "free_times": free_times,
@@ -271,7 +271,7 @@ class ThemeMath(LinesGame):
                 trigger_positions.append((col_index, row_index))
 
             trigger_count = len(trigger_symbols)
-            free_times = self._get_or_default(self.scatter_multiples, trigger_count, 0)
+            free_times = self._get_or_default(self.scatter_multiples, trigger_count - 1, 0)
             if free_times <= 0:
                 continue
             triggers.append(
@@ -544,7 +544,7 @@ class ThemeMath(LinesGame):
         return free_mode in ("super_free", "super_wild")
 
     def apply_type_grid_disables(self, item_list, free_game: bool = False):
-        """Keep the 5x6 board shape and blank cells disabled by current type_index."""
+        """Keep the 5x6 board shape and blank cells disabled by unlock state."""
 
         board_cols, col_count, row_count = self._normalize_item_list(
             item_list,
@@ -563,8 +563,11 @@ class ThemeMath(LinesGame):
         if col_count != self.config.col_count or row_count != self.config.row_count:
             return [0] * (col_count * row_count)
 
-        grid_disables_by_type = self.grid_disables_free_by_type if free_game else self.grid_disables_by_type
+        grid_disables_by_type = self.grid_disables_free_by_type if self.is_high_bet() else self.grid_disables_by_type
         grid_disables = grid_disables_by_type.get(int(self.type_index)) or grid_disables_by_type.get(0)
+        if not grid_disables:
+            fallback_by_type = self.grid_disables_by_type if self.is_high_bet() else self.grid_disables_free_by_type
+            grid_disables = fallback_by_type.get(0)
         if grid_disables:
             return grid_disables
         return super()._get_grid_disables(free_game, col_count, row_count)

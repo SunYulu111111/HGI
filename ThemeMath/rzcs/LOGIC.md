@@ -5,9 +5,8 @@
 - 列数：5
 - 行数：6
 - 原始牌面：5x6
-- 有效结构：
-  - 33333
-  - 33633
+- 未解锁第三列分裂有效结构：33333
+- 已解锁第三列分裂有效结构：33633
 
 ## 1.2 符号类型
 
@@ -25,21 +24,28 @@
 
 根据玩家 `base_bet >= SPECIAL_TYPE_NEED_BET` 判断：
 
-| 条件 | 使用 General | 牌面结构 |
+| 条件 | 使用 General | 当前有效结构 |
 | --- | --- | --- |
 | `base_bet >= SPECIAL_TYPE_NEED_BET` | `GENERAL_1` | 33633 |
 | `base_bet < SPECIAL_TYPE_NEED_BET` | `GENERAL_2` | 33333 |
+
+牌面结构由第三列分裂是否解锁决定，与 Base/Free 无关：
+
+- 未解锁：使用 `GRID_DISABLES`
+- 已解锁：使用 `GRID_DISABLES_FREE`
 
 ## 2.2 Free
 
 根据玩家 `base_bet >= SPECIAL_TYPE_NEED_BET` 以及是否为 `super_free` 判断：
 
-| 条件 | 使用 General | 牌面结构 |
+| 条件 | 使用 General | 当前有效结构 |
 | --- | --- | --- |
 | 低 bet，普通 free | `GENERAL_1` | 33333 |
 | 高 bet，普通 free | `GENERAL_2` | 33633 |
 | 低 bet，super free | `GENERAL_3` | 33333 |
 | 高 bet，super free | `GENERAL_4` | 33633 |
+
+Free 中同样按第三列分裂是否解锁选择有效结构，与普通 free / super free 无关。
 
 ---
 
@@ -51,7 +57,7 @@
 2. 根据结果选择 `GENERAL_1 / GENERAL_2`
 3. 根据玩家 `INDEX` 加载 `game_server.conf` 中对应 section；如果不存在则回退到 `[0]`
 4. 生成 5x6 牌面
-5. 根据 bet 使用 `GRID_DISABLES_0 / GRID_DISABLES_1`
+5. 根据第三列分裂是否解锁选择 `GRID_DISABLES / GRID_DISABLES_FREE`
 6. 将无效格置空，形成 33333 / 33633
 7. 计算 Line 中奖
 8. 判断 scatter/wild 连线触发 free
@@ -82,9 +88,9 @@
 
 Base 中触发 free 后：
 
-- scatter/wild 触发线数量 `>= 2`：进入选择玩法
-- scatter/wild 触发线数量 `= 1`：直接进入普通 free
-- 是否进入选择玩法不再根据触发线中是否包含 Wild 判断
+- 累计 free 次数 `>= 16`：进入选择玩法
+- 累计 free 次数 `< 16`：直接进入普通 free
+- 是否进入选择玩法不再根据触发线数量或触发线中是否包含 Wild 判断
 
 选择选项：
 
@@ -151,7 +157,7 @@ Base 触发 free 后，根据玩家选择记录 free 类型：
 
 1. 根据 bet 和 `is_super` 选择 free general
 2. 生成 5x6 牌面
-3. 根据 bet 使用 `GRID_DISABLES_FREE_0 / GRID_DISABLES_FREE_1`
+3. 根据第三列分裂是否解锁选择 `GRID_DISABLES / GRID_DISABLES_FREE`
 4. 修改牌面为 33333 / 33633
 5. 计算 Line 中奖
 6. 根据 free 类型应用赢钱倍乘
@@ -159,7 +165,7 @@ Base 触发 free 后，根据玩家选择记录 free 类型：
 
 ## 5.3 Free 倍乘
 
-Free 倍乘根据当前 free 牌面结构和 free 类型共同决定。
+Free 倍乘根据 `base_bet >= SPECIAL_TYPE_NEED_BET` 的类型 index 和 free 类型共同决定。
 
 ### 普通 Free
 
@@ -177,17 +183,17 @@ FREE_MULTIPLE_TRIGGER_PROBABILITY=10000,5000
 
 该配置顺序对应：
 
-| Index | 牌面结构 | 说明 |
+| Index | 条件 | 说明 |
 | --- | --- | --- |
-| 0 | 33333 | 必定触发普通 free 倍乘 |
-| 1 | 33633 | 50% 概率触发普通 free 倍乘 |
+| 0 | `base_bet < SPECIAL_TYPE_NEED_BET` | 必定触发普通 free 倍乘 |
+| 1 | `base_bet >= SPECIAL_TYPE_NEED_BET` | 50% 概率触发普通 free 倍乘 |
 
 因此：
 
-| 牌面结构 | 结果 |
+| 条件 | 结果 |
 | --- | --- |
-| 33333 | 本次 spin 赢钱必定 `*2` |
-| 33633 | 本次 spin 赢钱 50% 概率 `*2`，50% 概率 `*1` |
+| `base_bet < SPECIAL_TYPE_NEED_BET` | 本次 spin 赢钱必定 `*2` |
+| `base_bet >= SPECIAL_TYPE_NEED_BET` | 本次 spin 赢钱 50% 概率 `*2`，50% 概率 `*1` |
 
 ---
 
@@ -208,17 +214,17 @@ SUPER_FREE_MULTIPLE_TRIGGER_PROBABILITY=10000,5000
 
 该配置顺序对应：
 
-| Index | 牌面结构 | 说明 |
+| Index | 条件 | 说明 |
 | --- | --- | --- |
-| 0 | 33333 | 必定触发 super free 倍乘 |
-| 1 | 33633 | 50% 概率触发 super free 倍乘 |
+| 0 | `base_bet < SPECIAL_TYPE_NEED_BET` | 必定触发 super free 倍乘 |
+| 1 | `base_bet >= SPECIAL_TYPE_NEED_BET` | 50% 概率触发 super free 倍乘 |
 
 因此：
 
-| 牌面结构 | 结果 |
+| 条件 | 结果 |
 | --- | --- |
-| 33333 | 本次 spin 必定从 `6/8/15` 中按权重抽取倍乘 |
-| 33633 | 本次 spin 50% 概率从 `6/8/15` 中按权重抽取倍乘，50% 概率 `*1` |
+| `base_bet < SPECIAL_TYPE_NEED_BET` | 本次 spin 必定从 `6/8/15` 中按权重抽取倍乘 |
+| `base_bet >= SPECIAL_TYPE_NEED_BET` | 本次 spin 50% 概率从 `6/8/15` 中按权重抽取倍乘，50% 概率 `*1` |
 
 ---
 
@@ -226,9 +232,9 @@ SUPER_FREE_MULTIPLE_TRIGGER_PROBABILITY=10000,5000
 
 每次 free spin：
 
-1. 根据 bet 判断当前牌面结构：
-   - 低 bet：`33333`
-   - 高 bet：`33633`
+1. 根据 `base_bet >= SPECIAL_TYPE_NEED_BET` 判断当前类型 index：
+   - 低 bet：index 0
+   - 高 bet：index 1
 2. 根据是否为 super free 选择对应倍乘配置
 3. 先判断本次 spin 是否触发倍乘
 4. 若未触发，倍乘为 `1`
@@ -271,10 +277,8 @@ Free 中同样遍历所有中奖线：
 ## 7.1 game_config.conf
 
 - `SPECIAL_TYPE_NEED_BET`
-- `GRID_DISABLES_0`
-- `GRID_DISABLES_1`
-- `GRID_DISABLES_FREE_0`
-- `GRID_DISABLES_FREE_1`
+- `GRID_DISABLES`
+- `GRID_DISABLES_FREE`
 - `SCATTER_ID`
 - `WILD_ID`
 - `SCATTER_MULTIPLES`
@@ -300,7 +304,7 @@ Free 中同样遍历所有中奖线：
 
 1. 根据 bet 选择 base general
 2. Spin 生成 5x6 牌面
-3. 根据 bet 应用 `GRID_DISABLES`
+3. 根据第三列分裂是否解锁应用 `GRID_DISABLES / GRID_DISABLES_FREE`
 4. 计算 Line 中奖
 5. 计算 scatter/wild free 触发
 6. 若触发 free，判断是否进入选择玩法
@@ -311,7 +315,7 @@ Free 中同样遍历所有中奖线：
 
 1. 根据 bet 和是否 super 选择 free general
 2. Spin 生成 5x6 牌面
-3. 根据 bet 应用 `GRID_DISABLES_FREE`
+3. 根据第三列分裂是否解锁应用 `GRID_DISABLES / GRID_DISABLES_FREE`
 4. 计算 Line 中奖
 5. 根据普通 free / super free 应用倍乘
 6. 计算 scatter/wild 重触发次数
@@ -344,13 +348,13 @@ Free 中同样遍历所有中奖线：
 
 1. Base 是否使用高 bet 逻辑，以 `base_bet >= SPECIAL_TYPE_NEED_BET` 判断
 2. Base 高 bet 使用 `GENERAL_1`，低 bet 使用 `GENERAL_2`
-3. 高 bet 使用 33633，低 bet 使用 33333
+3. `GRID_DISABLES` 表示未解锁第三列分裂，`GRID_DISABLES_FREE` 表示已解锁第三列分裂，与 Base/Free 无关
 4. Free general 由 bet 和 `is_super` 共同决定
-5. Base 中两条及以上 scatter/wild 触发线才进入选择玩法
-6. Base 中单条触发线直接进入普通 free
+5. Base 中累计 free 次数 `>= 16` 才进入选择玩法
+6. Base 中累计 free 次数 `< 16` 直接进入普通 free
 7. Free 中不进入选择玩法，只累加额外 free 次数
-8. 普通 free 在 33333 中必定 `*2`，在 33633 中按 `FREE_MULTIPLE_TRIGGER_PROBABILITY` 判断是否 `*2`
-9. Super free 在 33333 中必定随机倍乘，在 33633 中按 `SUPER_FREE_MULTIPLE_TRIGGER_PROBABILITY` 判断是否随机倍乘
+8. 普通 free 低 bet 必定 `*2`，高 bet 按 `FREE_MULTIPLE_TRIGGER_PROBABILITY` 判断是否 `*2`
+9. Super free 低 bet 必定随机倍乘，高 bet 按 `SUPER_FREE_MULTIPLE_TRIGGER_PROBABILITY` 判断是否随机倍乘
 10. JP 只在 Base 未触发 free 时判断
 11. JP pick 后会按 JP 类型概率判断是否翻倍
 12. 当前 symbol id 已压缩，不再区分分裂和非分裂 symbol
