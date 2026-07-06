@@ -29,11 +29,11 @@
 
 ## 2.1 Base
 
-Base 使用 `reel_config/rand_ex_{INDEX}.conf`。
+Base 使用 `reel_config/mjwl_rand_ex_{INDEX}.conf`。
 
 | 输入 | 使用配置 | 说明 |
 | --- | --- | --- |
-| `index` | `rand_ex_{index}.conf` | 找不到精确 index 时由通用 reel 查找逻辑回退 |
+| `index` | `mjwl_rand_ex_{index}.conf` | 找不到精确 index 时由通用 reel 查找逻辑回退 |
 | `general_index` | `GENERAL_{general_index}` | 仿真默认 `GENERAL_1` |
 | `BASE_RATE` | normal / special / fix / zero | 顺序为 `正常盘,特殊盘,固定盘,0几率盘` |
 
@@ -46,7 +46,7 @@ Base 使用 `reel_config/rand_ex_{INDEX}.conf`。
 
 ## 2.2 Free
 
-Free 使用 `free_reel_config/free_rand_ex_{INDEX}.conf`。
+Free 使用 `free_reel_config/mjwl_free_rand_ex_{INDEX}.conf`。
 
 | 条件 | 使用 General | 说明 |
 | --- | --- | --- |
@@ -60,7 +60,7 @@ Free 使用 `free_reel_config/free_rand_ex_{INDEX}.conf`。
 
 ## 2.3 game_server section
 
-根据玩家 `INDEX` 读取 `game_server.conf`：
+根据玩家 `INDEX` 读取 `mjwl_game_server.conf`：
 
 1. 优先读取同名 section，例如 `[13]`
 2. 如果不存在，回退到 `[0]`
@@ -173,7 +173,7 @@ FREE_RANDOM_MULTI_WEIGHTS = 11,8,8,6
 
 - Base 未触发 free 时不会进入 JP
 - Free 中也不会触发 JP
-- `game_server.conf` 中未配置 `WIN_JP_*` 相关字段
+- `mjwl_game_server.conf` 中未配置 `WIN_JP_*` 相关字段
 
 ---
 
@@ -298,7 +298,7 @@ win = base_bet * prize * ways / BET_UNIT / PRIZE_RATE
 
 # 7. 关键配置
 
-## 7.1 game_config.conf
+## 7.1 mjwl_game_config.conf
 
 - `COL_COUNT`
 - `ROW_COUNT`
@@ -317,7 +317,7 @@ win = base_bet * prize * ways / BET_UNIT / PRIZE_RATE
 - `GRID_DISABLES`
 - `GRID_DISABLES_FREE`
 
-## 7.2 game_server.conf
+## 7.2 mjwl_game_server.conf
 
 - `FREE_COUNT_LIST`
 - `FREE_MULTI_LIST_1..4`

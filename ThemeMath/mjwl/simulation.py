@@ -28,11 +28,11 @@ except ImportError:
 m = ThemeMath()
 
 SPIN_TIMES = 1000000
-INDEX = [0,4,8,12,13,17]
+INDEX = [0]
 GENERAL_INDEX = [1]
 REPORT_INTERVAL = 5000
-THRESHOLDS = (5, 10, 20, 50, 100, 1000)
-CHOOSE_INDEXES = [1,2,3,4,5]
+THRESHOLDS = (5, 10, 20, 50, 100, 1000) 
+CHOOSE_INDEXES = [1]
 GENERAL_SECTION_RE = re.compile(r"^\s*\[GENERAL_(\d+)\]\s*$", re.MULTILINE)
 RESULT_CSV = Path(__file__).resolve().with_name("simulate_result.csv")
 MAIN_CASCADE_BUCKETS = tuple(range(10))

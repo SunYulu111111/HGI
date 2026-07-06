@@ -24,6 +24,8 @@ class ThemeMath(WaysGame):
     """当前主题的数学封装。"""
 
     # 配置里的 GoldSymbolWeight 对应第 2、3、4 列，内部下标是 1、2、3。
+    DEFAULT_GAME_CONFIG_FILE = "mjwl_game_config.conf"
+    DEFAULT_GAME_SERVER_CONFIG_FILE = "mjwl_game_server.conf"
     GOLD_COLUMNS = (1, 2, 3)
     GOLD_BASE = 10000
     GOLD_SYMBOL_OFFSET = 100
@@ -35,9 +37,17 @@ class ThemeMath(WaysGame):
     def __init__(self, base_bet: int = 10000, **kwargs):
         # 默认项目目录就是当前 theme_math.py 所在的主题文件夹。
         project_dir = kwargs.pop("project_dir", Path(__file__).resolve().parent)
-        game_config_file = kwargs.get("game_config_file", self.DEFAULT_GAME_CONFIG_FILE)
-        self.game_server_config_file = kwargs.pop("game_server_config_file", "game_server.conf")
-        super().__init__(base_bet=base_bet, project_dir=project_dir, **kwargs)
+        game_config_file = kwargs.pop("game_config_file", self.DEFAULT_GAME_CONFIG_FILE)
+        self.game_server_config_file = kwargs.pop(
+            "game_server_config_file",
+            self.DEFAULT_GAME_SERVER_CONFIG_FILE,
+        )
+        super().__init__(
+            base_bet=base_bet,
+            project_dir=project_dir,
+            game_config_file=game_config_file,
+            **kwargs,
+        )
         self.game_config_file = game_config_file
         self.game_server_config = self._load_game_server_config(self.project_dir / self.game_server_config_file)
         self.win_box_level_up_rates, self.win_box_level_multipliers = self.load_win_box_level_config()
@@ -569,7 +579,7 @@ class ThemeMath(WaysGame):
         return parser
 
     def load_free_choice_config(self) -> tuple[list[int], list[list[int]], list[int], list[int]]:
-        """从 game_server.conf 读取 1-4 类 free 的次数和消除倍数。"""
+        """从 mjwl_game_server.conf 读取 1-4 类 free 的次数和消除倍数。"""
 
         if not self.game_server_config.has_section("Game Info"):
             raise ValueError(f"{self.game_server_config_file} has no [Game Info] section")

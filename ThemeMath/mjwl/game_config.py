@@ -1,6 +1,6 @@
-"""把 game_config.conf 导出成 Python 常量的兼容文件。
+"""把 mjwl_game_config.conf 导出成 Python 常量的兼容文件。
 
-当前通用逻辑 slots_math.py 已经可以直接读取 game_config.conf；
+当前通用逻辑 slots_math.py 已经可以直接读取 mjwl_game_config.conf；
 保留这个文件主要是为了兼容旧脚本里 import game_config 的写法。
 """
 
@@ -11,11 +11,11 @@ from pathlib import Path
 
 
 # 当前主题的主配置文件路径。
-CONFIG_PATH = Path(__file__).with_name("game_config.conf")
+CONFIG_PATH = Path(__file__).with_name("mjwl_game_config.conf")
 
 
 def _load_main_config(path: Path = CONFIG_PATH):
-    """读取 game_config.conf 的 [MAIN] 配置段。"""
+    """读取 mjwl_game_config.conf 的 [MAIN] 配置段。"""
 
     parser = ConfigParser(inline_comment_prefixes=("#", ";"))
     parser.optionxform = str
