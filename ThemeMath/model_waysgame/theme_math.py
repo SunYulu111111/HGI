@@ -24,6 +24,9 @@ class ThemeMath(WaysGame):
     """当前主题的数学封装。"""
 
     # 配置里的 GoldSymbolWeight 对应第 2、3、4 列，内部下标是 1、2、3。
+    SPECIAL_CONFIG_DIR = "special"
+    DEFAULT_GAME_CONFIG_FILE = str(Path(SPECIAL_CONFIG_DIR) / "game_config.conf")
+    DEFAULT_GAME_SERVER_CONFIG_FILE = str(Path(SPECIAL_CONFIG_DIR) / "game_server.conf")
     GOLD_COLUMNS = (1, 2, 3)
     GOLD_BASE = 10000
     GOLD_SYMBOL_OFFSET = 100
@@ -35,9 +38,14 @@ class ThemeMath(WaysGame):
     def __init__(self, base_bet: int = 10000, **kwargs):
         # 默认项目目录就是当前 theme_math.py 所在的主题文件夹。
         project_dir = kwargs.pop("project_dir", Path(__file__).resolve().parent)
-        game_config_file = kwargs.get("game_config_file", self.DEFAULT_GAME_CONFIG_FILE)
-        self.game_server_config_file = kwargs.pop("game_server_config_file", "game_server.conf")
-        super().__init__(base_bet=base_bet, project_dir=project_dir, **kwargs)
+        game_config_file = kwargs.pop("game_config_file", self.DEFAULT_GAME_CONFIG_FILE)
+        self.game_server_config_file = kwargs.pop("game_server_config_file", self.DEFAULT_GAME_SERVER_CONFIG_FILE)
+        super().__init__(
+            base_bet=base_bet,
+            project_dir=project_dir,
+            game_config_file=game_config_file,
+            **kwargs,
+        )
         self.game_config_file = game_config_file
         self.game_server_config = self._load_game_server_config(self.project_dir / self.game_server_config_file)
         self.base_win_multipliers = self.get_win_box_level_multipliers()

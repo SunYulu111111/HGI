@@ -24,8 +24,9 @@ class ThemeMath(WaysGame):
     """当前主题的数学封装。"""
 
     # 配置里的 GoldSymbolWeight 对应第 2、3、4 列，内部下标是 1、2、3。
-    DEFAULT_GAME_CONFIG_FILE = "mjwl_game_config.conf"
-    DEFAULT_GAME_SERVER_CONFIG_FILE = "mjwl_game_server.conf"
+    SPECIAL_CONFIG_DIR = "special"
+    DEFAULT_GAME_CONFIG_FILE = str(Path(SPECIAL_CONFIG_DIR) / "mjwl_game_config.conf")
+    DEFAULT_GAME_SERVER_CONFIG_FILE = str(Path(SPECIAL_CONFIG_DIR) / "mjwl_game_server.conf")
     GOLD_COLUMNS = (1, 2, 3)
     GOLD_BASE = 10000
     GOLD_SYMBOL_OFFSET = 100

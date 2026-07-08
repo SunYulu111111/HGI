@@ -27,12 +27,14 @@ except ImportError:
 
 m = ThemeMath()
 
-SPIN_TIMES = 1000000
-INDEX = [0]
+SPIN_TIMES = 10000000
+INDEX = [14]
 GENERAL_INDEX = [1]
 REPORT_INTERVAL = 5000
 THRESHOLDS = (5, 10, 20, 50, 100, 1000) 
-CHOOSE_INDEXES = [1]
+CHOOSE_INDEXES = [1,2,3,4,5]
+TYPE8_INDEX = 8
+TYPE8_FREE_MAX_MULTIPLE = 100
 GENERAL_SECTION_RE = re.compile(r"^\s*\[GENERAL_(\d+)\]\s*$", re.MULTILINE)
 RESULT_CSV = Path(__file__).resolve().with_name("simulate_result.csv")
 MAIN_CASCADE_BUCKETS = tuple(range(10))
@@ -156,6 +158,14 @@ def record_win_info(status: dict, win_info: dict, mode_key: str) -> int:
     return total_win
 
 
+def get_type8_free_win_limit(index: int) -> int | None:
+    """Return the type8 free feature win limit; None means no limit."""
+
+    if int(index) != TYPE8_INDEX:
+        return None
+    return m.base_bet * TYPE8_FREE_MAX_MULTIPLE
+
+
 def main_cascade_bucket(cascade_count: int) -> int:
     """Return the status bucket index for a main-game cascade count."""
 
@@ -202,15 +212,22 @@ def run_free_spins(
 
     remaining_free_times = free_times
     free_total_win = 0
+    free_win_limit = get_type8_free_win_limit(index)
     while remaining_free_times > 0:
         remaining_free_times -= 1
-        status_handler.add_status_value(status, 1, "free", "spin")
         fg_result = m.fg_spin(
             index,
             free_general_index=free_general_index,
             choose_index=choose_index,
             free_choice=free_choice,
         )
+        current_free_win = int(fg_result.get("total_win", 0))
+        if free_win_limit is not None and free_total_win + current_free_win > free_win_limit:
+            status_handler.add_status_value(status, 1, "type8_free_cut_spin")
+            status_handler.add_status_value(status, current_free_win, "type8_free_cut_win")
+            continue
+
+        status_handler.add_status_value(status, 1, "free", "spin")
         free_total_win += record_win_info(status, fg_result, "free")
 
         retrigger_times = int(fg_result.get("free_times", 0))
@@ -554,6 +571,8 @@ status_model = {
     "gt_50x": 0,
     "gt_100x": 0,
     "gt_1000x": 0,
+    "type8_free_cut_spin": 0,
+    "type8_free_cut_win": 0,
 }
 
 statics_columns = [

@@ -18,12 +18,19 @@ from slots_math import LinesGame
 class ThemeMath(LinesGame):
     """Thin wrapper for a fixed-line game model."""
 
+    SPECIAL_CONFIG_DIR = "special"
+    DEFAULT_GAME_CONFIG_FILE = str(Path(SPECIAL_CONFIG_DIR) / "game_config.conf")
     FREE_REEL_CONFIG_DIR = "free_reel_config"
 
     def __init__(self, base_bet: int = 10000, **kwargs):
         project_dir = kwargs.pop("project_dir", Path(__file__).resolve().parent)
-        game_config_file = kwargs.get("game_config_file", self.DEFAULT_GAME_CONFIG_FILE)
-        super().__init__(base_bet=base_bet, project_dir=project_dir, **kwargs)
+        game_config_file = kwargs.pop("game_config_file", self.DEFAULT_GAME_CONFIG_FILE)
+        super().__init__(
+            base_bet=base_bet,
+            project_dir=project_dir,
+            game_config_file=game_config_file,
+            **kwargs,
+        )
         self.game_config_file = game_config_file
         self.scatter_id, self.scatter_cols, self.scatter_multiples = self._load_win_free_config()
         self.last_ng_result: dict = {}

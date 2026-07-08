@@ -1,6 +1,6 @@
-"""把 mjwl_game_config.conf 导出成 Python 常量的兼容文件。
+"""把 special/mjwl_game_config.conf 导出成 Python 常量的兼容文件。
 
-当前通用逻辑 slots_math.py 已经可以直接读取 mjwl_game_config.conf；
+当前通用逻辑 slots_math.py 已经可以直接读取 special/mjwl_game_config.conf；
 保留这个文件主要是为了兼容旧脚本里 import game_config 的写法。
 """
 
@@ -10,8 +10,22 @@ from configparser import ConfigParser
 from pathlib import Path
 
 
+def _default_config_path() -> Path:
+    """Return the current config path, with the old root path as a fallback."""
+
+    theme_dir = Path(__file__).resolve().parent
+    candidates = [
+        theme_dir / "special" / "mjwl_game_config.conf",
+        theme_dir / "mjwl_game_config.conf",
+    ]
+    for path in candidates:
+        if path.exists():
+            return path
+    return candidates[0]
+
+
 # 当前主题的主配置文件路径。
-CONFIG_PATH = Path(__file__).with_name("mjwl_game_config.conf")
+CONFIG_PATH = _default_config_path()
 
 
 def _load_main_config(path: Path = CONFIG_PATH):
