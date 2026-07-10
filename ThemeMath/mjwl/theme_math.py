@@ -139,9 +139,11 @@ class ThemeMath(WaysGame):
             win_multiplier_index = active_free_choice.get("free_index", 1) if active_free_choice else 1
             win_multipliers = list(active_free_choice["multipliers"]) if active_free_choice else list(self.free_multi_list[0])
             gold_weight_index = general_index
+            reel_general_index = general_index
         else:
             win_multiplier_index, win_multipliers = self.choose_base_win_multipliers()
             gold_weight_index = None
+            reel_general_index = self.get_base_reel_general_index(win_multiplier_index)
         use_level_up_gold_weights = not free_game and win_multiplier_index > 1
         if use_level_up_gold_weights:
             gold_weights = self.get_level_up_gold_symbol_weights(game_server_section)
@@ -154,7 +156,7 @@ class ThemeMath(WaysGame):
 
         item_list = self.spin(
             index=index,
-            general_index=general_index,
+            general_index=reel_general_index,
             row=source_row,
             col=col,
             reel_config_dir=reel_config_dir,
@@ -180,6 +182,7 @@ class ThemeMath(WaysGame):
         spin_info["col"] = col
         spin_info["col_heights"] = [len(col_items) for col_items in item_list]
         spin_info["choose_index"] = choose_index
+        spin_info["input_general_index"] = general_index
         spin_info["win_multiplier_index"] = win_multiplier_index
         spin_info["win_multipliers"] = list(win_multipliers)
         spin_info["gold_weight_type"] = "level_up" if use_level_up_gold_weights else "normal"
@@ -644,6 +647,12 @@ class ThemeMath(WaysGame):
 
         multiplier_index = self.weighted_random_index(self.win_box_level_up_rates)
         return multiplier_index + 1, list(self.win_box_level_multipliers[multiplier_index])
+
+    @staticmethod
+    def get_base_reel_general_index(win_multiplier_index: int) -> int:
+        """Base uses GENERAL_2 when the win box level-up path is selected."""
+
+        return 2 if win_multiplier_index > 1 else 1
 
     def get_win_box_level_multipliers(self) -> list[int]:
         """从 game server 的 WinBoxLevelMultiple 读取普通游戏消除倍数。"""

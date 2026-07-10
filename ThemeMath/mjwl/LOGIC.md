@@ -34,7 +34,8 @@ Base 使用 `reel_config/mjwl_rand_ex_{INDEX}.conf`。
 | 输入 | 使用配置 | 说明 |
 | --- | --- | --- |
 | `index` | `mjwl_rand_ex_{index}.conf` | 找不到精确 index 时由通用 reel 查找逻辑回退 |
-| `general_index` | `GENERAL_{general_index}` | 仿真默认 `GENERAL_1` |
+| `WinBoxLevelUpRate` 抽中第 1 档 | `GENERAL_1` | 未触发 base 倍乘框升级 |
+| `WinBoxLevelUpRate` 抽中第 2 档及以上 | `GENERAL_2` | 触发 base 倍乘框升级 |
 | `BASE_RATE` | normal / special / fix / zero | 顺序为 `正常盘,特殊盘,固定盘,0几率盘` |
 
 `BASE_RATE` 只决定本次 spin 使用哪类盘：
@@ -72,20 +73,21 @@ Free 使用 `free_reel_config/mjwl_free_rand_ex_{INDEX}.conf`。
 
 ## 3.1 Spin 流程
 
-1. 根据 `index/general_index` 读取 base reel 配置
-2. 根据 `BASE_RATE` 选择 normal / special / fix / zero
-3. 生成原始 5x6 牌面
-4. 按 `GRID_DISABLES` 裁剪成 45554 有效牌面
-5. 根据 `WinBoxLevelUpRate` 抽取 base 倍乘框档位
-6. 根据倍乘框档位选择金色 symbol 权重：
+1. 根据 `INDEX` 读取 game server 配置段
+2. 根据 `WinBoxLevelUpRate` 抽取 base 倍乘框档位
+3. 未升级使用 base `GENERAL_1`，升级使用 base `GENERAL_2`
+4. 根据 `BASE_RATE` 选择 normal / special / fix / zero
+5. 生成原始 5x6 牌面
+6. 按 `GRID_DISABLES` 裁剪成 45554 有效牌面
+7. 根据倍乘框档位选择金色 symbol 权重：
    - 未升级：使用 `GoldSymbolWeight`
    - 升级：使用 `LevelUpGoldWeight`
-7. 按第 2/3/4 列权重把普通 symbol 转成金色 symbol
-8. 计算 Ways 中奖
-9. 消除中奖 symbol 并补牌
-10. 按消除轮次应用 base 倍乘
-11. 重复消除，直到无中奖或达到消除上限
-12. 最终牌面 Scatter 数量 >= 3 时触发 free
+8. 按第 2/3/4 列权重把普通 symbol 转成金色 symbol
+9. 计算 Ways 中奖
+10. 消除中奖 symbol 并补牌
+11. 按消除轮次应用 base 倍乘
+12. 重复消除，直到无中奖或达到消除上限
+13. 最终牌面 Scatter 数量 >= 3 时触发 free
 
 ## 3.2 Base 倍乘框
 
@@ -357,19 +359,20 @@ normal,special,fix,zero
 
 ## Base
 
-1. 根据 `INDEX` 和 `GENERAL` 读取 base reel
-2. 根据 `BASE_RATE` 选择 normal / special / fix / zero
-3. Spin 生成 5x6 牌面
-4. 按 `GRID_DISABLES` 裁剪为 45554
-5. 按 `WinBoxLevelUpRate` 抽取 base 倍乘框档位
-6. 未升级使用 `GoldSymbolWeight`，升级使用 `LevelUpGoldWeight`
-7. 第 2/3/4 列按权重生成金色 symbol
-8. 计算 Ways 中奖
-9. 按当前消除轮次应用 base 倍乘
-10. 金色 symbol 第一次消除变 Wild；普通 symbol 直接消除
-11. 上方 symbol 下落，并从当前停轴上方继续补牌
-12. 重复计算，直到无中奖
-13. 根据最终牌面 Scatter 数量判断是否触发 free
+1. 根据 `INDEX` 读取 game server 配置段
+2. 按 `WinBoxLevelUpRate` 抽取 base 倍乘框档位
+3. 未升级读取 base `GENERAL_1`，升级读取 base `GENERAL_2`
+4. 根据 `BASE_RATE` 选择 normal / special / fix / zero
+5. Spin 生成 5x6 牌面
+6. 按 `GRID_DISABLES` 裁剪为 45554
+7. 未升级使用 `GoldSymbolWeight`，升级使用 `LevelUpGoldWeight`
+8. 第 2/3/4 列按权重生成金色 symbol
+9. 计算 Ways 中奖
+10. 按当前消除轮次应用 base 倍乘
+11. 金色 symbol 第一次消除变 Wild；普通 symbol 直接消除
+12. 上方 symbol 下落，并从当前停轴上方继续补牌
+13. 重复计算，直到无中奖
+14. 根据最终牌面 Scatter 数量判断是否触发 free
 
 ## Free
 
