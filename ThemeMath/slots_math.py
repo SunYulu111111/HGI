@@ -23,7 +23,7 @@ class SlotGameConfig:
     use_wilds: list[int]
     base_nums: list[int]
     item_prizes: list[list[int]]
-    line_mode: int
+    line_mode: int  # 1=左到右 WaysGame，2=左到右 LinesGame，3=Ways/Lines 左右双向
     line_rules: list[list[tuple[int, int]]]
     grid_disables: list[int]
     grid_disables_free: list[int]
@@ -728,8 +728,8 @@ class WaysGame(SlotsGame):
         """
 
         config = self.config
-        if config.line_mode not in (1, 2, 3):
-            raise NotImplementedError("WaysGame only supports LINE_MODE=1, 2, or 3")
+        if config.line_mode not in (1, 3):
+            raise NotImplementedError("WaysGame only supports LINE_MODE=1 or 3")
 
         board_cols, col_count, row_count = self._normalize_item_list(item_list, row=row, col=col)
         grid_disables = self._get_grid_disables(free_game, col_count, row_count)
@@ -770,16 +770,6 @@ class WaysGame(SlotsGame):
                 row_count,
                 direction="left",
             )
-        if config.line_mode == 2:
-            return self._cal_one_item_direction(
-                board_cols,
-                grid_disables,
-                item_id,
-                range(col_count - 1, -1, -1),
-                row_count,
-                direction="right",
-            )
-
         wins = []
         wins.extend(
             self._cal_one_item_direction(
@@ -876,8 +866,8 @@ class LinesGame(SlotsGame):
         """按 game_config.conf 中的 LINE_RULES_n 计算固定线赢钱。"""
 
         config = self.config
-        if config.line_mode not in (1, 2, 3):
-            raise NotImplementedError("LinesGame only supports LINE_MODE=1, 2, or 3")
+        if config.line_mode not in (2, 3):
+            raise NotImplementedError("LinesGame only supports LINE_MODE=2 or 3")
         if not config.line_rules:
             raise ValueError("LinesGame requires LINE_RULES_n in game_config.conf")
 
@@ -914,10 +904,8 @@ class LinesGame(SlotsGame):
         """按 LINE_MODE 返回当前线需要计算的方向。"""
 
         line_mode = self.config.line_mode
-        if line_mode == 1:
+        if line_mode == 2:
             yield "left", line_rule
-        elif line_mode == 2:
-            yield "right", list(reversed(line_rule))
         else:
             yield "left", line_rule
             yield "right", list(reversed(line_rule))

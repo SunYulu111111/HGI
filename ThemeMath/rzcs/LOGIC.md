@@ -55,7 +55,7 @@ Free 中同样按第三列分裂是否解锁选择有效结构，与普通 free 
 
 1. 判断 `base_bet >= SPECIAL_TYPE_NEED_BET`
 2. 根据结果选择 `GENERAL_1 / GENERAL_2`
-3. 根据玩家 `INDEX` 加载 `game_server.conf` 中对应 section；如果不存在则回退到 `[0]`
+3. 根据玩家 `INDEX` 加载 `special/rzcs_game_server.conf` 中对应 section；如果不存在则回退到 `[0]`
 4. 生成 5x6 牌面
 5. 根据第三列分裂是否解锁选择 `GRID_DISABLES / GRID_DISABLES_FREE`
 6. 将无效格置空，形成 33333 / 33633
@@ -75,16 +75,7 @@ Free 中同样按第三列分裂是否解锁选择有效结构，与普通 free 
   - 5连：16次
 - 多条线触发时，free 次数累加
 
-## 3.3 Scatter 非中奖线替换规则
-
-当牌面出现 scatter/wild 连线并触发 free 时，需要处理牌面上额外出现的 Scatter：
-
-- 先记录所有触发 free 的 scatter/wild 中奖线位置。
-- 牌面上如果还有 Scatter，但该 Scatter 不在任何一条触发 free 的中奖线上，则将该位置替换成不赢钱的普通 symbol。
-- 位于触发 free 中奖线上的 Scatter 不替换。
-- 该规则只用于避免非中奖线 Scatter 额外参与展示或结算，不改变已经判定出的 free 触发次数。
-
-## 3.4 选择规则
+## 3.3 选择规则
 
 Base 中触发 free 后：
 
@@ -116,7 +107,7 @@ Base 中触发 free 后：
 jp_win = base_bet * final_jp_multiple
 ```
 
-JP 概率配置在 `game_server.conf` 中，概率均为万分比：
+JP 概率配置在 `special/rzcs_game_server.conf` 中，概率均为万分比：
 
 ```text
 WIN_JP_PROBABILITY=10
@@ -274,7 +265,7 @@ Free 中同样遍历所有中奖线：
 
 # 7. 关键配置
 
-## 7.1 game_config.conf
+## 7.1 special/rzcs_game_config.conf
 
 - `SPECIAL_TYPE_NEED_BET`
 - `GRID_DISABLES`
@@ -283,7 +274,7 @@ Free 中同样遍历所有中奖线：
 - `WILD_ID`
 - `SCATTER_MULTIPLES`
 
-## 7.2 game_server.conf
+## 7.2 special/rzcs_game_server.conf
 
 - `WIN_JP_PROBABILITY`
 - `WIN_JP_MULTIPLE`

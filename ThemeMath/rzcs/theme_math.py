@@ -19,14 +19,25 @@ from slots_math import LinesGame
 class ThemeMath(LinesGame):
     """Thin wrapper for a fixed-line game model."""
 
+    SPECIAL_CONFIG_DIR = "special"
+    DEFAULT_GAME_CONFIG_FILE = str(Path(SPECIAL_CONFIG_DIR) / "rzcs_game_config.conf")
+    DEFAULT_GAME_SERVER_CONFIG_FILE = str(Path(SPECIAL_CONFIG_DIR) / "rzcs_game_server.conf")
     FREE_REEL_CONFIG_DIR = "free_reel_config"
     PROBABILITY_DENOMINATOR = 10000
 
     def __init__(self, base_bet: int = 10000, **kwargs):
         project_dir = kwargs.pop("project_dir", Path(__file__).resolve().parent)
-        self.game_server_config_file = kwargs.pop("game_server_config_file", "game_server.conf")
-        game_config_file = kwargs.get("game_config_file", self.DEFAULT_GAME_CONFIG_FILE)
-        super().__init__(base_bet=base_bet, project_dir=project_dir, **kwargs)
+        game_config_file = kwargs.pop("game_config_file", self.DEFAULT_GAME_CONFIG_FILE)
+        self.game_server_config_file = kwargs.pop(
+            "game_server_config_file",
+            self.DEFAULT_GAME_SERVER_CONFIG_FILE,
+        )
+        super().__init__(
+            base_bet=base_bet,
+            project_dir=project_dir,
+            game_config_file=game_config_file,
+            **kwargs,
+        )
         self.game_config_file = game_config_file
         self.game_server_config = self._read_config_file(self.project_dir / self.game_server_config_file)
         self.scatter_id, self.scatter_cols, self.scatter_multiples = self._load_win_free_config()
@@ -467,7 +478,7 @@ class ThemeMath(LinesGame):
         )
 
     def apply_index_server_config(self, index: int) -> None:
-        """Apply game_server.conf values selected by the player's INDEX."""
+        """Apply rzcs_game_server.conf values selected by the player's INDEX."""
 
         self.server_config_index = self._resolve_server_config_index(index)
         (
