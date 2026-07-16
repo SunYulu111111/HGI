@@ -38,6 +38,19 @@ FREE_CHOOSE_TYPE_BY_INDEX = {
 }
 FREE_CHOOSE_INDEX_BY_TYPE = {value: key for key, value in FREE_CHOOSE_TYPE_BY_INDEX.items()}
 FREE_TRIGGER_CHOICES = ("free", "super_free", "super_wild")
+JP_TYPE_COUNT = 4
+JP_TYPE_REPORT_FIELDS = tuple(
+    field
+    for index in range(JP_TYPE_COUNT)
+    for field in (f"jp_type_{index}_count", f"jp_type_{index}_rate")
+)
+JP_TYPE_STATICS_FIELDS = [
+    {"label": f"JP{index}次数", "key": f"jp_type_{index}_count"}
+    if field_type == "count"
+    else {"label": f"JP{index}频率", "key": f"jp_type_{index}_rate"}
+    for index in range(JP_TYPE_COUNT)
+    for field_type in ("count", "rate")
+]
 GENERAL_SECTION_RE = re.compile(r"^\s*\[GENERAL_(\d+)\]\s*$", re.MULTILINE)
 RESULT_CSV = Path(__file__).resolve().with_name("simulate_result.csv")
 RESULT_CSV_FIELDS = [
@@ -64,6 +77,7 @@ RESULT_CSV_FIELDS = [
     "FreeLine",
     "BaseJP",
     "FreeJP",
+    *JP_TYPE_REPORT_FIELDS,
     "Hit",
     "Hit率",
     ">5x",
@@ -196,6 +210,12 @@ def record_win_info(status: dict, win_info: dict, mode_key: str) -> int:
     jp_win = int(win_info.get("jp_win", 0))
     status_handler.update_feature_win(status, mode_key, "lines", line_win)
     status_handler.update_feature_win(status, mode_key, "jp", jp_win)
+    if win_info.get("win_jp"):
+        win_jp_info = win_info.get("win_jp_info", {})
+        jp_type_index = win_jp_info.get("jp_type_index", win_info.get("jp_type_index"))
+        if not isinstance(jp_type_index, int) or not 0 <= jp_type_index < JP_TYPE_COUNT:
+            raise ValueError(f"invalid jp_type_index: {jp_type_index}")
+        status["jp_type_counts"][jp_type_index] += 1
     return total_win
 
 
@@ -272,6 +292,9 @@ def build_simulation_row(
     row["总押注"] = status["bet"]
     row["BaseJP"] = base_status["jp"][1]
     row["FreeJP"] = free_status["jp"][1]
+    for jp_type_index, count in enumerate(status["jp_type_counts"]):
+        row[f"jp_type_{jp_type_index}_count"] = count
+        row[f"jp_type_{jp_type_index}_rate"] = count / base_spin if base_spin else 0
     row["Free平均次数"] = status["free_times"] / free_trigger_count if free_trigger_count else 0
     row["Free平均倍"] = (
         free_status["lines"][1] / free_trigger_count / base_bet
@@ -448,6 +471,11 @@ def print_summary(result: dict | list[dict]) -> None:
     print(f"普通游戏赢钱: {result['BaseLine']}")
     print(f"免费游戏赢钱: {result['FreeLine']}")
     print(f"JP赢钱: {result['BaseJP'] + result['FreeJP']}")
+    for jp_type_index in range(JP_TYPE_COUNT):
+        print(
+            f"JP{jp_type_index}次数: {result[f'jp_type_{jp_type_index}_count']}, "
+            f"频率: {result[f'jp_type_{jp_type_index}_rate']:.6%}"
+        )
     print(f"总赢钱: {result['总赢钱']}")
     print(f"普通游戏 RTP: {result['base_rtp']:.3f}")
     print(f"免费游戏 RTP: {result['free_rtp']:.3f}")
@@ -607,6 +635,7 @@ status_model = {
     "wins": 0,
     "hit": 0,
     "free_times": 0,
+    "jp_type_counts": [0] * JP_TYPE_COUNT,
     "gt_5x": 0,
     "gt_10x": 0,
     "gt_20x": 0,
@@ -651,6 +680,7 @@ statics_columns = [
             "base_jp_rtp",
             "BaseLine",
             "BaseJP",
+            *JP_TYPE_STATICS_FIELDS,
             "main_win_times",
             "main_win_rate",
         ],

@@ -536,7 +536,7 @@ class simulation:
         }
         if header in rtp_headers or header.endswith("_rtp"):
             return f"{value:.6f}"
-        if header in {"Hit率", "Free频率", "触发率", "main_win_rate", "free_win_rate", "win_rate", "trigger_free_rate"}:
+        if header in {"Hit率", "Free频率", "触发率"} or header.endswith("_rate"):
             return f"{value:.3%}"
         if header in {"Free平均倍"}:
             return f"{value:.3f}"

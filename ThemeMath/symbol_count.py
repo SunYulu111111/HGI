@@ -59,7 +59,7 @@ def format_count_block(counts: list[list[int]], newline: str) -> list[str]:
     """生成和配置文件备注一致的三引号统计块。"""
     lines = [f'"""{newline}']
     for index, row in enumerate(counts):
-        suffix = ", " if index < len(counts) - 1 else ""
+        suffix = "," if index < len(counts) - 1 else ""
         lines.append(f"{row}{suffix}{newline}")
     lines.append(f'"""{newline}')
     return lines
