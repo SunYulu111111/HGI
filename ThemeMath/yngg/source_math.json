@@ -1,0 +1,190 @@
+{
+  "identity": {
+    "provider": "HGI",
+    "game": "Si Botak Desa",
+    "game_id": 362,
+    "program_name": "yngg"
+  },
+  "layout": {
+    "reels": 6,
+    "rows": 5,
+    "win_type": "cluster",
+    "minimum_connected_symbols": 5,
+    "connection": [
+      "horizontal",
+      "vertical"
+    ]
+  },
+  "paytable": [
+    {
+      "symbol_id": 3,
+      "symbol": "H1",
+      "payout_x_bet": {
+        "5": 1,
+        "6-7": 2.5,
+        "8-11": 5,
+        "12+": 25
+      }
+    },
+    {
+      "symbol_id": 4,
+      "symbol": "H2",
+      "payout_x_bet": {
+        "5": 1,
+        "6-7": 2.5,
+        "8-11": 5,
+        "12+": 10
+      }
+    },
+    {
+      "symbol_id": 5,
+      "symbol": "H3",
+      "payout_x_bet": {
+        "5": 0.5,
+        "6-7": 1,
+        "8-11": 3,
+        "12+": 5
+      }
+    },
+    {
+      "symbol_id": 6,
+      "symbol": "M1",
+      "payout_x_bet": {
+        "5": 0.3,
+        "6-7": 0.5,
+        "8-11": 1,
+        "12+": 3
+      }
+    },
+    {
+      "symbol_id": 7,
+      "symbol": "M2",
+      "payout_x_bet": {
+        "5": 0.3,
+        "6-7": 0.5,
+        "8-11": 1,
+        "12+": 3
+      }
+    },
+    {
+      "symbol_id": 8,
+      "symbol": "L1",
+      "payout_x_bet": {
+        "5": 0.1,
+        "6-7": 0.2,
+        "8-11": 0.5,
+        "12+": 1
+      }
+    },
+    {
+      "symbol_id": 9,
+      "symbol": "L2",
+      "payout_x_bet": {
+        "5": 0.1,
+        "6-7": 0.2,
+        "8-11": 0.5,
+        "12+": 1
+      }
+    },
+    {
+      "symbol_id": 10,
+      "symbol": "L3",
+      "payout_x_bet": {
+        "5": 0.1,
+        "6-7": 0.2,
+        "8-11": 0.3,
+        "12+": 0.6
+      }
+    },
+    {
+      "symbol_id": 11,
+      "symbol": "L4",
+      "payout_x_bet": {
+        "5": 0.1,
+        "6-7": 0.2,
+        "8-11": 0.3,
+        "12+": 0.6
+      }
+    },
+    {
+      "symbol_id": 12,
+      "symbol": "L5",
+      "payout_x_bet": {
+        "5": 0.1,
+        "6-7": 0.2,
+        "8-11": 0.3,
+        "12+": 0.5
+      }
+    }
+  ],
+  "symbol_id_mapping": {
+    "scatter": 0,
+    "wild": 1,
+    "golden_feature_symbols": 2,
+    "paying_symbols": "3-12 (payout descending)",
+    "super_scatter": 13
+  },
+  "coin_values_x_bet": [
+    0.2,
+    0.5,
+    1,
+    2,
+    3,
+    4,
+    5,
+    10,
+    15,
+    20,
+    25,
+    50,
+    100,
+    250,
+    500
+  ],
+  "clover_multipliers": [
+    2,
+    3,
+    4,
+    5,
+    10,
+    20
+  ],
+  "fixed_jackpots_x_bet": {
+    "mini": 10,
+    "minor": 25,
+    "major": 100,
+    "grand": 5000
+  },
+  "free_games": {
+    "free": {
+      "trigger": "3 scatters",
+      "spins": 10
+    },
+    "super_free": {
+      "trigger": "2 scatters + 1 super scatter",
+      "spins": 10
+    },
+    "retrigger": {
+      "2_scatters": 2,
+      "3_scatters": 4
+    }
+  },
+  "bet_scopes": [
+    100000,
+    200000,
+    500000,
+    1000000,
+    2000000,
+    5000000,
+    10000000,
+    20000000
+  ],
+  "provenance": {
+    "rules": "C:\\Users\\sunyulu\\Downloads\\HGI_SLOT_《印尼鬼怪》策划案.md",
+    "reference_reels": "C:\\Users\\sunyulu\\le-king-demo-extract\\numeric\\reels\\strips"
+  },
+  "limitations": [
+    "Reference reel strips do not contain HGI feature-generation probabilities.",
+    "Golden feature outcomes must be supplied by authoritative server data."
+  ]
+}
