@@ -29,6 +29,7 @@ SPIN_TIMES = 1000000
 INDEX = [0]
 GENERAL_INDEX = [1]
 BASE_BETS = [10000]
+SPLIT_UNLOCKED = [1]
 REPORT_INTERVAL = 5000
 THRESHOLDS = (5, 10, 20, 50, 100, 1000)
 FREE_CHOOSE_INDEX = [1]
@@ -61,6 +62,7 @@ RESULT_CSV_FIELDS = [
     "FREE_CHOOSE_INDEX",
     "CHOOSE_TYPE",
     "BASE_BET",
+    "SPLIT_UNLOCKED",
     "SPIN",
     "总押注",
     "rtp",
@@ -119,6 +121,25 @@ def list_config_values(value) -> list:
     if isinstance(value, (list, tuple)):
         return list(value)
     return [value]
+
+
+def normalize_optional_bool(value):
+    """Normalize optional bool-like config values."""
+
+    if value is None or isinstance(value, bool):
+        return value
+    if isinstance(value, int):
+        if value in (0, 1):
+            return bool(value)
+        raise ValueError(f"bool value must be 0 or 1, got: {value}")
+    normalized = str(value).strip().lower()
+    if normalized in ("", "none", "null", "auto"):
+        return None
+    if normalized in ("1", "true", "yes", "y", "unlock", "unlocked"):
+        return True
+    if normalized in ("0", "false", "no", "n", "lock", "locked"):
+        return False
+    raise ValueError(f"invalid bool value: {value}")
 
 
 def normalize_choice_type(choice_type: str) -> str:
@@ -233,7 +254,7 @@ def run_free_spins(
     while remaining_free_times > 0:
         remaining_free_times -= 1
         status_handler.add_status_value(status, 1, "free", "spin")
-        fg_info = m.fg_spin(index, return_detail=True, free_mode=free_mode)
+        fg_info = m.fg_spin(index, return_detail=False, free_mode=free_mode)
         free_total_win += record_win_info(status, fg_info, "free")
 
         retrigger_times = get_free_times(fg_info)
@@ -271,6 +292,7 @@ def build_simulation_row(
     free_choose_index: int,
     choice_type: str,
     base_bet: int,
+    split_unlocked: bool,
     free_general_index: int | None = None,
 ) -> dict:
     """Build one rzcs report row from current status."""
@@ -283,6 +305,7 @@ def build_simulation_row(
     row["FREE_CHOOSE_INDEX"] = free_choose_index
     row["CHOOSE_TYPE"] = format_choice_type(choice_type)
     row["BASE_BET"] = base_bet
+    row["SPLIT_UNLOCKED"] = int(split_unlocked)
     row["错误"] = ""
 
     base_status = status["base"]
@@ -321,6 +344,7 @@ def simulation(
     free_general_index: int | None = None,
     report_interval: int = REPORT_INTERVAL,
     base_bet: int | None = None,
+    split_unlocked: bool | None = None,
     print_updates: bool = False,
 ) -> list[dict]:
     """Run N base spins and return cumulative checkpoint rows."""
@@ -332,9 +356,13 @@ def simulation(
     else:
         free_choose_index = normalize_free_choose_index(free_choose_index)
     choice_type = choice_type_from_free_choose_index(free_choose_index)
-    m = ThemeMath(base_bet=base_bet)
+    if split_unlocked is None:
+        split_unlocked = first_config_value(SPLIT_UNLOCKED)
+    split_unlocked = normalize_optional_bool(split_unlocked)
+    m = ThemeMath(base_bet=base_bet, third_col_split_unlocked=split_unlocked)
     general_index = m.get_base_general_index()
     current_free_general_index = m.get_free_general_index(choice_type)
+    current_split_unlocked = m.is_high_bet()
     status = status_handler.new_status()
     rows = []
 
@@ -342,7 +370,7 @@ def simulation(
         status_handler.update_spin_start(status, m.base_bet)
         spin_total_win = 0
 
-        win_info = m.ng_spin(index, return_detail=True)
+        win_info = m.ng_spin(index, return_detail=False)
         spin_total_win += record_win_info(status, win_info, "base")
         spin_total_win += apply_base_trigger_choice(
             m,
@@ -363,6 +391,7 @@ def simulation(
                 free_choose_index,
                 choice_type,
                 base_bet,
+                current_split_unlocked,
                 current_free_general_index,
             )
             rows.append(row)
@@ -378,6 +407,7 @@ def simulation(
                 free_choose_index,
                 choice_type,
                 base_bet,
+                current_split_unlocked,
                 current_free_general_index,
             )
         )
@@ -393,6 +423,7 @@ def simulation_all(
     choice_types: list[str] | None = None,
     free_general_indexes: list[int] | None = None,
     base_bets: list[int] | None = None,
+    split_unlocked_values: list[bool | None] | None = None,
     report_interval: int = REPORT_INTERVAL,
     print_updates: bool = True,
 ) -> list[dict]:
@@ -409,46 +440,59 @@ def simulation_all(
     else:
         target_free_choose_indexes = free_choose_indexes
     target_base_bets = list_config_values(BASE_BETS) if base_bets is None else base_bets
-    for base_bet in target_base_bets:
-        for index in target_indexes:
-            target_general_indexes = [None]
-            for general_index in target_general_indexes:
-                for free_choose_index in target_free_choose_indexes:
-                    choice_type = ""
-                    target_free_general_indexes = [None]
-                    for free_general_index in target_free_general_indexes:
-                        try:
-                            choice_type = choice_type_from_free_choose_index(free_choose_index)
-                            rows = simulation(
-                                spin_times=spin_times,
-                                index=index,
-                                general_index=general_index,
-                                free_choose_index=free_choose_index,
-                                choice_type=choice_type,
-                                free_general_index=free_general_index,
-                                report_interval=report_interval if print_updates else 0,
-                                base_bet=base_bet,
-                                print_updates=print_updates,
-                            )
-                            if rows:
-                                final_row = rows[-1]
-                                final_row["ok"] = True
-                                results.append(final_row)
-                        except Exception as exc:
-                            results.append(
-                                {
-                                    "ok": False,
-                                    "INDEX": index,
-                                    "GENERAL": general_index,
-                                    "FREE_GENERAL": format_free_general_index(free_general_index, general_index),
-                                    "CHOOSE": free_choose_index,
-                                    "FREE_CHOOSE_INDEX": free_choose_index,
-                                    "CHOOSE_TYPE": choice_type,
-                                    "BASE_BET": base_bet,
-                                    "SPIN": spin_times,
-                                    "错误": str(exc),
-                                }
-                            )
+    target_split_unlocked_values = (
+        list_config_values(SPLIT_UNLOCKED)
+        if split_unlocked_values is None
+        else split_unlocked_values
+    )
+    target_split_unlocked_values = [
+        normalize_optional_bool(value) for value in target_split_unlocked_values
+    ]
+    for split_unlocked in target_split_unlocked_values:
+        for base_bet in target_base_bets:
+            for index in target_indexes:
+                target_general_indexes = [None]
+                for general_index in target_general_indexes:
+                    for free_choose_index in target_free_choose_indexes:
+                        choice_type = ""
+                        target_free_general_indexes = [None]
+                        for free_general_index in target_free_general_indexes:
+                            try:
+                                choice_type = choice_type_from_free_choose_index(free_choose_index)
+                                rows = simulation(
+                                    spin_times=spin_times,
+                                    index=index,
+                                    general_index=general_index,
+                                    free_choose_index=free_choose_index,
+                                    choice_type=choice_type,
+                                    free_general_index=free_general_index,
+                                    report_interval=report_interval if print_updates else 0,
+                                    base_bet=base_bet,
+                                    split_unlocked=split_unlocked,
+                                    print_updates=print_updates,
+                                )
+                                if rows:
+                                    final_row = rows[-1]
+                                    final_row["ok"] = True
+                                    results.append(final_row)
+                            except Exception as exc:
+                                results.append(
+                                    {
+                                        "ok": False,
+                                        "INDEX": index,
+                                        "GENERAL": general_index,
+                                        "FREE_GENERAL": format_free_general_index(free_general_index, general_index),
+                                        "CHOOSE": free_choose_index,
+                                        "FREE_CHOOSE_INDEX": free_choose_index,
+                                        "CHOOSE_TYPE": choice_type,
+                                        "BASE_BET": base_bet,
+                                        "SPLIT_UNLOCKED": (
+                                            "" if split_unlocked is None else int(split_unlocked)
+                                        ),
+                                        "SPIN": spin_times,
+                                        "错误": str(exc),
+                                    }
+                                )
     return results
 
 
@@ -465,7 +509,8 @@ def print_summary(result: dict | list[dict]) -> None:
         f"index: {result['INDEX']}, GENERAL_{result['GENERAL']}, "
         f"FREE_GENERAL_{result['FREE_GENERAL']}, FREE_CHOOSE_INDEX: {result['FREE_CHOOSE_INDEX']}, "
         f"choice_type: {result['CHOOSE_TYPE']}, "
-        f"base_bet: {result['BASE_BET']}"
+        f"base_bet: {result['BASE_BET']}, "
+        f"split_unlocked: {result['SPLIT_UNLOCKED']}"
     )
     print(f"总押注: {result['总押注']}")
     print(f"普通游戏赢钱: {result['BaseLine']}")
@@ -593,6 +638,17 @@ def parse_str_list(value: str | None) -> list[str] | None:
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
+def parse_bool_list(value: str | None) -> list[bool | None] | None:
+    """Parse comma-separated optional bool values."""
+
+    if value is None:
+        return None
+    value = value.strip()
+    if not value:
+        return []
+    return [normalize_optional_bool(item) for item in value.split(",")]
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run rzcs line-game simulation.")
     parser.add_argument("--spins", type=int, default=SPIN_TIMES, help="Base ng_spin count.")
@@ -607,6 +663,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--choices", default=None, help="Comma-separated choices: free,super_free.")
     parser.add_argument("--base-bets", default=None, help="Comma-separated base bets.")
     parser.add_argument("--base-bet", type=int, default=None, help="Single base bet, kept for compatibility.")
+    parser.add_argument(
+        "--split-unlocked",
+        default=None,
+        help="Comma-separated third-column split unlock states: 1/true=unlocked, 0/false=locked, auto=bet based.",
+    )
     parser.add_argument("--report-interval", type=int, default=REPORT_INTERVAL)
     parser.add_argument(
         "--no-print-updates",
@@ -655,6 +716,7 @@ statics_columns = [
             "FREE_CHOOSE_INDEX",
             "CHOOSE_TYPE",
             "BASE_BET",
+            "SPLIT_UNLOCKED",
             "SPIN",
             "总押注",
             "rtp",
@@ -729,6 +791,7 @@ if __name__ == "__main__":
         choice_types=parse_str_list(args.choices),
         free_general_indexes=parse_int_list(args.free_generals),
         base_bets=base_bets,
+        split_unlocked_values=parse_bool_list(args.split_unlocked),
         report_interval=args.report_interval,
         print_updates=args.print_updates,
     )

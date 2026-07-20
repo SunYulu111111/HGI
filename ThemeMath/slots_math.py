@@ -49,6 +49,8 @@ class SlotsGame:
     # 配置文件解析结果会被缓存，避免大量模拟时重复读盘。
     _game_config_cache: dict[Path, SlotGameConfig] = {}
     _reel_config_cache: dict[tuple[Path, int, int], dict] = {}
+    _reel_config_path_cache: dict[tuple[Path, str | None, int], Path] = {}
+    _reel_config_request_cache: dict[tuple[Path, str | None, int, int, int], dict] = {}
 
     def __init__(
         self,
@@ -63,8 +65,12 @@ class SlotsGame:
         self.base_bet = base_bet
         self.project_dir = self._resolve_project_dir(project_dir, game_config_file)
         self.config = self._load_game_config(self.project_dir / game_config_file)
-        self.reel_config_dir = self.project_dir / reel_config_dir
+        reel_config_path = Path(reel_config_dir)
+        if not reel_config_path.is_absolute():
+            reel_config_path = self.project_dir / reel_config_path
+        self.reel_config_dir = reel_config_path.resolve()
         self.reel_file_template = reel_file_template
+        self._resolved_reel_config_dirs: dict[str | None, Path] = {None: self.reel_config_dir}
         self.wild_id = self.config.wild_id if wild_id is None else wild_id
         self.last_win_items: list[dict] = []
         self.last_win_positions: list[tuple[int, int]] = []
@@ -220,14 +226,28 @@ class SlotsGame:
     ) -> dict:
         """读取并缓存指定 index/general 的 reel 配置。"""
 
+        target_dir = self._resolve_reel_config_dir(reel_config_dir)
+        target_template = self.reel_file_template if reel_file_template is None else reel_file_template
+        request_cache_key = (
+            target_dir,
+            target_template,
+            index,
+            general_index,
+            self.config.col_count,
+        )
+        if request_cache_key in self._reel_config_request_cache:
+            return self._reel_config_request_cache[request_cache_key]
+
         path = self._find_reel_config_path(
             index,
-            reel_config_dir=reel_config_dir,
-            reel_file_template=reel_file_template,
+            reel_config_dir=target_dir,
+            reel_file_template=target_template,
         )
-        cache_key = (path.resolve(), general_index, self.config.col_count)
+        cache_key = (path, general_index, self.config.col_count)
         if cache_key in self._reel_config_cache:
-            return self._reel_config_cache[cache_key]
+            config = self._reel_config_cache[cache_key]
+            self._reel_config_request_cache[request_cache_key] = config
+            return config
 
         parser = self._read_config_file(path)
 
@@ -256,6 +276,7 @@ class SlotsGame:
             raise ValueError(f"{path.name} [{section_name}] BASE_RATE must contain 4 values")
 
         self._reel_config_cache[cache_key] = config
+        self._reel_config_request_cache[request_cache_key] = config
         return config
 
     def _find_reel_config_path(
@@ -268,6 +289,9 @@ class SlotsGame:
 
         target_dir = self._resolve_reel_config_dir(reel_config_dir)
         target_template = self.reel_file_template if reel_file_template is None else reel_file_template
+        cache_key = (target_dir, target_template, index)
+        if cache_key in self._reel_config_path_cache:
+            return self._reel_config_path_cache[cache_key]
 
         if not target_dir.exists():
             raise FileNotFoundError(f"reel config dir not found: {target_dir}")
@@ -275,10 +299,12 @@ class SlotsGame:
         if target_template:
             path = target_dir / target_template.format(index=index)
             if path.exists():
+                self._reel_config_path_cache[cache_key] = path
                 return path
 
             fallback_path = target_dir / target_template.format(index=0)
             if index != 0 and fallback_path.exists():
+                self._reel_config_path_cache[cache_key] = fallback_path
                 return fallback_path
 
             raise FileNotFoundError(f"reel config not found: {path}; fallback index 0 not found")
@@ -287,12 +313,14 @@ class SlotsGame:
             path for path in target_dir.glob("*.conf") if self._matches_reel_index(path, index)
         )
         if len(matches) == 1:
+            self._reel_config_path_cache[cache_key] = matches[0]
             return matches[0]
         if not matches:
             fallback_matches = sorted(
                 path for path in target_dir.glob("*.conf") if self._matches_reel_index(path, 0)
             )
             if index != 0 and len(fallback_matches) == 1:
+                self._reel_config_path_cache[cache_key] = fallback_matches[0]
                 return fallback_matches[0]
             if index != 0 and len(fallback_matches) > 1:
                 names = ", ".join(path.name for path in fallback_matches)
@@ -311,12 +339,17 @@ class SlotsGame:
         """把 reel 配置目录解析成绝对路径；相对路径默认基于项目目录。"""
 
         if reel_config_dir is None:
-            return self.reel_config_dir.resolve()
+            return self.reel_config_dir
+        cache_key = str(reel_config_dir)
+        if cache_key in self._resolved_reel_config_dirs:
+            return self._resolved_reel_config_dirs[cache_key]
 
         path = Path(reel_config_dir)
         if not path.is_absolute():
             path = self.project_dir / path
-        return path.resolve()
+        resolved_path = path if path.is_absolute() else path.resolve()
+        self._resolved_reel_config_dirs[cache_key] = resolved_path
+        return resolved_path
 
     @classmethod
     def _read_config_file(cls, path: Path) -> ConfigParser:
@@ -877,7 +910,7 @@ class LinesGame(SlotsGame):
 
         grid_disables = self._get_grid_disables(free_game, col_count, row_count)
         total_win = 0
-        win_items = []
+        win_items = [] if return_detail else None
         for line_index, line_rule in enumerate(config.line_rules):
             for direction, ordered_positions in self._iter_line_directions(line_rule):
                 line_win = self._cal_one_line_direction(
@@ -891,13 +924,16 @@ class LinesGame(SlotsGame):
                 if line_win is None:
                     continue
                 total_win += line_win["win"]
-                win_items.append(line_win)
+                if return_detail:
+                    win_items.append(line_win)
 
-        win_positions = sorted({position for item in win_items for position in item["positions"]})
-        self.last_win_items = win_items
-        self.last_win_positions = win_positions
         if return_detail:
+            win_positions = sorted({position for item in win_items for position in item["positions"]})
+            self.last_win_items = win_items
+            self.last_win_positions = win_positions
             return {"total_win": total_win, "items": win_items, "win_positions": win_positions}
+        self.last_win_items = []
+        self.last_win_positions = []
         return total_win
 
     def _iter_line_directions(self, line_rule: list[tuple[int, int]]):

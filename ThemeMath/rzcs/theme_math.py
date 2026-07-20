@@ -28,6 +28,7 @@ class ThemeMath(LinesGame):
     def __init__(self, base_bet: int = 10000, **kwargs):
         project_dir = kwargs.pop("project_dir", Path(__file__).resolve().parent)
         game_config_file = kwargs.pop("game_config_file", self.DEFAULT_GAME_CONFIG_FILE)
+        self.third_col_split_unlocked = kwargs.pop("third_col_split_unlocked", None)
         self.game_server_config_file = kwargs.pop(
             "game_server_config_file",
             self.DEFAULT_GAME_SERVER_CONFIG_FILE,
@@ -47,6 +48,7 @@ class ThemeMath(LinesGame):
             self.grid_disables_free_by_type,
         ) = self._load_type_grid_config()
         self.server_config_index = 0
+        self._applied_server_config_index = 0
         (
             self.win_jp_probability,
             self.win_jp_multiples,
@@ -143,7 +145,7 @@ class ThemeMath(LinesGame):
     ) -> dict:
         win_result = self.cal_item_list(
             item_list,
-            return_detail=True,
+            return_detail=return_detail,
             free_game=free_game,
             row=row,
             col=col,
@@ -156,12 +158,18 @@ class ThemeMath(LinesGame):
             col=col,
             free_game=free_game,
         )
-        line_win = win_result["total_win"]
+        if return_detail:
+            line_win = win_result["total_win"]
+            win_items = win_result["items"]
+            win_positions = win_result["win_positions"]
+        else:
+            line_win = int(win_result)
+            win_items = []
+            win_positions = []
         jp_win = win_jp_info["win"]
         raw_total_win = line_win + jp_win
         win_multiplier_index, win_multiplier = self.choose_free_win_multiplier(free_mode) if free_game else (None, 1)
         total_win = raw_total_win * win_multiplier
-        win_items = win_result["items"] if return_detail else []
         if win_multiplier != 1:
             win_items = self.apply_win_multiplier(win_items, win_multiplier)
         result = {
@@ -174,7 +182,7 @@ class ThemeMath(LinesGame):
             "win_multiplier_index": win_multiplier_index,
             "free_mode": free_mode if free_game else None,
             "win_items": win_items,
-            "win_positions": win_result["win_positions"],
+            "win_positions": win_positions,
             "win_free": win_free_info["win_free"],
             "free_times": win_free_info["free_times"],
             "win_free_info": win_free_info,
@@ -205,8 +213,14 @@ class ThemeMath(LinesGame):
         row: int,
         row_count: int,
     ) -> int | None:
-        cell_item = super()._get_line_cell(board_cols, grid_disables, col, row, row_count)
-        return self.get_base_symbol_id(cell_item)
+        if col < 0 or col >= len(board_cols):
+            return None
+        if row < 0 or row >= len(board_cols[col]):
+            return None
+        disabled_index = col * row_count + row
+        if disabled_index < len(grid_disables) and grid_disables[disabled_index] == 1:
+            return None
+        return board_cols[col][row]
 
     def check_win_free(
         self,
@@ -480,7 +494,11 @@ class ThemeMath(LinesGame):
     def apply_index_server_config(self, index: int) -> None:
         """Apply rzcs_game_server.conf values selected by the player's INDEX."""
 
-        self.server_config_index = self._resolve_server_config_index(index)
+        resolved_index = self._resolve_server_config_index(index)
+        if self._applied_server_config_index == resolved_index:
+            self.server_config_index = resolved_index
+            return
+        self.server_config_index = resolved_index
         (
             self.win_jp_probability,
             self.win_jp_multiples,
@@ -495,6 +513,7 @@ class ThemeMath(LinesGame):
             self.super_free_multiple_probability,
             self.super_free_multiple_trigger_probability,
         ) = self._load_free_multiplier_config(index)
+        self._applied_server_config_index = resolved_index
 
     def _resolve_server_config_index(self, index: int) -> int:
         for section_name in (str(index), "0"):
@@ -534,6 +553,8 @@ class ThemeMath(LinesGame):
         return grid_disables
 
     def is_high_bet(self) -> bool:
+        if self.third_col_split_unlocked is not None:
+            return bool(self.third_col_split_unlocked)
         return self.base_bet >= self.special_type_need_bet
 
     def get_type_index(self) -> int:
