@@ -25,7 +25,7 @@ except ImportError:
     from theme_math import ThemeMath
 
 
-SPIN_TIMES = 1000000
+SPIN_TIMES = 10000000
 INDEX = [0]
 GENERAL_INDEX = [1]
 BASE_BETS = [10000]
@@ -93,6 +93,7 @@ RESULT_CSV_FIELDS = [
     "Free次数",
     "FreeSpin",
     "Free重触发",
+    "Free触发平均次数",
     "Free平均次数",
     "Free平均倍",
     "main_win_times",
@@ -210,6 +211,14 @@ def get_free_times(win_info: dict) -> int:
     return int(win_info.get("free_times", 0)) if win_info.get("win_free") else 0
 
 
+def record_base_trigger_free_times(status: dict, free_times: int) -> None:
+    """Record raw free spins awarded by one base-game trigger."""
+
+    if free_times <= 0:
+        return
+    status["base_trigger_free_times"] += free_times
+
+
 def resolve_free_trigger_choice(m: ThemeMath, win_info: dict, choice_type: str) -> dict:
     """Resolve one win_info trigger with the requested choice."""
 
@@ -274,6 +283,7 @@ def apply_base_trigger_choice(
     """Apply the selected trigger option and return extra spin win."""
 
     choice_result = resolve_free_trigger_choice(m, win_info, choice_type)
+    record_base_trigger_free_times(status, get_free_times(win_info))
     if choice_result["type"] == "free":
         free_times = int(choice_result.get("free_times", 0))
         status_handler.update_free_trigger(status, "base", free_times)
@@ -322,6 +332,11 @@ def build_simulation_row(
     row["Free平均倍"] = (
         free_status["lines"][1] / free_trigger_count / base_bet
         if free_trigger_count and base_bet
+        else 0
+    )
+    row["Free触发平均次数"] = (
+        status["base_trigger_free_times"] / free_trigger_count
+        if free_trigger_count
         else 0
     )
     row["main_win_times"] = base_status["lines"][0]
@@ -534,6 +549,7 @@ def print_summary(result: dict | list[dict]) -> None:
     print(f"免费游戏赢钱率: {result['free_win_rate']:.3f}")
     print(f"触发 free 次数: {result['触发Free']}")
     print(f"free 中再次触发 free 次数: {result['Free重触发']}")
+    print(f"触发 free 时平均次数: {result['Free触发平均次数']:.6f}")
     print(f"触发 free 概率: {result['Free频率']:.3%}")
     print(f"免费游戏总次数: {result['FreeSpin']}")
     print(f"平均每次触发 free 次数: {result['Free平均次数']:.6f}")
@@ -696,6 +712,7 @@ status_model = {
     "wins": 0,
     "hit": 0,
     "free_times": 0,
+    "base_trigger_free_times": 0,
     "jp_type_counts": [0] * JP_TYPE_COUNT,
     "gt_5x": 0,
     "gt_10x": 0,
@@ -762,6 +779,7 @@ statics_columns = [
             "Free次数",
             "FreeSpin",
             "Free重触发",
+            "Free触发平均次数",
             "Free平均次数",
             "Free平均倍",
         ],

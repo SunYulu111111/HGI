@@ -464,7 +464,10 @@ class ThemeMath(LinesGame):
             self._parse_int_list(main.get("SCATTER_MULTIPLES", "")),
         )
 
-    def _load_jp_config(self, index: int | None = None) -> tuple[int, list[int], list[int], list[int]]:
+    def _load_jp_config(
+        self,
+        index: int | None = None,
+    ) -> tuple[int, list[int], list[int], list[int]]:
         main = self._get_runtime_config_section(index)
         return (
             int(main.get("WIN_JP_PROBABILITY", "0")),
