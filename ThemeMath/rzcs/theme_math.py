@@ -22,6 +22,7 @@ class ThemeMath(LinesGame):
     SPECIAL_CONFIG_DIR = "special"
     DEFAULT_GAME_CONFIG_FILE = str(Path(SPECIAL_CONFIG_DIR) / "rzcs_game_config.conf")
     DEFAULT_GAME_SERVER_CONFIG_FILE = str(Path(SPECIAL_CONFIG_DIR) / "rzcs_game_server.conf")
+    DEFAULT_BONUS_CONFIG_FILE = str(Path(SPECIAL_CONFIG_DIR) / "rzcs_bonus.conf")
     FREE_REEL_CONFIG_DIR = "free_reel_config"
     PROBABILITY_DENOMINATOR = 10000
 
@@ -33,6 +34,7 @@ class ThemeMath(LinesGame):
             "game_server_config_file",
             self.DEFAULT_GAME_SERVER_CONFIG_FILE,
         )
+        self.bonus_config_file = kwargs.pop("bonus_config_file", self.DEFAULT_BONUS_CONFIG_FILE)
         super().__init__(
             base_bet=base_bet,
             project_dir=project_dir,
@@ -41,6 +43,8 @@ class ThemeMath(LinesGame):
         )
         self.game_config_file = game_config_file
         self.game_server_config = self._read_config_file(self.project_dir / self.game_server_config_file)
+        bonus_config_path = self.project_dir / self.bonus_config_file
+        self.bonus_config = self._read_config_file(bonus_config_path) if bonus_config_path.exists() else None
         self.scatter_id, self.scatter_cols, self.scatter_multiples = self._load_win_free_config()
         (
             self.special_type_need_bet,
@@ -468,6 +472,50 @@ class ThemeMath(LinesGame):
         self,
         index: int | None = None,
     ) -> tuple[int, list[int], list[int], list[int]]:
+        bonus_section, bonus_general = self._get_bonus_config_sections(index)
+        if bonus_section is not None:
+            probability = int(
+                self._get_bonus_config_value(
+                    bonus_section,
+                    bonus_general,
+                    ("BONUS_ENTER_RATE", "WIN_JP_PROBABILITY"),
+                    "0",
+                )
+            )
+            multiples = self._parse_int_list(
+                self._get_bonus_config_value(
+                    bonus_section,
+                    bonus_general,
+                    ("BONUS_JP_MULTIPLE", "WIN_JP_MULTIPLE"),
+                    "",
+                )
+            )
+            if not multiples:
+                multiples = self._load_bonus_init_multiples(bonus_general)
+            type_probability_text = self._get_bonus_config_value(
+                bonus_section,
+                bonus_general,
+                ("BONUS_JP_TYPE_PROBABILITY", "WIN_JP_TYPE_PROBABILITY"),
+                "",
+            )
+            if not type_probability_text:
+                type_probability_text = self._get_bonus_config_value(
+                    bonus_section,
+                    bonus_general,
+                    ("BONUS_RATE_4", "BONUS_RATE_1"),
+                    "",
+                )
+            type_probability = self._parse_int_list(type_probability_text)
+            double_probability = self._parse_int_list(
+                self._get_bonus_config_value(
+                    bonus_section,
+                    bonus_general,
+                    ("BONUS_JP_DOUBLE_PROBABILITY", "WIN_JP_DOUBLE_PROBABILITY"),
+                    "0,0,0,0",
+                )
+            )
+            return (probability, multiples, type_probability, double_probability)
+
         main = self._get_runtime_config_section(index)
         return (
             int(main.get("WIN_JP_PROBABILITY", "0")),
@@ -475,6 +523,47 @@ class ThemeMath(LinesGame):
             self._parse_int_list(main.get("WIN_JP_TYPE_PROBABILITY", "")),
             self._parse_int_list(main.get("WIN_JP_DOUBLE_PROBABILITY", "0,0,0,0")),
         )
+
+    def _get_bonus_config_sections(self, index: int | None):
+        if self.bonus_config is None:
+            return None, None
+        general = self.bonus_config["GENERAL"] if self.bonus_config.has_section("GENERAL") else None
+        if index is not None:
+            section_name = str(index)
+            if self.bonus_config.has_section(section_name):
+                return self.bonus_config[section_name], general
+        if general is not None:
+            return general, general
+        if self.bonus_config.has_section("0"):
+            return self.bonus_config["0"], None
+        return None, None
+
+    @staticmethod
+    def _get_bonus_config_value(section, general, keys: tuple[str, ...], default: str) -> str:
+        for source in (section, general):
+            if source is None:
+                continue
+            for key in keys:
+                value = source.get(key)
+                if value is not None:
+                    return value
+        return default
+
+    def _load_bonus_init_multiples(self, bonus_general) -> list[int]:
+        if bonus_general is None:
+            return []
+        multiples = []
+        for key in (
+            "BONUS_MINI_INIT_VALUE",
+            "BONUS_MINOR_INIT_VALUE",
+            "BONUS_MAJOR_INIT_VALUE",
+            "BONUS_GRAND_INIT_VALUE",
+        ):
+            values = self._parse_int_list(bonus_general.get(key, ""))
+            if not values:
+                continue
+            multiples.append(values[0] // max(int(self.base_bet), 1))
+        return multiples
 
     def _load_free_multiplier_config(
         self,
@@ -536,12 +625,21 @@ class ThemeMath(LinesGame):
     def _load_type_grid_config(self) -> tuple[int, dict[int, list[int]], dict[int, list[int]]]:
         parser = self._read_config_file(self.project_dir / self.game_config_file)
         main = parser["MAIN"]
-        special_type_need_bet = int(main.get("SPECIAL_TYPE_NEED_BET", "0"))
+        special_type_need_bet = self._load_special_type_need_bet(main)
         return (
             special_type_need_bet,
             self._load_indexed_grid_disables(main, "GRID_DISABLES"),
             self._load_indexed_grid_disables(main, "GRID_DISABLES_FREE"),
         )
+
+    def _load_special_type_need_bet(self, game_config_main) -> int:
+        """Load split-unlock threshold from server config, falling back to the old location."""
+
+        if self.game_server_config.has_section("Game Info"):
+            value = self.game_server_config["Game Info"].get("SPECIAL_TYPE_NEED_BET")
+            if value is not None:
+                return int(value)
+        return int(game_config_main.get("SPECIAL_TYPE_NEED_BET", "0"))
 
     def _load_indexed_grid_disables(self, main, key_prefix: str) -> dict[int, list[int]]:
         grid_disables: dict[int, list[int]] = {}

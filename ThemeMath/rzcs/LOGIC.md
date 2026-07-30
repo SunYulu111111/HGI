@@ -97,39 +97,62 @@ Base 中触发 free 后：
 判断流程：
 
 1. 检查有效牌面上是否存在 Wild
-2. 若存在 Wild，根据 `WIN_JP_PROBABILITY` 判断是否进入 JP
-3. 若进入 JP，根据 `WIN_JP_TYPE_PROBABILITY` 随机 JP 类型
-4. 根据 `WIN_JP_MULTIPLE` 获取基础 JP 倍数
-5. 根据 JP 类型对应的 `WIN_JP_DOUBLE_PROBABILITY` 判断是否翻倍
+2. 若存在 Wild，根据 `rzcs_bonus.conf` 中当前 index 的 `BONUS_ENTER_RATE` 判断是否进入 JP
+3. 若进入 JP，根据 `BONUS_JP_TYPE_PROBABILITY` 随机 JP 类型
+4. 根据 `BONUS_JP_MULTIPLE` 获取基础 JP 倍数
+5. 根据 JP 类型对应的 `BONUS_JP_DOUBLE_PROBABILITY` 判断是否翻倍
 6. 最终 JP 赢分为：
 
 ```text
 jp_win = base_bet * final_jp_multiple
 ```
 
-JP 概率配置在 `special/rzcs_game_server.conf` 中，概率均为万分比：
+JP 配置已从 `special/rzcs_game_server.conf` 迁移到 `special/rzcs_bonus.conf`。生产配置使用 bonus 通用字段：
 
 ```text
-WIN_JP_PROBABILITY=10
-WIN_JP_MULTIPLE=5000,100,50,20
-WIN_JP_TYPE_PROBABILITY=1,5,100,500
-WIN_JP_DOUBLE_PROBABILITY=10,100,500,1000
+BONUS_MINI_INIT_VALUE=...
+BONUS_MINOR_INIT_VALUE=...
+BONUS_MAJOR_INIT_VALUE=...
+BONUS_GRAND_INIT_VALUE=...
+BONUS_ENTER_RATE=62
+BONUS_RATE_1=9615,344,34,7
 ```
 
-`WIN_JP_DOUBLE_PROBABILITY` 顺序对应 `WIN_JP_MULTIPLE=5000,100,50,20`：
+当前 Python 仿真为了保持旧 JP 行为不变，会优先读取同一文件中的兼容字段：
+
+```text
+BONUS_JP_MULTIPLE=20,50,100,5000
+BONUS_JP_TYPE_PROBABILITY=1399,50,5,1
+BONUS_JP_DOUBLE_PROBABILITY=79,50,10,1
+```
+
+`BONUS_JP_DOUBLE_PROBABILITY` 顺序对应 `BONUS_JP_MULTIPLE=20,50,100,5000`：
 
 | JP基础倍数 | 翻倍概率(万分比) | 说明 |
 | --- | --- | --- |
-| 5000 | 10 | 10/10000 |
-| 100 | 100 | 100/10000 |
-| 50 | 500 | 500/10000 |
-| 20 | 1000 | 1000/10000 |
+| 20 | 79 | 79/10000 |
+| 50 | 50 | 50/10000 |
+| 100 | 10 | 10/10000 |
+| 5000 | 1 | 1/10000 |
 
 若命中翻倍：
 
 ```text
 final_jp_multiple = base_jp_multiple * 2
 ```
+
+## 4.1 collect_level 收集等级
+
+仿真中维护玩家当前 `collect_level`：
+
+- 最低等级为 1，最高等级为 5
+- 初始等级由 `collect_level` 参数指定
+- `level_up_rate` 表示当前等级升级到下一等级的概率，概率口径为万分比
+- 每次 Base 牌面结算后，检查有效牌面上是否存在 `Wild(1)`
+- 若有效牌面存在 Wild 且本次未触发 JP，则按 `level_up_rate` 尝试升一级，最高升到 4
+- 若本次触发 JP，则按达到 `collect_level=5` 记录最高等级
+- 触发 JP 玩法后，当前 `collect_level` 重置为 1
+- Free 中不触发 JP，收集等级逻辑只在 Base 牌面后处理
 
 ---
 
@@ -169,7 +192,7 @@ FREE_MULTIPLE=2
 是否应用普通 free 倍乘由以下配置控制，概率为万分比：
 
 ```text
-FREE_MULTIPLE_TRIGGER_PROBABILITY=10000,5000
+FREE_MULTIPLE_TRIGGER_PROBABILITY=10000,10000
 ```
 
 该配置顺序对应：
@@ -177,14 +200,14 @@ FREE_MULTIPLE_TRIGGER_PROBABILITY=10000,5000
 | Index | 条件 | 说明 |
 | --- | --- | --- |
 | 0 | `base_bet < SPECIAL_TYPE_NEED_BET` | 必定触发普通 free 倍乘 |
-| 1 | `base_bet >= SPECIAL_TYPE_NEED_BET` | 50% 概率触发普通 free 倍乘 |
+| 1 | `base_bet >= SPECIAL_TYPE_NEED_BET` | 必定触发普通 free 倍乘 |
 
 因此：
 
 | 条件 | 结果 |
 | --- | --- |
 | `base_bet < SPECIAL_TYPE_NEED_BET` | 本次 spin 赢钱必定 `*2` |
-| `base_bet >= SPECIAL_TYPE_NEED_BET` | 本次 spin 赢钱 50% 概率 `*2`，50% 概率 `*1` |
+| `base_bet >= SPECIAL_TYPE_NEED_BET` | 本次 spin 赢钱必定 `*2` |
 
 ---
 
@@ -200,7 +223,7 @@ SUPER_FREE_MULTIPLE_PROBABILITY=100,50,10
 是否应用 super free 倍乘由以下配置控制，概率为万分比：
 
 ```text
-SUPER_FREE_MULTIPLE_TRIGGER_PROBABILITY=10000,5000
+SUPER_FREE_MULTIPLE_TRIGGER_PROBABILITY=10000,10000
 ```
 
 该配置顺序对应：
@@ -208,14 +231,14 @@ SUPER_FREE_MULTIPLE_TRIGGER_PROBABILITY=10000,5000
 | Index | 条件 | 说明 |
 | --- | --- | --- |
 | 0 | `base_bet < SPECIAL_TYPE_NEED_BET` | 必定触发 super free 倍乘 |
-| 1 | `base_bet >= SPECIAL_TYPE_NEED_BET` | 50% 概率触发 super free 倍乘 |
+| 1 | `base_bet >= SPECIAL_TYPE_NEED_BET` | 必定触发 super free 倍乘 |
 
 因此：
 
 | 条件 | 结果 |
 | --- | --- |
 | `base_bet < SPECIAL_TYPE_NEED_BET` | 本次 spin 必定从 `6/8/15` 中按权重抽取倍乘 |
-| `base_bet >= SPECIAL_TYPE_NEED_BET` | 本次 spin 50% 概率从 `6/8/15` 中按权重抽取倍乘，50% 概率 `*1` |
+| `base_bet >= SPECIAL_TYPE_NEED_BET` | 本次 spin 必定从 `6/8/15` 中按权重抽取倍乘 |
 
 ---
 
@@ -267,7 +290,6 @@ Free 中同样遍历所有中奖线：
 
 ## 7.1 special/rzcs_game_config.conf
 
-- `SPECIAL_TYPE_NEED_BET`
 - `GRID_DISABLES`
 - `GRID_DISABLES_FREE`
 - `SCATTER_ID`
@@ -276,16 +298,36 @@ Free 中同样遍历所有中奖线：
 
 ## 7.2 special/rzcs_game_server.conf
 
-- `WIN_JP_PROBABILITY`
-- `WIN_JP_MULTIPLE`
-- `WIN_JP_TYPE_PROBABILITY`
-- `WIN_JP_DOUBLE_PROBABILITY`
-- `FREE_MULTIPLE`
-- `FREE_MULTIPLE_PROBABILITY`
-- `FREE_MULTIPLE_TRIGGER_PROBABILITY`
-- `SUPER_FREE_MULTIPLE`
-- `SUPER_FREE_MULTIPLE_PROBABILITY`
-- `SUPER_FREE_MULTIPLE_TRIGGER_PROBABILITY`
+- `[Game Info]`
+  - `SPECIAL_TYPE_NEED_BET`
+- `[index]`
+  - `FREE_MULTIPLE`
+  - `FREE_MULTIPLE_PROBABILITY`
+  - `FREE_MULTIPLE_TRIGGER_PROBABILITY`
+  - `SUPER_FREE_MULTIPLE`
+  - `SUPER_FREE_MULTIPLE_PROBABILITY`
+  - `SUPER_FREE_MULTIPLE_TRIGGER_PROBABILITY`
+
+旧版本若仍在 `special/rzcs_game_config.conf` 中配置 `SPECIAL_TYPE_NEED_BET`，代码会作为回退读取。
+
+## 7.3 special/rzcs_bonus.conf
+
+- `[GENERAL]`
+  - `BONUS_MINI_INIT_VALUE`
+  - `BONUS_MINOR_INIT_VALUE`
+  - `BONUS_MAJOR_INIT_VALUE`
+  - `BONUS_GRAND_INIT_VALUE`
+  - `BONUS_GRAND_ACCUM_RATE`
+  - `BONUS_GRAND_ACCUM_MAX`
+  - `BONUS_OPEN_ACCUM_NUM`
+  - `BONUS_ENTER_RATE`
+  - `BONUS_RATE_1` ~ `BONUS_RATE_6`
+  - `BONUS_JP_MULTIPLE`
+  - `BONUS_JP_TYPE_PROBABILITY`
+  - `BONUS_JP_DOUBLE_PROBABILITY`
+- `[index]`
+  - `BONUS_ENTER_RATE`
+  - `BONUS_RATE_1` ~ `BONUS_RATE_6`
 
 ---
 
@@ -327,11 +369,18 @@ Free 中同样遍历所有中奖线：
 
 默认仿真配置：
 
-- `SPIN_TIMES=1000000`
+- `SPIN_TIMES=10000000`
 - `INDEX=[0]`
 - `BASE_BETS=[10000]`
-- `FREE_CHOOSE_INDEX=[1]`
+- `FREE_CHOOSE_INDEX=[2]`
+- `COLLECT_LEVEL=1`
+- `LEVEL_UP_RATE=0`
 - `REPORT_INTERVAL=5000`
+
+相关命令行参数：
+
+- `--collect-level`：初始收集等级，范围 1~5
+- `--level-up-rate`：牌面出现有效 Wild 时从当前等级升到下一等级的概率，范围 0~10000
 
 ---
 
@@ -344,10 +393,12 @@ Free 中同样遍历所有中奖线：
 5. Base 中累计 free 次数 `>= 16` 才进入选择玩法
 6. Base 中累计 free 次数 `< 16` 直接进入普通 free
 7. Free 中不进入选择玩法，只累加额外 free 次数
-8. 普通 free 低 bet 必定 `*2`，高 bet 按 `FREE_MULTIPLE_TRIGGER_PROBABILITY` 判断是否 `*2`
-9. Super free 低 bet 必定随机倍乘，高 bet 按 `SUPER_FREE_MULTIPLE_TRIGGER_PROBABILITY` 判断是否随机倍乘
+8. 普通 free 低 bet / 高 bet 都按 `FREE_MULTIPLE_TRIGGER_PROBABILITY=10000,10000` 必定 `*2`
+9. Super free 低 bet / 高 bet 都按 `SUPER_FREE_MULTIPLE_TRIGGER_PROBABILITY=10000,10000` 必定随机倍乘
 10. JP 只在 Base 未触发 free 时判断
 11. JP pick 后会按 JP 类型概率判断是否翻倍
 12. 当前 symbol id 已压缩，不再区分分裂和非分裂 symbol
 13. 所有直接概率配置均使用万分比
-14. `WIN_JP_TYPE_PROBABILITY`、`FREE_MULTIPLE_PROBABILITY`、`SUPER_FREE_MULTIPLE_PROBABILITY` 是权重，不是万分比概率
+14. `BONUS_JP_TYPE_PROBABILITY`、`FREE_MULTIPLE_PROBABILITY`、`SUPER_FREE_MULTIPLE_PROBABILITY` 是权重，不是万分比概率
+15. `collect_level` 只在 Base 牌面后更新；普通 Wild 升级最高到 4
+16. 触发 JP 时按达到 `collect_level=5` 记录最高等级，随后当前 `collect_level` 重置为 1

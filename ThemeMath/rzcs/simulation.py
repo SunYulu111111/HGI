@@ -30,15 +30,22 @@ INDEX = [0]
 GENERAL_INDEX = [1]
 BASE_BETS = [10000]
 SPLIT_UNLOCKED = [1]
+COLLECT_LEVEL = 1
+LEVEL_UP_RATE = 0
 REPORT_INTERVAL = 5000
 THRESHOLDS = (5, 10, 20, 50, 100, 1000)
-FREE_CHOOSE_INDEX = [2]
+FREE_CHOOSE_INDEX = [1]
 FREE_CHOOSE_TYPE_BY_INDEX = {
     1: "free",
     2: "super_free",
 }
 FREE_CHOOSE_INDEX_BY_TYPE = {value: key for key, value in FREE_CHOOSE_TYPE_BY_INDEX.items()}
 FREE_TRIGGER_CHOICES = ("free", "super_free", "super_wild")
+FREE_MODE_STAT_PREFIX = {
+    "free": "normal_free",
+    "super_free": "super_free",
+    "super_wild": "super_free",
+}
 JP_TYPE_COUNT = 4
 JP_TYPE_REPORT_FIELDS = tuple(
     field
@@ -52,6 +59,36 @@ JP_TYPE_STATICS_FIELDS = [
     for index in range(JP_TYPE_COUNT)
     for field_type in ("count", "rate")
 ]
+FREE_MODE_REPORT_FIELDS = [
+    "normal_free_rtp",
+    "normal_free_lines_rtp",
+    "normal_free_jp_rtp",
+    "普通FreeLine",
+    "普通FreeJP",
+    "普通Free触发",
+    "普通Free次数",
+    "普通FreeSpin",
+    "普通Free重触发",
+    "普通Free触发平均次数",
+    "普通Free平均次数",
+    "普通Free平均倍",
+    "normal_free_win_times",
+    "normal_free_win_rate",
+    "super_free_rtp",
+    "super_free_lines_rtp",
+    "super_free_jp_rtp",
+    "SuperFreeLine",
+    "SuperFreeJP",
+    "SuperFree触发",
+    "SuperFree次数",
+    "SuperFreeSpin",
+    "SuperFree重触发",
+    "SuperFree触发平均次数",
+    "SuperFree平均次数",
+    "SuperFree平均倍",
+    "super_free_win_times",
+    "super_free_win_rate",
+]
 GENERAL_SECTION_RE = re.compile(r"^\s*\[GENERAL_(\d+)\]\s*$", re.MULTILINE)
 RESULT_CSV = Path(__file__).resolve().with_name("simulate_result.csv")
 RESULT_CSV_FIELDS = [
@@ -63,6 +100,13 @@ RESULT_CSV_FIELDS = [
     "CHOOSE_TYPE",
     "BASE_BET",
     "SPLIT_UNLOCKED",
+    "COLLECT_LEVEL",
+    "LEVEL_UP_RATE",
+    "当前收集等级",
+    "最高收集等级",
+    "Wild牌面次数",
+    "等级升级次数",
+    "JP升5次数",
     "SPIN",
     "总押注",
     "rtp",
@@ -96,6 +140,7 @@ RESULT_CSV_FIELDS = [
     "Free触发平均次数",
     "Free平均次数",
     "Free平均倍",
+    *FREE_MODE_REPORT_FIELDS,
     "main_win_times",
     "main_win_rate",
     "free_win_times",
@@ -143,6 +188,26 @@ def normalize_optional_bool(value):
     raise ValueError(f"invalid bool value: {value}")
 
 
+def normalize_collect_level(value: int) -> int:
+    """Validate the initial collect level."""
+
+    level = int(value)
+    if not 1 <= level <= 5:
+        raise ValueError(f"collect_level must be between 1 and 5, got: {value}")
+    return level
+
+
+def normalize_level_up_rate(value: int) -> int:
+    """Validate level-up probability in ten-thousandths."""
+
+    probability = int(value)
+    if not 0 <= probability <= ThemeMath.PROBABILITY_DENOMINATOR:
+        raise ValueError(
+            f"level_up_rate must be between 0 and {ThemeMath.PROBABILITY_DENOMINATOR}, got: {value}"
+        )
+    return probability
+
+
 def normalize_choice_type(choice_type: str) -> str:
     """Validate and normalize the configured free-trigger choice."""
 
@@ -187,6 +252,13 @@ def format_free_general_index(free_general_index: int | None, general_index: int
     return general_index if free_general_index is None else free_general_index
 
 
+def free_mode_stat_prefix(free_mode: str) -> str:
+    """Return the status prefix used for normal/super free split statistics."""
+
+    normalized_mode = normalize_choice_type(free_mode)
+    return FREE_MODE_STAT_PREFIX[normalized_mode]
+
+
 def discover_general_indexes(index: int, free_game: bool = False) -> list[int]:
     """Discover GENERAL_n sections in the configured reel file."""
 
@@ -209,6 +281,44 @@ def get_free_times(win_info: dict) -> int:
     """Return awarded free spins for a win_info payload."""
 
     return int(win_info.get("free_times", 0)) if win_info.get("win_free") else 0
+
+
+def has_visible_wild(m: ThemeMath, win_info: dict) -> bool:
+    """Return whether the evaluated player board contains an active wild."""
+
+    for col_items in win_info.get("item_list", []):
+        for item in col_items:
+            if item is not None and m.get_base_symbol_id(item) == m.wild_id:
+                return True
+    return False
+
+
+def update_collect_level(m: ThemeMath, status: dict, win_info: dict) -> None:
+    """Update collect level after one base-game board."""
+
+    wild_visible = has_visible_wild(m, win_info)
+    if wild_visible:
+        status_handler.add_status_value(status, 1, "collect_level_wild_spins")
+
+    if win_info.get("win_jp"):
+        status_handler.add_status_value(status, 1, "collect_level_jp_up_times")
+        if status["collect_level"] < 5:
+            status_handler.add_status_value(status, 1, "collect_level_up_times")
+        status["collect_level_max"] = max(status["collect_level_max"], 5)
+        status["collect_level"] = 1
+        return
+
+    if not wild_visible:
+        return
+
+    if status["collect_level"] >= 4:
+        return
+    if not m.roll_probability(status["level_up_rate"]):
+        return
+
+    status["collect_level"] += 1
+    status_handler.add_status_value(status, 1, "collect_level_up_times")
+    status["collect_level_max"] = max(status["collect_level_max"], status["collect_level"])
 
 
 def record_base_trigger_free_times(status: dict, free_times: int) -> None:
@@ -249,6 +359,38 @@ def record_win_info(status: dict, win_info: dict, mode_key: str) -> int:
     return total_win
 
 
+def record_free_mode_win_info(status: dict, win_info: dict, prefix: str) -> None:
+    """Record one free spin into the normal/super split status fields."""
+
+    line_win = get_line_win(win_info)
+    jp_win = int(win_info.get("jp_win", 0))
+    if line_win > 0:
+        status_handler.add_status_value(status, [1, line_win], f"{prefix}_lines")
+    if jp_win > 0:
+        status_handler.add_status_value(status, [1, jp_win], f"{prefix}_jp")
+
+
+def record_free_mode_base_trigger(status: dict, free_mode: str, free_times: int) -> None:
+    """Record one base-game free trigger in the selected free mode bucket."""
+
+    if free_times <= 0:
+        return
+    prefix = free_mode_stat_prefix(free_mode)
+    status_handler.add_status_value(status, 1, f"{prefix}_triggers")
+    status_handler.add_status_value(status, free_times, f"{prefix}_base_trigger_times")
+    status_handler.add_status_value(status, free_times, f"{prefix}_times")
+
+
+def record_free_mode_retrigger(status: dict, free_mode: str, free_times: int) -> None:
+    """Record free-game retriggers in the active free mode bucket."""
+
+    if free_times <= 0:
+        return
+    prefix = free_mode_stat_prefix(free_mode)
+    status_handler.add_status_value(status, 1, f"{prefix}_free")
+    status_handler.add_status_value(status, free_times, f"{prefix}_times")
+
+
 def run_free_spins(
     m: ThemeMath,
     status: dict,
@@ -260,14 +402,18 @@ def run_free_spins(
 
     remaining_free_times = free_times
     free_total_win = 0
+    free_mode_prefix = free_mode_stat_prefix(free_mode)
     while remaining_free_times > 0:
         remaining_free_times -= 1
         status_handler.add_status_value(status, 1, "free", "spin")
+        status_handler.add_status_value(status, 1, f"{free_mode_prefix}_spin")
         fg_info = m.fg_spin(index, return_detail=False, free_mode=free_mode)
         free_total_win += record_win_info(status, fg_info, "free")
+        record_free_mode_win_info(status, fg_info, free_mode_prefix)
 
         retrigger_times = get_free_times(fg_info)
         status_handler.update_free_trigger(status, "free", retrigger_times)
+        record_free_mode_retrigger(status, free_mode, retrigger_times)
         remaining_free_times += retrigger_times
 
     return free_total_win
@@ -287,12 +433,57 @@ def apply_base_trigger_choice(
     if choice_result["type"] == "free":
         free_times = int(choice_result.get("free_times", 0))
         status_handler.update_free_trigger(status, "base", free_times)
+        record_free_mode_base_trigger(status, "free", free_times)
         return run_free_spins(m, status, index, free_times, free_mode="free")
     if choice_result["type"] == "super_free":
         free_times = int(choice_result.get("free_times", 0))
         status_handler.update_free_trigger(status, "base", free_times)
+        record_free_mode_base_trigger(status, "super_free", free_times)
         return run_free_spins(m, status, index, free_times, free_mode="super_free")
     return 0
+
+
+def add_free_mode_row_fields(
+    row: dict,
+    status: dict,
+    prefix: str,
+    label: str,
+    base_bet: int,
+) -> None:
+    """Add normal/super free report fields without affecting aggregate RTP."""
+
+    total_bet = status["bet"]
+    line_count, line_win = status[f"{prefix}_lines"]
+    _, jp_win = status[f"{prefix}_jp"]
+    trigger_count = status[f"{prefix}_triggers"]
+    spin_count = status[f"{prefix}_spin"]
+    free_times = status[f"{prefix}_times"]
+    retrigger_count = status[f"{prefix}_free"]
+    base_trigger_times = status[f"{prefix}_base_trigger_times"]
+    total_win = line_win + jp_win
+
+    row[f"{prefix}_rtp"] = total_win / total_bet if total_bet else 0
+    row[f"{prefix}_lines_rtp"] = line_win / total_bet if total_bet else 0
+    row[f"{prefix}_jp_rtp"] = jp_win / total_bet if total_bet else 0
+    row[f"{label}Line"] = line_win
+    row[f"{label}JP"] = jp_win
+    row[f"{label}触发"] = trigger_count
+    row[f"{label}次数"] = free_times
+    row[f"{label}Spin"] = spin_count
+    row[f"{label}重触发"] = retrigger_count
+    row[f"{label}触发平均次数"] = (
+        base_trigger_times / trigger_count
+        if trigger_count
+        else 0
+    )
+    row[f"{label}平均次数"] = free_times / trigger_count if trigger_count else 0
+    row[f"{label}平均倍"] = (
+        line_win / trigger_count / base_bet
+        if trigger_count and base_bet
+        else 0
+    )
+    row[f"{prefix}_win_times"] = line_count
+    row[f"{prefix}_win_rate"] = line_count / spin_count if spin_count else 0
 
 
 def build_simulation_row(
@@ -316,6 +507,13 @@ def build_simulation_row(
     row["CHOOSE_TYPE"] = format_choice_type(choice_type)
     row["BASE_BET"] = base_bet
     row["SPLIT_UNLOCKED"] = int(split_unlocked)
+    row["COLLECT_LEVEL"] = status["collect_level_start"]
+    row["LEVEL_UP_RATE"] = status["level_up_rate"]
+    row["当前收集等级"] = status["collect_level"]
+    row["最高收集等级"] = status["collect_level_max"]
+    row["Wild牌面次数"] = status["collect_level_wild_spins"]
+    row["等级升级次数"] = status["collect_level_up_times"]
+    row["JP升5次数"] = status["collect_level_jp_up_times"]
     row["错误"] = ""
 
     base_status = status["base"]
@@ -347,6 +545,8 @@ def build_simulation_row(
         if free_status["spin"]
         else 0
     )
+    add_free_mode_row_fields(row, status, "normal_free", "普通Free", base_bet)
+    add_free_mode_row_fields(row, status, "super_free", "SuperFree", base_bet)
     return row
 
 
@@ -360,6 +560,8 @@ def simulation(
     report_interval: int = REPORT_INTERVAL,
     base_bet: int | None = None,
     split_unlocked: bool | None = None,
+    collect_level: int = COLLECT_LEVEL,
+    level_up_rate: int = LEVEL_UP_RATE,
     print_updates: bool = False,
 ) -> list[dict]:
     """Run N base spins and return cumulative checkpoint rows."""
@@ -374,11 +576,17 @@ def simulation(
     if split_unlocked is None:
         split_unlocked = first_config_value(SPLIT_UNLOCKED)
     split_unlocked = normalize_optional_bool(split_unlocked)
+    collect_level = normalize_collect_level(collect_level)
+    level_up_rate = normalize_level_up_rate(level_up_rate)
     m = ThemeMath(base_bet=base_bet, third_col_split_unlocked=split_unlocked)
     general_index = m.get_base_general_index()
     current_free_general_index = m.get_free_general_index(choice_type)
     current_split_unlocked = m.is_high_bet()
     status = status_handler.new_status()
+    status["collect_level_start"] = collect_level
+    status["collect_level"] = collect_level
+    status["collect_level_max"] = collect_level
+    status["level_up_rate"] = level_up_rate
     rows = []
 
     for _ in range(spin_times):
@@ -387,6 +595,7 @@ def simulation(
 
         win_info = m.ng_spin(index, return_detail=False)
         spin_total_win += record_win_info(status, win_info, "base")
+        update_collect_level(m, status, win_info)
         spin_total_win += apply_base_trigger_choice(
             m,
             status,
@@ -439,6 +648,8 @@ def simulation_all(
     free_general_indexes: list[int] | None = None,
     base_bets: list[int] | None = None,
     split_unlocked_values: list[bool | None] | None = None,
+    collect_level: int = COLLECT_LEVEL,
+    level_up_rate: int = LEVEL_UP_RATE,
     report_interval: int = REPORT_INTERVAL,
     print_updates: bool = True,
 ) -> list[dict]:
@@ -463,6 +674,8 @@ def simulation_all(
     target_split_unlocked_values = [
         normalize_optional_bool(value) for value in target_split_unlocked_values
     ]
+    collect_level = normalize_collect_level(collect_level)
+    level_up_rate = normalize_level_up_rate(level_up_rate)
     for split_unlocked in target_split_unlocked_values:
         for base_bet in target_base_bets:
             for index in target_indexes:
@@ -484,6 +697,8 @@ def simulation_all(
                                     report_interval=report_interval if print_updates else 0,
                                     base_bet=base_bet,
                                     split_unlocked=split_unlocked,
+                                    collect_level=collect_level,
+                                    level_up_rate=level_up_rate,
                                     print_updates=print_updates,
                                 )
                                 if rows:
@@ -504,6 +719,8 @@ def simulation_all(
                                         "SPLIT_UNLOCKED": (
                                             "" if split_unlocked is None else int(split_unlocked)
                                         ),
+                                        "COLLECT_LEVEL": collect_level,
+                                        "LEVEL_UP_RATE": level_up_rate,
                                         "SPIN": spin_times,
                                         "错误": str(exc),
                                     }
@@ -525,7 +742,14 @@ def print_summary(result: dict | list[dict]) -> None:
         f"FREE_GENERAL_{result['FREE_GENERAL']}, FREE_CHOOSE_INDEX: {result['FREE_CHOOSE_INDEX']}, "
         f"choice_type: {result['CHOOSE_TYPE']}, "
         f"base_bet: {result['BASE_BET']}, "
-        f"split_unlocked: {result['SPLIT_UNLOCKED']}"
+        f"split_unlocked: {result['SPLIT_UNLOCKED']}, "
+        f"collect_level: {result['COLLECT_LEVEL']}, "
+        f"level_up_rate: {result['LEVEL_UP_RATE']}"
+    )
+    print(
+        f"当前收集等级: {result['当前收集等级']}, 最高收集等级: {result['最高收集等级']}, "
+        f"Wild牌面次数: {result['Wild牌面次数']}, 等级升级次数: {result['等级升级次数']}, "
+        f"JP升5次数: {result['JP升5次数']}"
     )
     print(f"总押注: {result['总押注']}")
     print(f"普通游戏赢钱: {result['BaseLine']}")
@@ -554,6 +778,14 @@ def print_summary(result: dict | list[dict]) -> None:
     print(f"免费游戏总次数: {result['FreeSpin']}")
     print(f"平均每次触发 free 次数: {result['Free平均次数']:.6f}")
     print(f"平均每次 free 赢钱倍数: {result['Free平均倍']:.3f}")
+    print(
+        f"普通 free: 触发 {result['普通Free触发']}, spin {result['普通FreeSpin']}, "
+        f"重触发 {result['普通Free重触发']}, RTP {result['normal_free_rtp']:.3f}"
+    )
+    print(
+        f"Super free: 触发 {result['SuperFree触发']}, spin {result['SuperFreeSpin']}, "
+        f"重触发 {result['SuperFree重触发']}, RTP {result['super_free_rtp']:.3f}"
+    )
 
 
 def print_table(results: list[dict]) -> None:
@@ -680,6 +912,18 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--base-bets", default=None, help="Comma-separated base bets.")
     parser.add_argument("--base-bet", type=int, default=None, help="Single base bet, kept for compatibility.")
     parser.add_argument(
+        "--collect-level",
+        type=int,
+        default=COLLECT_LEVEL,
+        help="Initial collect level, min 1 and max 5.",
+    )
+    parser.add_argument(
+        "--level-up-rate",
+        type=int,
+        default=LEVEL_UP_RATE,
+        help="Probability in ten-thousandths to upgrade one level when an active wild appears.",
+    )
+    parser.add_argument(
         "--split-unlocked",
         default=None,
         help="Comma-separated third-column split unlock states: 1/true=unlocked, 0/false=locked, auto=bet based.",
@@ -713,6 +957,27 @@ status_model = {
     "hit": 0,
     "free_times": 0,
     "base_trigger_free_times": 0,
+    "collect_level_start": COLLECT_LEVEL,
+    "collect_level": COLLECT_LEVEL,
+    "collect_level_max": COLLECT_LEVEL,
+    "level_up_rate": LEVEL_UP_RATE,
+    "collect_level_wild_spins": 0,
+    "collect_level_up_times": 0,
+    "collect_level_jp_up_times": 0,
+    "normal_free_spin": 0,
+    "normal_free_lines": [0, 0],
+    "normal_free_jp": [0, 0],
+    "normal_free_free": 0,
+    "normal_free_times": 0,
+    "normal_free_triggers": 0,
+    "normal_free_base_trigger_times": 0,
+    "super_free_spin": 0,
+    "super_free_lines": [0, 0],
+    "super_free_jp": [0, 0],
+    "super_free_free": 0,
+    "super_free_times": 0,
+    "super_free_triggers": 0,
+    "super_free_base_trigger_times": 0,
     "jp_type_counts": [0] * JP_TYPE_COUNT,
     "gt_5x": 0,
     "gt_10x": 0,
@@ -734,6 +999,13 @@ statics_columns = [
             "CHOOSE_TYPE",
             "BASE_BET",
             "SPLIT_UNLOCKED",
+            "COLLECT_LEVEL",
+            "LEVEL_UP_RATE",
+            "当前收集等级",
+            "最高收集等级",
+            "Wild牌面次数",
+            "等级升级次数",
+            "JP升5次数",
             "SPIN",
             "总押注",
             "rtp",
@@ -784,6 +1056,44 @@ statics_columns = [
             "Free平均倍",
         ],
     },
+    {
+        "title": "普通Free",
+        "fields": [
+            "normal_free_rtp",
+            "normal_free_lines_rtp",
+            "normal_free_jp_rtp",
+            "普通FreeLine",
+            "普通FreeJP",
+            "普通Free触发",
+            "普通Free次数",
+            "普通FreeSpin",
+            "普通Free重触发",
+            "普通Free触发平均次数",
+            "普通Free平均次数",
+            "普通Free平均倍",
+            "normal_free_win_times",
+            "normal_free_win_rate",
+        ],
+    },
+    {
+        "title": "SuperFree",
+        "fields": [
+            "super_free_rtp",
+            "super_free_lines_rtp",
+            "super_free_jp_rtp",
+            "SuperFreeLine",
+            "SuperFreeJP",
+            "SuperFree触发",
+            "SuperFree次数",
+            "SuperFreeSpin",
+            "SuperFree重触发",
+            "SuperFree触发平均次数",
+            "SuperFree平均次数",
+            "SuperFree平均倍",
+            "super_free_win_times",
+            "super_free_win_rate",
+        ],
+    },
 ]
 
 status_handler = SlotsSimulation(
@@ -810,6 +1120,8 @@ if __name__ == "__main__":
         free_general_indexes=parse_int_list(args.free_generals),
         base_bets=base_bets,
         split_unlocked_values=parse_bool_list(args.split_unlocked),
+        collect_level=args.collect_level,
+        level_up_rate=args.level_up_rate,
         report_interval=args.report_interval,
         print_updates=args.print_updates,
     )
