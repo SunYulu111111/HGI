@@ -25,11 +25,11 @@ except ImportError:
     from theme_math import ThemeMath
 
 
-SPIN_TIMES = 10000000
+SPIN_TIMES = 1000000
 INDEX = [0]
 GENERAL_INDEX = [1]
 BASE_BETS = [10000]
-SPLIT_UNLOCKED = [1]
+SPLIT_UNLOCKED = [0]
 COLLECT_LEVEL = 1
 LEVEL_UP_RATE = 0
 REPORT_INTERVAL = 5000
@@ -382,12 +382,12 @@ def record_free_mode_base_trigger(status: dict, free_mode: str, free_times: int)
 
 
 def record_free_mode_retrigger(status: dict, free_mode: str, free_times: int) -> None:
-    """Record free-game retriggers in the active free mode bucket."""
+    """Record awarded retrigger spins in the active free mode bucket."""
 
     if free_times <= 0:
         return
     prefix = free_mode_stat_prefix(free_mode)
-    status_handler.add_status_value(status, 1, f"{prefix}_free")
+    status_handler.add_status_value(status, free_times, f"{prefix}_free")
     status_handler.add_status_value(status, free_times, f"{prefix}_times")
 
 
@@ -400,20 +400,30 @@ def run_free_spins(
 ) -> int:
     """Consume free spins and return total free win."""
 
+    free_max_spins = int(m.free_max_spins)
+    free_times = min(free_times, free_max_spins)
     remaining_free_times = free_times
+    total_free_times = free_times
     free_total_win = 0
     free_mode_prefix = free_mode_stat_prefix(free_mode)
     while remaining_free_times > 0:
         remaining_free_times -= 1
+        while True:
+            fg_info = m.fg_spin(index, return_detail=False, free_mode=free_mode)
+            retrigger_times = get_free_times(fg_info)
+            if total_free_times + retrigger_times <= free_max_spins:
+                break
+
         status_handler.add_status_value(status, 1, "free", "spin")
         status_handler.add_status_value(status, 1, f"{free_mode_prefix}_spin")
-        fg_info = m.fg_spin(index, return_detail=False, free_mode=free_mode)
         free_total_win += record_win_info(status, fg_info, "free")
         record_free_mode_win_info(status, fg_info, free_mode_prefix)
 
-        retrigger_times = get_free_times(fg_info)
-        status_handler.update_free_trigger(status, "free", retrigger_times)
+        if retrigger_times > 0:
+            status_handler.add_status_value(status, retrigger_times, "free", "free")
+            status_handler.add_status_value(status, retrigger_times, "free_times")
         record_free_mode_retrigger(status, free_mode, retrigger_times)
+        total_free_times += retrigger_times
         remaining_free_times += retrigger_times
 
     return free_total_win
@@ -431,12 +441,18 @@ def apply_base_trigger_choice(
     choice_result = resolve_free_trigger_choice(m, win_info, choice_type)
     record_base_trigger_free_times(status, get_free_times(win_info))
     if choice_result["type"] == "free":
-        free_times = int(choice_result.get("free_times", 0))
+        free_times = min(
+            int(choice_result.get("free_times", 0)),
+            int(m.free_max_spins),
+        )
         status_handler.update_free_trigger(status, "base", free_times)
         record_free_mode_base_trigger(status, "free", free_times)
         return run_free_spins(m, status, index, free_times, free_mode="free")
     if choice_result["type"] == "super_free":
-        free_times = int(choice_result.get("free_times", 0))
+        free_times = min(
+            int(choice_result.get("free_times", 0)),
+            int(m.free_max_spins),
+        )
         status_handler.update_free_trigger(status, "base", free_times)
         record_free_mode_base_trigger(status, "super_free", free_times)
         return run_free_spins(m, status, index, free_times, free_mode="super_free")

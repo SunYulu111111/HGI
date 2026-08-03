@@ -1,101 +1,93 @@
-# HGI Math
+# HGI_math
 
-HGI Math 是一个 Slots 数学逻辑与仿真项目。仓库核心放在 `ThemeMath/` 下，通用模块负责读取配置、生成牌面、计算 Ways/Lines/Count 玩法收益，各主题目录只保留本主题的配置、特性逻辑和仿真入口。
 
-## 项目结构
 
-```text
-.
-|-- README.md
-|-- test.py
-`-- ThemeMath/
-    |-- slots_math.py          # 通用 Slots 基础逻辑、WaysGame、LinesGame、CountGame
-    |-- slots_simulation.py    # 通用仿真状态统计与报表输出
-    |-- symbol_count.py        # 统计轴带 symbol 数量并写回配置备注
-    |-- model_waysgame/        # Ways 玩法模板
-    |-- model_linesgame/       # Lines 玩法模板
-    |-- model_countgame/       # Count 玩法模板
-    |-- mahj3/
-    |-- mjwl/
-    |-- rzcs/
-    `-- yngg/
+## Getting started
+
+To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+
+Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+
+## Add your files
+
+* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
+* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+
+```
+cd existing_repo
+git remote add origin https://gitlab.com/hgi-group1/hgi_math.git
+git branch -M main
+git push -uf origin main
 ```
 
-常见主题目录约定：
+## Integrate with your tools
 
-- `theme_math.py`：主题数学入口，通常定义 `ThemeMath`。
-- `simulation.py`：主题仿真入口。
-- `game_config.conf` 或 `special/game_config.conf`：基础数学配置。
-- `reel_config/`：普通盘轴带配置。
-- `free_reel_config/`：免费盘轴带配置。
-- `general_config/`、`special/`、`special_config/`：主题相关配置。
-- `LOGIC.md`：主题玩法逻辑说明。
+* [Set up project integrations](https://gitlab.com/hgi-group1/hgi_math/-/settings/integrations)
 
-## 环境要求
+## Collaborate with your team
 
-项目主要使用 Python 标准库，建议使用 Python 3.10 或更高版本。
+* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
+* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
+* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
+* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
+* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
 
-```bash
-python --version
-```
+## Test and Deploy
 
-如果后续主题引入第三方依赖，请优先补充依赖文件和本 README 的安装说明。
+Use the built-in continuous integration in GitLab.
 
-## 快速开始
+* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
+* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
+* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
+* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
+* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
 
-在仓库根目录运行主题仿真：
+***
 
-```bash
-python ThemeMath/model_linesgame/simulation.py --spins 100000 --index 0 --general 1
-python ThemeMath/yngg/simulation.py --spins 100000 --base-bet 100000 --index 0 --general-index 1
-```
+# Editing this README
 
-运行单元测试：
+When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
 
-```bash
-python -m unittest ThemeMath.yngg.test_theme_math
-```
+## Suggestions for a good README
 
-统计并更新某个主题的轴带 symbol 数量：
+Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
 
-```bash
-python ThemeMath/symbol_count.py --root ThemeMath/rzcs
-```
+## Name
+Choose a self-explaining name for your project.
 
-只检查不写回：
+## Description
+Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
 
-```bash
-python ThemeMath/symbol_count.py --root ThemeMath/rzcs --dry-run
-```
+## Badges
+On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
 
-## 新任务目录约定
+## Visuals
+Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
 
-接下来的新主题或新任务建议放在 `ThemeMath/<new_folder>/` 下独立进行，避免直接混入已有主题目录。
+## Installation
+Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
 
-推荐流程：
+## Usage
+Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
 
-1. 根据玩法类型复制一个模板目录：`model_waysgame/`、`model_linesgame/` 或 `model_countgame/`。
-2. 重命名为新的主题或任务目录，例如 `ThemeMath/new_theme/`。
-3. 替换或补齐 `game_config.conf`、`reel_config/`、`free_reel_config/` 等配置。
-4. 在新目录内维护 `theme_math.py`、`simulation.py` 和必要的 `LOGIC.md`。
-5. 大规模仿真输出文件建议单独保存，提交前确认是否需要纳入版本库。
+## Support
+Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
 
-## 核心模块说明
+## Roadmap
+If you have ideas for releases in the future, it is a good idea to list them in the README.
 
-`ThemeMath/slots_math.py` 提供通用基础类和玩法基类：
+## Contributing
+State if you are open to contributions and what your requirements are for accepting them.
 
-- `SlotsGame`：读取主题配置、加载轴带、随机生成牌面，并维护停轴状态。
-- `WaysGame`：基于 ways 规则计算中奖。
-- `LinesGame`：基于固定线规则计算中奖。
-- `CountGame`：基于 symbol 数量规则计算中奖。
+For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
 
-`ThemeMath/slots_simulation.py` 提供仿真统计工具，统一维护 RTP、Hit 率、Free 触发、倍数区间等报表字段。
+You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
 
-主题入口通常继承其中一个玩法类，并实现本主题的普通盘、免费盘、特殊 symbol、消除补牌或其它特色功能。
+## Authors and acknowledgment
+Show your appreciation to those who have contributed to the project.
 
-## 配置注意事项
+## License
+For open source projects, say how it is licensed.
 
-- `GENERAL_n` 表示不同权重或轴带分组，仿真时通过 `--general` 或 `--general-index` 选择。
-- `reel_config` 文件中的 `BASE_RATE` 通常对应普通盘、特殊盘、固定结果、零概率结果等来源。
-- 配置里涉及金额或赔率时，注意和 `base_bet`、`BET_UNIT` 保持一致。
-- 修改轴带后建议运行 `symbol_count.py --dry-run` 检查统计结果，再决定是否写回。
+## Project status
+If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.

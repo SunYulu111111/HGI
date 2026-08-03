@@ -67,6 +67,7 @@ class ThemeMath(LinesGame):
             self.super_free_multiple_probability,
             self.super_free_multiple_trigger_probability,
         ) = self._load_free_multiplier_config(self.server_config_index)
+        self.free_max_spins = self._load_free_max_spins(self.server_config_index)
         self.type_index = self.get_type_index()
         self.last_ng_result: dict = {}
         self.last_fg_result: dict = {}
@@ -346,7 +347,7 @@ class ThemeMath(LinesGame):
         raise ValueError(f"unknown free trigger choice: {choice_type}")
 
     def choose_free_win_multiplier(self, free_mode: str) -> tuple[int | None, int]:
-        if free_mode == "super_free":
+        if self.is_super_free_mode(free_mode):
             trigger_probability = self._get_or_default(
                 self.super_free_multiple_trigger_probability,
                 int(self.type_index),
@@ -583,6 +584,13 @@ class ThemeMath(LinesGame):
             ),
         )
 
+    def _load_free_max_spins(self, index: int | None = None) -> int:
+        main = self._get_runtime_config_section(index)
+        free_max_spins = int(main.get("Free_Max_Spins", "100"))
+        if free_max_spins <= 0:
+            raise ValueError(f"Free_Max_Spins must be positive, got: {free_max_spins}")
+        return free_max_spins
+
     def apply_index_server_config(self, index: int) -> None:
         """Apply rzcs_game_server.conf values selected by the player's INDEX."""
 
@@ -605,6 +613,7 @@ class ThemeMath(LinesGame):
             self.super_free_multiple_probability,
             self.super_free_multiple_trigger_probability,
         ) = self._load_free_multiplier_config(index)
+        self.free_max_spins = self._load_free_max_spins(index)
         self._applied_server_config_index = resolved_index
 
     def _resolve_server_config_index(self, index: int) -> int:

@@ -107,18 +107,26 @@ Base 中触发 free 后：
 jp_win = base_bet * final_jp_multiple
 ```
 
-JP 配置已从 `special/rzcs_game_server.conf` 迁移到 `special/rzcs_bonus.conf`。生产配置使用 bonus 通用字段：
+JP 配置位于 `special/rzcs_bonus.conf`。所有 JP 数组统一按以下顺序排列：
+
+| 数组下标 | JP类型 | 基础倍数 |
+| --- | --- | --- |
+| 0 | MINI | 20 |
+| 1 | MINOR | 50 |
+| 2 | MAJOR | 100 |
+| 3 | GRAND | 5000 |
+
+`[GENERAL]` 中配置四档 JP 倍数：
 
 ```text
-BONUS_MINI_INIT_VALUE=...
-BONUS_MINOR_INIT_VALUE=...
-BONUS_MAJOR_INIT_VALUE=...
-BONUS_GRAND_INIT_VALUE=...
+BONUS_MINI_MULTI=20
+BONUS_MINOR_MULTI=50
+BONUS_MAJOR_MULTI=100
+BONUS_GRAND_MULTI=5000
 BONUS_ENTER_RATE=62
-BONUS_RATE_1=9615,344,34,7
 ```
 
-当前 Python 仿真为了保持旧 JP 行为不变，会优先读取同一文件中的兼容字段：
+各控制类型 section 可独立覆盖 `BONUS_ENTER_RATE`、倍数、类型权重和翻倍概率。当前配置为：
 
 ```text
 BONUS_JP_MULTIPLE=20,50,100,5000
@@ -126,14 +134,16 @@ BONUS_JP_TYPE_PROBABILITY=1399,50,5,1
 BONUS_JP_DOUBLE_PROBABILITY=79,50,10,1
 ```
 
-`BONUS_JP_DOUBLE_PROBABILITY` 顺序对应 `BONUS_JP_MULTIPLE=20,50,100,5000`：
+三个数组必须保持 `MINI → MINOR → MAJOR → GRAND` 的相同顺序：
 
-| JP基础倍数 | 翻倍概率(万分比) | 说明 |
-| --- | --- | --- |
-| 20 | 79 | 79/10000 |
-| 50 | 50 | 50/10000 |
-| 100 | 10 | 10/10000 |
-| 5000 | 1 | 1/10000 |
+| JP类型 | 基础倍数 | 类型权重 | 翻倍概率(万分比) |
+| --- | --- | --- | --- |
+| MINI | 20 | 1399 | 79 |
+| MINOR | 50 | 50 | 50 |
+| MAJOR | 100 | 5 | 10 |
+| GRAND | 5000 | 1 | 1 |
+
+`BONUS_JP_TYPE_PROBABILITY` 是相对权重，不要求总和为 10000；`BONUS_ENTER_RATE` 和 `BONUS_JP_DOUBLE_PROBABILITY` 使用万分比。
 
 若命中翻倍：
 
@@ -265,6 +275,11 @@ Free 中同样遍历所有中奖线：
 - 每条线按 8/12/16 次计算
 - 多条线累加额外 free 次数
 - Free 中不进入选择玩法，只增加额外 free 次数
+- `Free重触发`、`普通Free重触发`、`SuperFree重触发` 统计额外获得的 free 次数总和，不统计重触发事件数
+- 每局 free 的初始次数与重触发额外次数之和不能超过当前 index 的 `Free_Max_Spins`
+- Base 触发的初始 free 次数若超过 `Free_Max_Spins`，实际进入次数截断为 `Free_Max_Spins`
+- 若接受当前牌面会使 free 总次数超过 `Free_Max_Spins`，则丢弃该牌面并重新 roll，直到结果不超过上限
+- 被丢弃的牌面不计入 FreeSpin、赢钱或重触发统计
 
 ---
 
@@ -301,6 +316,7 @@ Free 中同样遍历所有中奖线：
 - `[Game Info]`
   - `SPECIAL_TYPE_NEED_BET`
 - `[index]`
+  - `Free_Max_Spins`
   - `FREE_MULTIPLE`
   - `FREE_MULTIPLE_PROBABILITY`
   - `FREE_MULTIPLE_TRIGGER_PROBABILITY`
@@ -313,21 +329,19 @@ Free 中同样遍历所有中奖线：
 ## 7.3 special/rzcs_bonus.conf
 
 - `[GENERAL]`
-  - `BONUS_MINI_INIT_VALUE`
-  - `BONUS_MINOR_INIT_VALUE`
-  - `BONUS_MAJOR_INIT_VALUE`
-  - `BONUS_GRAND_INIT_VALUE`
-  - `BONUS_GRAND_ACCUM_RATE`
-  - `BONUS_GRAND_ACCUM_MAX`
-  - `BONUS_OPEN_ACCUM_NUM`
+  - `BONUS_MINI_MULTI`
+  - `BONUS_MINOR_MULTI`
+  - `BONUS_MAJOR_MULTI`
+  - `BONUS_GRAND_MULTI`
   - `BONUS_ENTER_RATE`
-  - `BONUS_RATE_1` ~ `BONUS_RATE_6`
   - `BONUS_JP_MULTIPLE`
   - `BONUS_JP_TYPE_PROBABILITY`
   - `BONUS_JP_DOUBLE_PROBABILITY`
 - `[index]`
   - `BONUS_ENTER_RATE`
-  - `BONUS_RATE_1` ~ `BONUS_RATE_6`
+  - `BONUS_JP_MULTIPLE`
+  - `BONUS_JP_TYPE_PROBABILITY`
+  - `BONUS_JP_DOUBLE_PROBABILITY`
 
 ---
 
