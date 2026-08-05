@@ -25,16 +25,29 @@ except ImportError:
     from theme_math import ThemeMath
 
 
-SPIN_TIMES = 1000000
+class RzcsSlotsSimulation(SlotsSimulation):
+    """Format RZCS console statistics with three decimal places."""
+
+    def format_cell(self, header: str, value):
+        if value == "" or value is None:
+            return ""
+        if header in {"Hit率", "Free频率", "触发率"} or header.endswith("_rate"):
+            return f"{value:.3%}"
+        if isinstance(value, float):
+            return f"{value:.3f}"
+        return value
+
+
+SPIN_TIMES = 10000000
 INDEX = [0]
 GENERAL_INDEX = [1]
 BASE_BETS = [10000]
-SPLIT_UNLOCKED = [0]
+SPLIT_UNLOCKED = [1]
 COLLECT_LEVEL = 1
 LEVEL_UP_RATE = 0
 REPORT_INTERVAL = 5000
 THRESHOLDS = (5, 10, 20, 50, 100, 1000)
-FREE_CHOOSE_INDEX = [1]
+FREE_CHOOSE_INDEX = [2]
 FREE_CHOOSE_TYPE_BY_INDEX = {
     1: "free",
     2: "super_free",
@@ -46,6 +59,10 @@ FREE_MODE_STAT_PREFIX = {
     "super_free": "super_free",
     "super_wild": "super_free",
 }
+FREE_COUNT_GROUPS = (
+    ("free_ge_16", "Free>=16"),
+    ("free_lt_16", "Free<16"),
+)
 JP_TYPE_COUNT = 4
 JP_TYPE_REPORT_FIELDS = tuple(
     field
@@ -88,6 +105,26 @@ FREE_MODE_REPORT_FIELDS = [
     "SuperFree平均倍",
     "super_free_win_times",
     "super_free_win_rate",
+]
+FREE_COUNT_GROUP_REPORT_FIELDS = [
+    field
+    for prefix, label in FREE_COUNT_GROUPS
+    for field in (
+        f"{prefix}_rtp",
+        f"{prefix}_lines_rtp",
+        f"{prefix}_jp_rtp",
+        f"{label}Line",
+        f"{label}JP",
+        f"{label}触发",
+        f"{label}次数",
+        f"{label}Spin",
+        f"{label}重触发",
+        f"{label}触发平均次数",
+        f"{label}平均次数",
+        f"{label}平均倍",
+        f"{prefix}_win_times",
+        f"{prefix}_win_rate",
+    )
 ]
 GENERAL_SECTION_RE = re.compile(r"^\s*\[GENERAL_(\d+)\]\s*$", re.MULTILINE)
 RESULT_CSV = Path(__file__).resolve().with_name("simulate_result.csv")
@@ -141,6 +178,7 @@ RESULT_CSV_FIELDS = [
     "Free平均次数",
     "Free平均倍",
     *FREE_MODE_REPORT_FIELDS,
+    *FREE_COUNT_GROUP_REPORT_FIELDS,
     "main_win_times",
     "main_win_rate",
     "free_win_times",
@@ -257,6 +295,12 @@ def free_mode_stat_prefix(free_mode: str) -> str:
 
     normalized_mode = normalize_choice_type(free_mode)
     return FREE_MODE_STAT_PREFIX[normalized_mode]
+
+
+def free_count_stat_prefix(free_times: int) -> str:
+    """Return the status prefix selected by the base trigger's raw free count."""
+
+    return "free_ge_16" if int(free_times) >= 16 else "free_lt_16"
 
 
 def discover_general_indexes(index: int, free_game: bool = False) -> list[int]:
@@ -391,12 +435,35 @@ def record_free_mode_retrigger(status: dict, free_mode: str, free_times: int) ->
     status_handler.add_status_value(status, free_times, f"{prefix}_times")
 
 
+def record_free_count_base_trigger(
+    status: dict,
+    prefix: str,
+    raw_free_times: int,
+    awarded_free_times: int,
+) -> None:
+    """Record a base trigger in its raw-count bucket."""
+
+    status_handler.add_status_value(status, 1, f"{prefix}_triggers")
+    status_handler.add_status_value(status, raw_free_times, f"{prefix}_base_trigger_times")
+    status_handler.add_status_value(status, awarded_free_times, f"{prefix}_times")
+
+
+def record_free_count_retrigger(status: dict, prefix: str, free_times: int) -> None:
+    """Record awarded retrigger spins in a raw-count bucket."""
+
+    if free_times <= 0:
+        return
+    status_handler.add_status_value(status, free_times, f"{prefix}_free")
+    status_handler.add_status_value(status, free_times, f"{prefix}_times")
+
+
 def run_free_spins(
     m: ThemeMath,
     status: dict,
     index: int,
     free_times: int,
     free_mode: str = "free",
+    free_count_prefix: str | None = None,
 ) -> int:
     """Consume free spins and return total free win."""
 
@@ -416,13 +483,19 @@ def run_free_spins(
 
         status_handler.add_status_value(status, 1, "free", "spin")
         status_handler.add_status_value(status, 1, f"{free_mode_prefix}_spin")
+        if free_count_prefix is not None:
+            status_handler.add_status_value(status, 1, f"{free_count_prefix}_spin")
         free_total_win += record_win_info(status, fg_info, "free")
         record_free_mode_win_info(status, fg_info, free_mode_prefix)
+        if free_count_prefix is not None:
+            record_free_mode_win_info(status, fg_info, free_count_prefix)
 
         if retrigger_times > 0:
             status_handler.add_status_value(status, retrigger_times, "free", "free")
             status_handler.add_status_value(status, retrigger_times, "free_times")
         record_free_mode_retrigger(status, free_mode, retrigger_times)
+        if free_count_prefix is not None:
+            record_free_count_retrigger(status, free_count_prefix, retrigger_times)
         total_free_times += retrigger_times
         remaining_free_times += retrigger_times
 
@@ -439,7 +512,9 @@ def apply_base_trigger_choice(
     """Apply the selected trigger option and return extra spin win."""
 
     choice_result = resolve_free_trigger_choice(m, win_info, choice_type)
-    record_base_trigger_free_times(status, get_free_times(win_info))
+    raw_free_times = get_free_times(win_info)
+    count_prefix = free_count_stat_prefix(raw_free_times)
+    record_base_trigger_free_times(status, raw_free_times)
     if choice_result["type"] == "free":
         free_times = min(
             int(choice_result.get("free_times", 0)),
@@ -447,7 +522,15 @@ def apply_base_trigger_choice(
         )
         status_handler.update_free_trigger(status, "base", free_times)
         record_free_mode_base_trigger(status, "free", free_times)
-        return run_free_spins(m, status, index, free_times, free_mode="free")
+        record_free_count_base_trigger(status, count_prefix, raw_free_times, free_times)
+        return run_free_spins(
+            m,
+            status,
+            index,
+            free_times,
+            free_mode="free",
+            free_count_prefix=count_prefix,
+        )
     if choice_result["type"] == "super_free":
         free_times = min(
             int(choice_result.get("free_times", 0)),
@@ -455,7 +538,15 @@ def apply_base_trigger_choice(
         )
         status_handler.update_free_trigger(status, "base", free_times)
         record_free_mode_base_trigger(status, "super_free", free_times)
-        return run_free_spins(m, status, index, free_times, free_mode="super_free")
+        record_free_count_base_trigger(status, count_prefix, raw_free_times, free_times)
+        return run_free_spins(
+            m,
+            status,
+            index,
+            free_times,
+            free_mode="super_free",
+            free_count_prefix=count_prefix,
+        )
     return 0
 
 
@@ -563,6 +654,8 @@ def build_simulation_row(
     )
     add_free_mode_row_fields(row, status, "normal_free", "普通Free", base_bet)
     add_free_mode_row_fields(row, status, "super_free", "SuperFree", base_bet)
+    for prefix, label in FREE_COUNT_GROUPS:
+        add_free_mode_row_fields(row, status, prefix, label, base_bet)
     return row
 
 
@@ -774,7 +867,7 @@ def print_summary(result: dict | list[dict]) -> None:
     for jp_type_index in range(JP_TYPE_COUNT):
         print(
             f"JP{jp_type_index}次数: {result[f'jp_type_{jp_type_index}_count']}, "
-            f"频率: {result[f'jp_type_{jp_type_index}_rate']:.6%}"
+            f"频率: {result[f'jp_type_{jp_type_index}_rate']:.3%}"
         )
     print(f"总赢钱: {result['总赢钱']}")
     print(f"普通游戏 RTP: {result['base_rtp']:.3f}")
@@ -789,10 +882,10 @@ def print_summary(result: dict | list[dict]) -> None:
     print(f"免费游戏赢钱率: {result['free_win_rate']:.3f}")
     print(f"触发 free 次数: {result['触发Free']}")
     print(f"free 中再次触发 free 次数: {result['Free重触发']}")
-    print(f"触发 free 时平均次数: {result['Free触发平均次数']:.6f}")
+    print(f"触发 free 时平均次数: {result['Free触发平均次数']:.3f}")
     print(f"触发 free 概率: {result['Free频率']:.3%}")
     print(f"免费游戏总次数: {result['FreeSpin']}")
-    print(f"平均每次触发 free 次数: {result['Free平均次数']:.6f}")
+    print(f"平均每次触发 free 次数: {result['Free平均次数']:.3f}")
     print(f"平均每次 free 赢钱倍数: {result['Free平均倍']:.3f}")
     print(
         f"普通 free: 触发 {result['普通Free触发']}, spin {result['普通FreeSpin']}, "
@@ -994,6 +1087,20 @@ status_model = {
     "super_free_times": 0,
     "super_free_triggers": 0,
     "super_free_base_trigger_times": 0,
+    "free_ge_16_spin": 0,
+    "free_ge_16_lines": [0, 0],
+    "free_ge_16_jp": [0, 0],
+    "free_ge_16_free": 0,
+    "free_ge_16_times": 0,
+    "free_ge_16_triggers": 0,
+    "free_ge_16_base_trigger_times": 0,
+    "free_lt_16_spin": 0,
+    "free_lt_16_lines": [0, 0],
+    "free_lt_16_jp": [0, 0],
+    "free_lt_16_free": 0,
+    "free_lt_16_times": 0,
+    "free_lt_16_triggers": 0,
+    "free_lt_16_base_trigger_times": 0,
     "jp_type_counts": [0] * JP_TYPE_COUNT,
     "gt_5x": 0,
     "gt_10x": 0,
@@ -1112,7 +1219,30 @@ statics_columns = [
     },
 ]
 
-status_handler = SlotsSimulation(
+for prefix, label in FREE_COUNT_GROUPS:
+    statics_columns.append(
+        {
+            "title": label,
+            "fields": [
+                f"{prefix}_rtp",
+                f"{prefix}_lines_rtp",
+                f"{prefix}_jp_rtp",
+                f"{label}Line",
+                f"{label}JP",
+                f"{label}触发",
+                f"{label}次数",
+                f"{label}Spin",
+                f"{label}重触发",
+                f"{label}触发平均次数",
+                f"{label}平均次数",
+                f"{label}平均倍",
+                f"{prefix}_win_times",
+                f"{prefix}_win_rate",
+            ],
+        }
+    )
+
+status_handler = RzcsSlotsSimulation(
     status_model=status_model,
     thresholds=THRESHOLDS,
     feature_key="lines",

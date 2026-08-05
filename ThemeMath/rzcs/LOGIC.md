@@ -277,9 +277,19 @@ Free 中同样遍历所有中奖线：
 - Free 中不进入选择玩法，只增加额外 free 次数
 - `Free重触发`、`普通Free重触发`、`SuperFree重触发` 统计额外获得的 free 次数总和，不统计重触发事件数
 - 每局 free 的初始次数与重触发额外次数之和不能超过当前 index 的 `Free_Max_Spins`
+- 当前 index `0/4/8/12/17` 均配置为 `Free_Max_Spins=960`
 - Base 触发的初始 free 次数若超过 `Free_Max_Spins`，实际进入次数截断为 `Free_Max_Spins`
 - 若接受当前牌面会使 free 总次数超过 `Free_Max_Spins`，则丢弃该牌面并重新 roll，直到结果不超过上限
 - 被丢弃的牌面不计入 FreeSpin、赢钱或重触发统计
+
+### Free 次数分组统计
+
+仿真按 Base 触发时的原始 free 次数拆分为两组：
+
+- `Free>=16`：原始 free 次数大于等于 16
+- `Free<16`：原始 free 次数小于 16
+- 分组判断发生在选择普通 Free / Super Free 之前；例如原始16次选择 Super Free 后变为4次，仍归入 `Free>=16`
+- 触发后的整局 FreeSpin、赢钱、重触发额外次数和总次数始终记录在该组
 
 ---
 
@@ -316,7 +326,7 @@ Free 中同样遍历所有中奖线：
 - `[Game Info]`
   - `SPECIAL_TYPE_NEED_BET`
 - `[index]`
-  - `Free_Max_Spins`
+  - `Free_Max_Spins`（当前为 960）
   - `FREE_MULTIPLE`
   - `FREE_MULTIPLE_PROBABILITY`
   - `FREE_MULTIPLE_TRIGGER_PROBABILITY`
