@@ -68,6 +68,7 @@ class ThemeMath(LinesGame):
             self.super_free_multiple_trigger_probability,
         ) = self._load_free_multiplier_config(self.server_config_index)
         self.free_max_spins = self._load_free_max_spins(self.server_config_index)
+        self.free_max_total_bet = self._load_free_max_total_bet(self.server_config_index)
         self.type_index = self.get_type_index()
         self.last_ng_result: dict = {}
         self.last_fg_result: dict = {}
@@ -591,6 +592,15 @@ class ThemeMath(LinesGame):
             raise ValueError(f"Free_Max_Spins must be positive, got: {free_max_spins}")
         return free_max_spins
 
+    def _load_free_max_total_bet(self, index: int | None = None) -> int:
+        main = self._get_runtime_config_section(index)
+        free_max_total_bet = int(main.get("FreeMaxTotalBet", "0"))
+        if free_max_total_bet < 0:
+            raise ValueError(
+                f"FreeMaxTotalBet must be non-negative, got: {free_max_total_bet}"
+            )
+        return free_max_total_bet
+
     def apply_index_server_config(self, index: int) -> None:
         """Apply rzcs_game_server.conf values selected by the player's INDEX."""
 
@@ -614,6 +624,7 @@ class ThemeMath(LinesGame):
             self.super_free_multiple_trigger_probability,
         ) = self._load_free_multiplier_config(index)
         self.free_max_spins = self._load_free_max_spins(index)
+        self.free_max_total_bet = self._load_free_max_total_bet(index)
         self._applied_server_config_index = resolved_index
 
     def _resolve_server_config_index(self, index: int) -> int:

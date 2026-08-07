@@ -280,7 +280,10 @@ Free 中同样遍历所有中奖线：
 - 当前 index `0/4/8/12/17` 均配置为 `Free_Max_Spins=960`
 - Base 触发的初始 free 次数若超过 `Free_Max_Spins`，实际进入次数截断为 `Free_Max_Spins`
 - 若接受当前牌面会使 free 总次数超过 `Free_Max_Spins`，则丢弃该牌面并重新 roll，直到结果不超过上限
-- 被丢弃的牌面不计入 FreeSpin、赢钱或重触发统计
+- 每局 free 的累计赢钱不能超过 `base_bet * FreeMaxTotalBet`
+- 若当前牌面赢钱加上此前 free 累计赢钱超过该上限，则丢弃当前牌面并重新 spin
+- `FreeMaxTotalBet=0` 表示不限制 free 累计赢钱
+- 因次数或赢钱上限被丢弃的牌面均不计入 FreeSpin、赢钱或重触发统计
 
 ### Free 次数分组统计
 
@@ -327,6 +330,7 @@ Free 中同样遍历所有中奖线：
   - `SPECIAL_TYPE_NEED_BET`
 - `[index]`
   - `Free_Max_Spins`（当前为 960）
+  - `FreeMaxTotalBet`
   - `FREE_MULTIPLE`
   - `FREE_MULTIPLE_PROBABILITY`
   - `FREE_MULTIPLE_TRIGGER_PROBABILITY`

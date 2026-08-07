@@ -38,8 +38,8 @@ class RzcsSlotsSimulation(SlotsSimulation):
         return value
 
 
-SPIN_TIMES = 10000000
-INDEX = [0]
+SPIN_TIMES = 1000000
+INDEX = [8]
 GENERAL_INDEX = [1]
 BASE_BETS = [10000]
 SPLIT_UNLOCKED = [1]
@@ -468,6 +468,12 @@ def run_free_spins(
     """Consume free spins and return total free win."""
 
     free_max_spins = int(m.free_max_spins)
+    free_max_total_bet = int(m.free_max_total_bet)
+    free_max_total_win = (
+        int(m.base_bet) * free_max_total_bet
+        if free_max_total_bet > 0
+        else None
+    )
     free_times = min(free_times, free_max_spins)
     remaining_free_times = free_times
     total_free_times = free_times
@@ -478,7 +484,13 @@ def run_free_spins(
         while True:
             fg_info = m.fg_spin(index, return_detail=False, free_mode=free_mode)
             retrigger_times = get_free_times(fg_info)
-            if total_free_times + retrigger_times <= free_max_spins:
+            candidate_win = int(fg_info.get("total_win", 0))
+            within_spin_limit = total_free_times + retrigger_times <= free_max_spins
+            within_win_limit = (
+                free_max_total_win is None
+                or free_total_win + candidate_win <= free_max_total_win
+            )
+            if within_spin_limit and within_win_limit:
                 break
 
         status_handler.add_status_value(status, 1, "free", "spin")
