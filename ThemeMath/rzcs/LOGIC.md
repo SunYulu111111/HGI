@@ -5,8 +5,14 @@
 - 列数：5
 - 行数：6
 - 原始牌面：5x6
-- 未解锁第三列分裂有效结构：33333
+- 未解锁第三列分裂有效结构：33333（第三列仅第1/3/5格有效）
 - 已解锁第三列分裂有效结构：33633
+
+未解锁时使用：
+
+```text
+GRID_DISABLES=0,0,0,1,1,1,0,0,0,1,1,1,0,1,0,1,0,1,0,0,0,1,1,1,0,0,0,1,1,1
+```
 
 ## 1.2 符号类型
 
@@ -27,7 +33,7 @@
 | 条件 | 使用 General | 当前有效结构 |
 | --- | --- | --- |
 | `base_bet >= SPECIAL_TYPE_NEED_BET` | `GENERAL_1` | 33633 |
-| `base_bet < SPECIAL_TYPE_NEED_BET` | `GENERAL_2` | 33333 |
+| `base_bet < SPECIAL_TYPE_NEED_BET` | `GENERAL_2` | 33333（第三列交错） |
 
 牌面结构由第三列分裂是否解锁决定，与 Base/Free 无关：
 
@@ -40,9 +46,9 @@
 
 | 条件 | 使用 General | 当前有效结构 |
 | --- | --- | --- |
-| 低 bet，普通 free | `GENERAL_1` | 33333 |
+| 低 bet，普通 free | `GENERAL_1` | 33333（第三列交错） |
 | 高 bet，普通 free | `GENERAL_2` | 33633 |
-| 低 bet，super free | `GENERAL_3` | 33333 |
+| 低 bet，super free | `GENERAL_3` | 33333（第三列交错） |
 | 高 bet，super free | `GENERAL_4` | 33633 |
 
 Free 中同样按第三列分裂是否解锁选择有效结构，与普通 free / super free 无关。
@@ -58,7 +64,7 @@ Free 中同样按第三列分裂是否解锁选择有效结构，与普通 free 
 3. 根据玩家 `INDEX` 加载 `special/rzcs_game_server.conf` 中对应 section；如果不存在则回退到 `[0]`
 4. 生成 5x6 牌面
 5. 根据第三列分裂是否解锁选择 `GRID_DISABLES / GRID_DISABLES_FREE`
-6. 将无效格置空，形成 33333 / 33633
+6. 将无效格置空，形成第三列交错的 33333 / 33633
 7. 计算 Line 中奖
 8. 判断 scatter/wild 连线触发 free
 9. 如果未触发 free，再判断 JP
@@ -182,7 +188,7 @@ Base 触发 free 后，根据玩家选择记录 free 类型：
 1. 根据 bet 和 `is_super` 选择 free general
 2. 生成 5x6 牌面
 3. 根据第三列分裂是否解锁选择 `GRID_DISABLES / GRID_DISABLES_FREE`
-4. 修改牌面为 33333 / 33633
+4. 修改牌面为第三列交错的 33333 / 33633
 5. 计算 Line 中奖
 6. 根据 free 类型应用赢钱倍乘
 7. 判断是否再次触发 free
@@ -300,6 +306,9 @@ Free 中同样遍历所有中奖线：
 
 - 使用固定线玩法
 - 当前配置为 60 条线
+- `LINE_RULES_0~29` 依次对应原偶数编号线 `0,2,...,58`
+- `LINE_RULES_30~59` 依次对应原奇数编号线 `1,3,...,59`
+- 未分裂结构下，新编号 `0~29` 经过第三列有效格，`30~59` 经过第三列无效格
 - 从左向右计算
 - Wild 可替代普通符号
 - Scatter/Wild 的中奖与替代能力由配置控制
