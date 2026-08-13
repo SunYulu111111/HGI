@@ -39,7 +39,7 @@ class RzcsSlotsSimulation(SlotsSimulation):
 
 
 SPIN_TIMES = 1000000
-INDEX = [8]
+INDEX = [12]
 GENERAL_INDEX = [1]
 BASE_BETS = [10000]
 SPLIT_UNLOCKED = [1]
@@ -47,7 +47,7 @@ COLLECT_LEVEL = 1
 LEVEL_UP_RATE = 0
 REPORT_INTERVAL = 5000
 THRESHOLDS = (5, 10, 20, 50, 100, 1000)
-FREE_CHOOSE_INDEX = [1]
+FREE_CHOOSE_INDEX = [2]
 FREE_CHOOSE_TYPE_BY_INDEX = {
     1: "free",
     2: "super_free",

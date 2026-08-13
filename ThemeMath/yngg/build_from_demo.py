@@ -77,7 +77,7 @@ def copy_model_layout() -> None:
         ),
         encoding="utf-8",
     )
-    (THEME_DIR / "general_config" / "slot_prop_config.conf").write_text(
+    (THEME_DIR / "special" / "slot_prop_config.conf").write_text(
         "\n".join(
             [
                 "[System Base Info]",
