@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import unittest
+from fractions import Fraction
 
 from simulation import build_symbol_bets, simulate
 from theme_math import ThemeMath
@@ -28,6 +29,15 @@ class LastChoiceRandom:
         return stop - 1
 
 
+class CountingLastChoiceRandom:
+    def __init__(self):
+        self.calls = 0
+
+    def randrange(self, stop: int) -> int:
+        self.calls += 1
+        return stop - 1
+
+
 class ThemeMathTest(unittest.TestCase):
     def setUp(self):
         self.math = ThemeMath(rng=FirstChoiceRandom())
@@ -47,13 +57,27 @@ class ThemeMathTest(unittest.TestCase):
         self.assertTrue(self.math.double_enabled)
         self.assertEqual(self.math.double_max_times, 10)
         self.assertEqual(self.math.double_multiple, 2)
-        self.assertEqual(self.math.double_result_weights, [1, 1])
+        self.assertEqual(
+            self.math.double_weights,
+            [1000, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1],
+        )
+        self.assertEqual(
+            list(self.math.double_weight_tiers),
+            [1, 5, 10, 25, 50, 100],
+        )
         for section in ("0", "4", "8", "12", "17"):
             self.assertTrue(self.math.game_server_config.has_section(section))
-        self.assertEqual(
-            self.math.game_server_config["0"]["GoldSymbolWeight"],
-            "750,600,730",
-        )
+            self.assertEqual(
+                self.math.game_server_config[section]["DoubleWeight"],
+                "1000,512,256,128,64,32,16,8,4,2,1",
+            )
+            for threshold in (1, 5, 10, 25, 50, 100):
+                self.assertEqual(
+                    self.math.game_server_config[section][
+                        f"DoubleWeight_{threshold}"
+                    ],
+                    "1000,512,256,128,64,32,16,8,4,2,1",
+                )
 
     def test_normal_spin_uses_index_symbol_prize_and_multiplier(self):
         self.force_trigger_index(14)  # symbol 3, multiplier 3
@@ -94,6 +118,34 @@ class ThemeMathTest(unittest.TestCase):
         self.assertEqual(len(set(result["winning_indexes"])), 8)
         self.assertNotIn(9, result["winning_indexes"])
         self.assertNotIn(21, result["winning_indexes"])
+
+    def test_each_symbol_and_all_symbols_have_exact_point_seven_rtp(self):
+        total_weight = sum(self.math.win_weights)
+        self.assertEqual(total_weight, 30_000)
+        self.assertEqual(self.math.win_weights[9], 0)
+        self.assertEqual(self.math.win_weights[21], 0)
+
+        for symbol_id in range(2, 10):
+            bets = {symbol_id: self.math.base_bet}
+            weighted_win = sum(
+                weight * self.math._settle_index(index, bets)["win"]
+                for index, weight in enumerate(self.math.win_weights)
+            )
+            with self.subTest(symbol_id=symbol_id):
+                self.assertEqual(
+                    Fraction(weighted_win, total_weight * self.math.base_bet),
+                    Fraction(7, 10),
+                )
+
+        bets = {symbol_id: self.math.base_bet for symbol_id in range(2, 10)}
+        weighted_win = sum(
+            weight * self.math._settle_index(index, bets)["win"]
+            for index, weight in enumerate(self.math.win_weights)
+        )
+        self.assertEqual(
+            Fraction(weighted_win, total_weight * sum(bets.values())),
+            Fraction(7, 10),
+        )
 
     def test_bonus_repeated_symbol_indexes_pay_independently(self):
         self.force_trigger_index(9)
@@ -158,6 +210,7 @@ class ThemeMathTest(unittest.TestCase):
         result = self.math.double_win(2_400_000)
 
         self.assertFalse(result["success"])
+        self.assertEqual(result["selected_times"], 0)
         self.assertEqual(result["total_win"], 0)
         self.assertFalse(result["can_double"])
 
@@ -167,11 +220,53 @@ class ThemeMathTest(unittest.TestCase):
         result = math.apply_double_up(100_000, double_times=10)
 
         self.assertEqual(result["attempted_times"], 10)
+        self.assertEqual(result["selected_times"], 10)
         self.assertEqual(result["success_times"], 10)
         self.assertEqual(result["total_win"], 102_400_000)
         self.assertFalse(result["can_double"])
         with self.assertRaises(ValueError):
             math.double_win(result["total_win"], completed_times=10)
+
+    def test_double_weight_is_selected_once_per_win(self):
+        rng = CountingLastChoiceRandom()
+        math = ThemeMath(rng=rng)
+
+        result = math.apply_double_up(100_000, double_times=10)
+
+        self.assertEqual(rng.calls, 1)
+        self.assertEqual(result["selected_times"], 10)
+        self.assertEqual(result["success_times"], 10)
+
+    def test_double_weight_tier_follows_initial_win_multiple(self):
+        total_bet = 100_000
+        cases = (
+            (50_000, "DoubleWeight_1"),
+            (100_000, "DoubleWeight_1"),
+            (100_001, "DoubleWeight_5"),
+            (500_000, "DoubleWeight_5"),
+            (500_001, "DoubleWeight_10"),
+            (1_000_001, "DoubleWeight_25"),
+            (2_500_001, "DoubleWeight_50"),
+            (5_000_001, "DoubleWeight_100"),
+            (10_000_000, "DoubleWeight_100"),
+            (10_000_001, "DoubleWeight"),
+        )
+        for win_amount, expected_key in cases:
+            with self.subTest(win_amount=win_amount):
+                key, _ = self.math.get_double_weight_config(win_amount, total_bet)
+                self.assertEqual(key, expected_key)
+
+    def test_attempt_beyond_selected_double_times_fails(self):
+        self.math.double_weight_tiers[1] = [0] * 11
+        self.math.double_weight_tiers[1][2] = 1
+
+        result = self.math.apply_double_up(100_000, double_times=3)
+
+        self.assertEqual(result["selected_times"], 2)
+        self.assertEqual(result["success_times"], 2)
+        self.assertEqual(result["attempted_times"], 3)
+        self.assertTrue(result["failed"])
+        self.assertEqual(result["total_win"], 0)
 
     def test_spin_applies_requested_double_choices(self):
         math = ThemeMath(rng=LastChoiceRandom())
@@ -182,6 +277,10 @@ class ThemeMathTest(unittest.TestCase):
 
         self.assertEqual(result["base_win"], 2_400_000)
         self.assertEqual(result["double_result"]["attempted_times"], 2)
+        self.assertEqual(
+            result["double_result"]["double_weight_key"],
+            "DoubleWeight_25",
+        )
         self.assertEqual(result["total_win"], 9_600_000)
 
     def test_double_is_not_attempted_without_a_win(self):

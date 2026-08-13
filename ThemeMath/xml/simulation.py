@@ -54,6 +54,9 @@ def simulate(
     hit_count = 0
     double_attempt_count = 0
     double_success_count = 0
+    double_fail_count = 0
+    double_selected_counts = [0] * (math.double_max_times + 1)
+    double_weight_key_counts: dict[str, int] = {}
     for _ in range(spins):
         result = math.spin(
             bets,
@@ -67,6 +70,15 @@ def simulate(
         hit_count += int(result["total_win"] > 0)
         double_attempt_count += result["double_result"]["attempted_times"]
         double_success_count += result["double_result"]["success_times"]
+        double_fail_count += int(result["double_result"]["failed"])
+        selected_times = result["double_result"]["selected_times"]
+        if selected_times is not None:
+            double_selected_counts[selected_times] += 1
+        double_weight_key = result["double_result"]["double_weight_key"]
+        if double_weight_key is not None:
+            double_weight_key_counts[double_weight_key] = (
+                double_weight_key_counts.get(double_weight_key, 0) + 1
+            )
 
     return {
         "spins": spins,
@@ -82,6 +94,9 @@ def simulate(
         "bonus_rate": bonus_count / spins,
         "double_attempt_count": double_attempt_count,
         "double_success_count": double_success_count,
+        "double_fail_count": double_fail_count,
+        "double_selected_counts": double_selected_counts,
+        "double_weight_key_counts": double_weight_key_counts,
     }
 
 
