@@ -1,444 +1,348 @@
-# 1. 基础信息
+# XML 水果机数学逻辑
 
-## 1.1 盘面
+## 1. 玩法概述
 
-- 列数：5
-- 行数：6
-- 原始牌面：5x6
-- 有效结构：
-  - Base：45554
-  - Free：45554
-- 无效格配置：
-  - Base：`GRID_DISABLES`
-  - Free：`GRID_DISABLES_FREE`
+XML 是单轮盘水果机玩法。玩家分别对 symbol `2-9` 中的一个或多个 symbol
+下注，spin 后按配置抽取一个轮盘 index，并根据该 index 对应的 symbol 和倍数
+结算。
 
-原始 5x6 牌面按列优先排列。计算前会按无效格配置裁剪为有效牌面，当前配置为第 1/5 列保留 4 格，第 2/3/4 列保留 5 格。
+核心文件：
 
-## 1.2 符号类型
+- `theme_math.py`：水果机、Bonus、翻倍和配置校验。
+- `simulation.py`：固定下注组合的蒙特卡洛模拟。
+- `special/xml_game_config.conf`：BaseBet 和通用格式配置。
+- `special/xml_game_server.conf`：轮盘、X、开奖权重、Bonus 和翻倍配置。
+- `reel_config/xml_rand_ex_0.conf`：使用 `ReelConfig` 的普通轴占位配置。
+- `free_reel_config/xml_free_rand_ex_0.conf`：使用同一 `ReelConfig` 的免费轴占位配置。
 
-- 0：Scatter
-- 1：Wild
-- 2~10：普通符号
-- 100+普通符号：金色 symbol
+## 2. Symbol 和下注
 
-金色 symbol 只是一种临时编码。算奖时会先还原为原始 symbol id；第一次被消除时不会离开牌面，而是变成 Wild。
+- `symbol 0`：Bonus 触发 symbol。
+- `symbol 1`：当前玩法未使用。
+- `symbol 2-9`：八个可下注水果图标。
 
----
-
-# 2. Reel / General 选择
-
-## 2.1 Base
-
-Base 使用 `reel_config/mjwl_rand_ex_{INDEX}.conf`。
-
-| 输入 | 使用配置 | 说明 |
-| --- | --- | --- |
-| `index` | `mjwl_rand_ex_{index}.conf` | 找不到精确 index 时由通用 reel 查找逻辑回退 |
-| `WinBoxLevelUpRate` 抽中第 1 档 | `GENERAL_1` | 未触发 base 倍乘框升级 |
-| `WinBoxLevelUpRate` 抽中第 2 档及以上 | `GENERAL_2` | 触发 base 倍乘框升级 |
-| `BASE_RATE` | normal / special / fix / zero | 顺序为 `正常盘,特殊盘,固定盘,0几率盘` |
-
-`BASE_RATE` 只决定本次 spin 使用哪类盘：
-
-- normal：`NORMAL_ROLL_1..5`
-- special：`SP_ROLL_1..5`
-- fix：`FIX_RESULT_n`
-- zero：`ZERO_RESULT_n`
-
-## 2.2 Free
-
-Free 使用 `free_reel_config/mjwl_free_rand_ex_{INDEX}.conf`。
-
-| 条件 | 使用 General | 说明 |
-| --- | --- | --- |
-| `choose_index=1` | `GENERAL_1` | 24 次 free，倍乘 `[1,2,3,5]` |
-| `choose_index=2` | `GENERAL_2` | 12 次 free，倍乘 `[2,4,6,10]` |
-| `choose_index=3` | `GENERAL_3` | 8 次 free，倍乘 `[3,6,9,15]` |
-| `choose_index=4` | `GENERAL_4` | 6 次 free，倍乘 `[4,8,12,20]` |
-| `choose_index=5` | 随机 `GENERAL_n` | 次数和倍乘分别按权重随机 |
-
-也可以通过 `free_general_index` 强制指定 free 使用的 `GENERAL_n`。
-
-## 2.3 game_server section
-
-根据玩家 `INDEX` 读取 `mjwl_game_server.conf`：
-
-1. 优先读取同名 section，例如 `[13]`
-2. 如果不存在，回退到 `[0]`
-3. 如果仍不存在，回退到 `[Game Info]`
-
----
-
-# 3. 主游戏 Base
-
-## 3.1 Spin 流程
-
-1. 根据 `INDEX` 读取 game server 配置段
-2. 根据 `WinBoxLevelUpRate` 抽取 base 倍乘框档位
-3. 未升级使用 base `GENERAL_1`，升级使用 base `GENERAL_2`
-4. 根据 `BASE_RATE` 选择 normal / special / fix / zero
-5. 生成原始 5x6 牌面
-6. 按 `GRID_DISABLES` 裁剪成 45554 有效牌面
-7. 根据倍乘框档位选择金色 symbol 权重：
-   - 未升级：使用 `GoldSymbolWeight`
-   - 升级：使用 `LevelUpGoldWeight`
-8. 按第 2/3/4 列权重把普通 symbol 转成金色 symbol
-9. 计算 Ways 中奖
-10. 消除中奖 symbol 并补牌
-11. 按消除轮次应用 base 倍乘
-12. 重复消除，直到无中奖或达到消除上限
-13. 最终牌面 Scatter 数量 >= 3 时触发 free
-
-## 3.2 Base 倍乘框
-
-Base 每次 spin 会先按以下配置抽取一组消除倍乘：
+玩家至少选择一个 symbol。每个 symbol 的下注金额必须满足：
 
 ```text
-WinBoxLevelUpRate=2000,40,8,2
-WinBoxLevelMultiple_1=1,2,3,5
-WinBoxLevelMultiple_2=2,4,6,10
-WinBoxLevelMultiple_3=3,6,9,15
-WinBoxLevelMultiple_4=4,8,12,20
+symbol_bet > 0
+symbol_bet % BaseBet == 0
 ```
 
-`WinBoxLevelUpRate` 是权重，不是直接概率。抽中第 1 档时视为未升级；抽中第 2 档及以上时视为触发倍乘框升级。
+当前 `BaseBet=100000`，因此合法下注包括 `100000`、`200000`、`300000` 等。
+不同 symbol 可以使用不同下注金额，总下注为所有 symbol 注额之和。
 
-每轮消除按轮次取倍乘：
+## 3. 普通 Spin
 
-| 消除轮次 | 使用倍乘下标 |
-| --- | --- |
-| 第 1 次消除 | 第 1 个倍乘 |
-| 第 2 次消除 | 第 2 个倍乘 |
-| 第 3 次消除 | 第 3 个倍乘 |
-| 第 4 次及以后 | 第 4 个倍乘 |
+`ReelConfig`、`MultiConfig`、`WinWeightConfig` 和
+`BonusWinWeightConfig` 长度必须相同，且相同下标表示同一个轮盘位置。
+`SymbolMultiWeight`、`HighSymbolWeight` 和 `MidSymbolWeight` 使用相同下标。
 
-## 3.3 Base 金色 symbol
+一次普通 spin 的流程：
 
-Base 未触发倍乘框升级时，使用：
+1. 校验各 symbol 的下注。
+2. 按 `WinWeightConfig` 加权抽取一个 `trigger_index`。
+3. 读取 `ReelConfig[trigger_index]` 得到中奖 symbol。
+4. 读取 `MultiConfig[trigger_index]` 并按 symbol 规则得到本次 X。
+5. symbol 非 0 时直接结算该 index。
+6. symbol 为 0 时进入 Bonus。
+
+代码和结果中的 `index` 为 0 基；`position` 为方便显示的 1 基位置。
+
+## 4. 普通派彩
+
+获取本次赢钱倍数 X：
 
 ```text
-GoldSymbolWeight =750,600,730
+1. 读取 MultiConfig[index]
+2. 如果该值不为 1，X = MultiConfig[index]
+3. 如果该值为 1：
+   - symbol 3/4/5：
+     按 SymbolMultiWeight 抽取下标，
+     X = HighSymbolWeight[下标]
+   - symbol 6/7/8：
+     按 SymbolMultiWeight 抽取下标，
+     X = MidSymbolWeight[下标]
+   - symbol 9：X = 5
 ```
 
-Base 触发倍乘框升级时，使用：
+同一次 spin 只按 `SymbolMultiWeight` 抽取一次下标。该 spin 中所有需要动态 X
+的 High symbol（3/4/5）和 Mid symbol（6/7/8）共用这个下标，再分别从
+`HighSymbolWeight`、`MidSymbolWeight` 读取 X。`MultiConfig != 1` 的位置
+仍直接使用其固定 X，不受共享下标影响。
+
+symbol 2 的轮盘位置必须直接在 `MultiConfig` 配置非 1 的 X。当前
+`ITEM_PRIZE_*` 仅为通用文件格式占位，不参与派彩。
+
+单个中奖 index 的派彩公式为：
 
 ```text
-LevelUpGoldWeight = 1000,1000,1000
+win = symbol_bet / BaseBet * X
 ```
 
-权重顺序对应第 2/3/4 列，概率均为万分比。
+未下注的中奖 symbol 派彩为 0。同一个 symbol 在 Bonus 中通过多个不同 index
+中奖时，每个 index 独立计算并累加。
 
-金色 symbol 规则：
-
-- 只有普通可赔付 symbol 可以转成金色
-- Scatter 和 Wild 不会转成金色
-- 金色 symbol 编码为 `100 + symbol_id`
-- 算奖时按原 symbol id 参与 Ways 计算
-- 第一次被消除时变成 Wild
-- 变成 Wild 后再次中奖才会被移除
-
-## 3.4 Free 触发判断
-
-每次 base 消除结束后，使用最终牌面判断 free：
-
-- 只统计有效格上的普通 Scatter（symbol 0）
-- Scatter 数量 >= 3 时触发 free
-- free 次数不使用 `SCATTER_MULTIPLES`
-- free 次数由 `choose_index` 对应的 `FREE_COUNT_LIST` 决定
-
-当前 `SCATTER_MULTIPLES` 和 `SCATTER_PRIZES` 均为 0，Scatter 本身不直接派彩。
-
-## 3.5 选择规则
-
-Base 触发 free 后，按外部传入的 `choose_index` 决定 free 类型：
-
-| choose_index | free 次数 | free 倍乘序列 | free general |
-| --- | --- | --- | --- |
-| 1 | 24 | `1,2,3,5` | `GENERAL_1` |
-| 2 | 12 | `2,4,6,10` | `GENERAL_2` |
-| 3 | 8 | `3,6,9,15` | `GENERAL_3` |
-| 4 | 6 | `4,8,12,20` | `GENERAL_4` |
-| 5 | 随机 | 随机 | 随机 |
-
-`choose_index=5` 时，次数和倍乘档位分别按以下权重随机：
+固定 X 示例：
 
 ```text
-FREE_RANDOM_COUNT_WEIGHTS = 2,3,4,5
-FREE_RANDOM_MULTI_WEIGHTS = 11,8,8,6
+symbol 3下注 = 100000
+BaseBet = 100000
+index 14的MultiConfig = 3
+X = 3
+
+win = 100000 / 100000 * 3
+    = 3
 ```
 
----
-
-# 4. JP 逻辑
-
-当前 `mjwl` math 逻辑中没有 JP 判断。
-
-- Base 未触发 free 时不会进入 JP
-- Free 中也不会触发 JP
-- `mjwl_game_server.conf` 中未配置 `WIN_JP_*` 相关字段
-
----
-
-# 5. 免费游戏 Free
-
-## 5.1 进入 Free 时记录
-
-Base 触发 free 后会记录一份 `free_choice`：
-
-- `choose_index`
-- `times_index`
-- `multiplier_index`
-- `free_index`
-- `free_times`
-- `free_count_max`
-- `multipliers`
-
-其中 `free_index = multiplier_index + 1`，默认用于选择 `free_reel_config` 中的 `GENERAL_n`。
-
-## 5.2 Free Spin 流程
-
-每次 free spin：
-
-1. 根据 `free_choice` 或 `choose_index` 确定 free 次数和倍乘序列
-2. 根据 `free_general_index` / `free_index` 读取 free reel general
-3. 根据 `BASE_RATE` 选择 normal / special / fix / zero
-4. 生成原始 5x6 牌面
-5. 按 `GRID_DISABLES_FREE` 裁剪成 45554 有效牌面
-6. 根据 `FreeGoldSymbolWeight_n` 把第 2/3/4 列普通 symbol 转成金色 symbol
-7. 计算 Ways 中奖
-8. 消除中奖 symbol 并补牌
-9. 按 free 倍乘序列应用消除轮次倍乘
-10. 最终牌面 Scatter 数量 >= 3 时重触发 free
-
-## 5.3 Free 倍乘
-
-Free 倍乘由进入 free 时的 `free_choice["multipliers"]` 决定。
-
-| choose_index | 倍乘序列 |
-| --- | --- |
-| 1 | `1,2,3,5` |
-| 2 | `2,4,6,10` |
-| 3 | `3,6,9,15` |
-| 4 | `4,8,12,20` |
-
-每轮消除按轮次取倍乘：
-
-| 消除轮次 | 使用倍乘下标 |
-| --- | --- |
-| 第 1 次消除 | 第 1 个倍乘 |
-| 第 2 次消除 | 第 2 个倍乘 |
-| 第 3 次消除 | 第 3 个倍乘 |
-| 第 4 次及以后 | 第 4 个倍乘 |
-
-## 5.4 Free 金色 symbol
-
-Free 使用 `FreeGoldSymbolWeight_n`，其中 `n` 为 free general index。
+动态 X 示例：
 
 ```text
-FreeGoldSymbolWeight_1 = 450,10000,550
-FreeGoldSymbolWeight_2 = 450,10000,550
-FreeGoldSymbolWeight_3 = 500,10000,600
-FreeGoldSymbolWeight_4 = 500,10000,600
+symbol 3下注 = 200000
+该位置MultiConfig = 1
+SymbolMultiWeight抽中的下标 = 0
+HighSymbolWeight[0] = 40
+X = 40
+
+win = 200000 / 100000 * 40
+    = 80
 ```
 
-在 `[13]` section 中当前配置为：
+## 5. Bonus
+
+普通 spin 抽到 `symbol 0` 时：
+
+1. 按 `RespinCountWeight` 抽取额外获取的 symbol 数量。
+2. 数组下标 `0-7` 分别表示 `1-8` 个，因此最少 1 个、最多 8 个。
+3. 使用 `BonusWinWeightConfig`，按权重不放回抽取对应数量的不同 index。
+4. 依次结算抽中的 index。
+5. Bonus 权重中 symbol 0 位置必须为 0，禁止递归触发 Bonus。
+
+当前 `WinWeightConfig` 中 symbol 0 对应的 index `9`、`21` 权重均为 0，
+因此基础配置不会通过普通 spin 触发 Bonus。保留 Bonus 逻辑供后续控制配置使用。
+
+## 6. 翻倍玩法
+
+只有基础派彩 `base_win > 0` 时才能选择翻倍。
+
+### 6.1 基础规则
+
+- 翻倍玩法始终开放，不使用启用开关。
+- `DoubleMaxTimes=10`：最多尝试 10 次。
+- `DoubleMultiple=2`：每次成功后当前赢钱乘 2。
+- 玩家可选择不翻倍，也可选择尝试 1-10 次。
+- 超过本局允许成功的倍乘次数时，本次赢钱归零。
+
+### 6.2 DoubleWeight 分档
+
+先按初始赢钱计算赢钱倍数：
 
 ```text
-FreeGoldSymbolWeight_1 = 650,10000,550
-FreeGoldSymbolWeight_2 = 650,10000,550
-FreeGoldSymbolWeight_3 = 700,10000,600
-FreeGoldSymbolWeight_4 = 700,10000,600
+win_multiple = base_win / total_bet
 ```
 
-权重顺序对应第 2/3/4 列，概率均为万分比。
+根据赢钱倍数选择大于等于它的最小 `DoubleWeight_X`：
 
-## 5.5 Free 重触发
+| 初始赢钱倍数 | 使用配置 |
+|---|---|
+| `<= 1` | `DoubleWeight_1` |
+| `> 1` 且 `<= 5` | `DoubleWeight_5` |
+| `> 5` 且 `<= 10` | `DoubleWeight_10` |
+| `> 10` 且 `<= 25` | `DoubleWeight_25` |
+| `> 25` 且 `<= 50` | `DoubleWeight_50` |
+| `> 50` 且 `<= 100` | `DoubleWeight_100` |
+| `> 100` | `DoubleWeight` |
 
-Free 中同样在消除结束后的最终牌面上统计 Scatter：
+每个权重数组的下标 `0-10` 表示本局允许成功倍乘的次数。中奖后只抽取一次，
+不会在每次翻倍时重新做随机判断。
 
-- 有效格 Scatter 数量 >= 3 时重触发
-- 重触发次数等于当前 `free_choice["free_times"]`
-- 不重新进入选择逻辑
-- 额外 free 次数累加到当前剩余 free spin 中
+假设抽中的允许次数为 2：
 
----
+- 玩家不翻倍：领取原赢钱。
+- 玩家尝试 1 次：成功，赢钱变为 2 倍。
+- 玩家尝试 2 次：两次都成功，赢钱变为 4 倍。
+- 玩家尝试第 3 次：失败，赢钱归零。
 
-# 6. Ways 中奖计算
+### 6.3 控制段
 
-- 使用 Ways 玩法
-- 当前 `LINE_MODE=1`
-- 从左向右连续计算
-- 每个普通 symbol 单独计算 ways
-- 最少 3 连才中奖
-- Wild 可替代普通 symbol
-- Scatter 和 Wild 自身不参与普通派彩
+`xml_game_server.conf` 保留 `[0]`、`[4]`、`[8]`、`[12]`、`[17]`
+控制段。每个控制段均包含完整的：
 
-当前 symbol id：
+- `DoubleMaxTimes`
+- `DoubleMultiple`
+- `DoubleWeight_1/5/10/25/50/100`
+- `DoubleWeight`
 
-| Symbol | 含义 |
-| --- | --- |
-| 0 | Scatter |
-| 1 | Wild |
-| 2~10 | 普通 symbol |
-| 100+symbol | 金色 symbol |
+当前数学逻辑读取 `[Game Info]`；控制段用于后续接入控制 index 时覆盖基础配置。
 
-Ways 计算规则：
+## 7. RTP
 
-1. 从第 1 列开始向右连续找同一 symbol
-2. 某列没有命中时停止
-3. 命中列数 >= `BASE_NUMS[symbol]` 才中奖
-4. 每列命中数量相乘得到 ways
-5. 赢钱公式：
+当前 `WinWeightConfig` 总权重为 `30000`，symbol 0 的两个位置权重为 0。
+
+新派彩规则下，单个 symbol 的基础 RTP 由以下内容共同决定：
+
+- 该 symbol 各轮盘位置的 `WinWeightConfig`。
+- 非 1 的固定 `MultiConfig`。
+- `MultiConfig=1` 时动态 X 的期望值。
+- `BaseBet`。
+
+单个 symbol 下注一个 BaseBet 时：
 
 ```text
-win = base_bet * prize * ways / BET_UNIT / PRIZE_RATE
+RTP(symbol) =
+    Σ(位置权重 * 该位置期望X)
+    / (WinWeightConfig总权重 * BaseBet)
 ```
 
-当前配置中 `BET_UNIT=10000`，`PRIZE_RATE=1`。
+现有 `WinWeightConfig` 是旧派彩公式下的配置，改用 X 后不再保证基础 RTP 为
+0.7；如仍需目标 RTP 0.7，需要按新公式重新调整开奖权重或 X 配置。
 
----
+翻倍后的实际 RTP 还会受到 `DoubleWeight_X` 和玩家尝试次数影响。
 
-# 7. 关键配置
+## 8. 代码接口
 
-## 7.1 mjwl_game_config.conf
+普通 spin：
 
-- `COL_COUNT`
-- `ROW_COUNT`
-- `ITEM_COUNT`
-- `PRIZE_RATE`
-- `USE_WILDS`
-- `BASE_NUMS`
-- `ITEM_PRIZES_0..10`
-- `LINE_MODE`
-- `SCATTER_MODE`
-- `SCATTER_ID`
-- `SCATTER_COLS`
-- `SCATTER_SERIAL`
-- `SCATTER_MULTIPLES`
-- `SCATTER_PRIZES`
-- `GRID_DISABLES`
-- `GRID_DISABLES_FREE`
+```python
+from theme_math import ThemeMath
 
-## 7.2 mjwl_game_server.conf
+math = ThemeMath()
+result = math.spin(
+    {
+        2: 100000,
+        5: 300000,
+        9: 200000,
+    }
+)
+```
 
-- `FREE_COUNT_LIST`
-- `FREE_MULTI_LIST_1..4`
-- `FREE_RANDOM_COUNT_WEIGHTS`
-- `FREE_RANDOM_MULTI_WEIGHTS`
-- `WinBoxLevelUpRate`
-- `WinBoxLevelMultiple_1..4`
-- `FreeMaxGameNum`
-- `Base_Max_EliTimes`
-- `Free_Max_EliTimes`
-- `BetGeneralCtrl`
-- `Free_Max_TotalBet`
-- `GoldSymbolWeight`
-- `FreeGoldSymbolWeight_1..4`
-- `Gua_Last_Spins_List`
-- `LevelUpGoldWeight`
+预设玩家最多尝试 2 次翻倍：
 
-注意：当前 math 代码读取消除上限的 key 为 `MainMaxRoundNum / FreeMaxRoundNum`；如果未配置，则不使用配置上限，只受函数参数 `max_cascades` 限制。
+```python
+result = math.spin(
+    {2: 100000, 5: 300000},
+    double_times=2,
+)
+```
 
-## 7.3 reel_config / free_reel_config
+关键结果字段：
 
-- `BASE_RATE`
-- `NORMAL_ROLL_1..5`
-- `SP_ROLL_1..5`
-- `FIX_RESULT_n`
-- `ZERO_RESULT_n`
+- `bets`：各 symbol 的下注。
+- `total_bet`：总下注。
+- `base_win`：翻倍前赢钱。
+- `total_win`：翻倍结束后的最终赢钱。
+- `trigger_index`、`trigger_symbol_id`：主开奖位置和 symbol。
+- `is_bonus`：是否进入 Bonus。
+- `winning_indexes`：实际结算的 index。
+- `outcomes`：各 index 的派彩明细。
+- `outcomes[].multi_config`：该位置原始 `MultiConfig`。
+- `outcomes[].symbol_multi_index`：动态 X 抽中的下标；固定 X 时为 `None`。
+- `outcomes[].x`：本次实际使用的 X。
+- `symbol_multi_index`：本次 spin 的 High/Mid 共享动态 X 下标。
+- `double_result.selected_times`：权重抽中的允许成功次数。
+- `double_result.double_weight_key`：本局使用的权重档位。
+- `double_result.attempted_times`：实际尝试次数。
+- `double_result.success_times`：成功次数。
+- `double_result.failed`：是否因超过允许次数而归零。
 
-`BASE_RATE` 顺序固定为：
+## 9. 模拟
+
+`simulation.py` 已按 RZCS 的入口和报表结构实现，支持单参数组合、批量组合、
+阶段检查点、分组控制台表格和 CSV 追加。
+
+默认参数：
+
+```python
+SPIN_TIMES = 1_000_000
+REPORT_INTERVAL = 5_000
+Bet_Multi = [0, 0, 1, 1, 1, 1, 1, 1, 1, 1]
+Double_Times = 0
+BET_MULTIS = [Bet_Multi]
+DOUBLE_TIMES = [Double_Times]
+SEEDS = [None]
+```
+
+`Bet_Multi[symbol_id]` 表示该 symbol 的 BaseBet 倍数：
 
 ```text
-normal,special,fix,zero
+实际下注 = BaseBet * Bet_Multi[symbol_id]
 ```
 
----
+倍数为 0 表示不下注。`Bet_Multi[0]` 和 `Bet_Multi[1]` 必须为 0。
+`Double_Times` 表示玩家赢钱后最多主动尝试的翻倍次数，0 表示不翻倍。
 
-# 8. 执行顺序
+### 9.1 Python 接口
 
-## Base
+- `simulation(...)`：运行一个参数组合，返回阶段检查点行。
+- `simulate(...)`：兼容旧接口，返回最终结果行。
+- `simulation_all(...)`：运行全部下注、倍乘次数和 seed 组合。
+- `print_table(...)`：输出与 RZCS 类似的分组统计表。
+- `append_simulation_results(...)`：追加最终行到 `simulate_result.csv`。
 
-1. 根据 `INDEX` 读取 game server 配置段
-2. 按 `WinBoxLevelUpRate` 抽取 base 倍乘框档位
-3. 未升级读取 base `GENERAL_1`，升级读取 base `GENERAL_2`
-4. 根据 `BASE_RATE` 选择 normal / special / fix / zero
-5. Spin 生成 5x6 牌面
-6. 按 `GRID_DISABLES` 裁剪为 45554
-7. 未升级使用 `GoldSymbolWeight`，升级使用 `LevelUpGoldWeight`
-8. 第 2/3/4 列按权重生成金色 symbol
-9. 计算 Ways 中奖
-10. 按当前消除轮次应用 base 倍乘
-11. 金色 symbol 第一次消除变 Wild；普通 symbol 直接消除
-12. 上方 symbol 下落，并从当前停轴上方继续补牌
-13. 重复计算，直到无中奖
-14. 根据最终牌面 Scatter 数量判断是否触发 free
+### 9.2 命令行
 
-## Free
+单组参数：
 
-1. 根据 `free_choice/free_general_index` 读取 free reel
-2. 根据 `BASE_RATE` 选择 normal / special / fix / zero
-3. Spin 生成 5x6 牌面
-4. 按 `GRID_DISABLES_FREE` 裁剪为 45554
-5. 根据 free general 使用 `FreeGoldSymbolWeight_n`
-6. 第 2/3/4 列按权重生成金色 symbol
-7. 计算 Ways 中奖
-8. 按当前消除轮次应用 free 倍乘
-9. 金色 symbol 第一次消除变 Wild；普通 symbol 直接消除
-10. 上方 symbol 下落，并从当前停轴上方继续补牌
-11. 重复计算，直到无中奖
-12. 根据最终牌面 Scatter 数量判断是否重触发 free
+```bash
+python simulation.py \
+  --spins 100000 \
+  --bet-multi "0,0,1,1,1,1,1,1,1,1" \
+  --double-times "0" \
+  --seed 7
+```
 
----
+多组下注使用分号分隔，多组倍乘次数和 seed 使用逗号分隔：
 
-# 9. Simulation 参数
+```bash
+python simulation.py \
+  --spins 100000 \
+  --bet-multis "0,0,1,1,1,1,1,1,1,1;0,0,2,0,0,0,0,0,0,0" \
+  --double-times "0,1,2" \
+  --seeds "7,8"
+```
 
-`simulation.py` 中主要参数：
+其他参数：
 
-| 参数 | 说明 |
-| --- | --- |
-| `SPIN_TIMES` | 仿真次数，默认 `1000000` |
-| `INDEX` | reel index 列表，默认 `[0]` |
-| `GENERAL_INDEX` | base general 列表，默认 `[1]` |
-| `CHOOSE_INDEXES` | free 选择列表，默认 `[1]` |
-| `REPORT_INTERVAL` | 进度刷新间隔，默认 `5000` |
+- `--report-interval`：阶段统计间隔。
+- `--no-print-updates`：运行时不打印阶段表格。
 
-命令行参数：
+### 9.3 输出
 
-| 参数 | 说明 |
-| --- | --- |
-| `--spins` | 覆盖仿真次数 |
-| `--indexes` | 指定 index 列表 |
-| `--generals` | 指定 base GENERAL 列表 |
-| `--free-generals` | 指定 free GENERAL 列表 |
-| `--choose-indexes` | 指定 choose index 列表 |
-| `--report-interval` | 覆盖报告间隔 |
-| `--no-print-updates` | 不打印中途进度 |
+每个最终结果会打印并追加到 `simulate_result.csv`，主要包括：
 
-`FREE_GENERAL` 展示规则：
+- 基础和最终 RTP。
+- 倍乘带来的 RTP 增减。
+- Hit 率、Bonus 率。
+- Bonus 额外 symbol 总数、平均数量及 1-8 个的分布。
+- `>5x` 至 `>1000x` 分布。
+- 翻倍尝试、成功和失败次数。
+- 抽中的倍乘次数分布。
+- 各 `DoubleWeight_X` 档位使用次数。
+- symbol `2-9` 各自的累计下注、命中次数、赢钱和 RTP。
+- `ok`、错误信息和完整累计 `status`。
 
-- 如果显式传入 `free_general_index`，展示该值
-- 如果 `choose_index=5`，展示实际随机使用过的 free general 集合
-- 否则展示 `choose_index`
+## 10. 配置校验
 
----
+初始化 `ThemeMath` 时会检查：
 
-# 10. 关键注意事项
+- 四组轮盘配置长度一致。
+- symbol id、倍数和权重合法。
+- `SymbolMultiWeight`、`HighSymbolWeight`、`MidSymbolWeight` 非空且长度一致。
+- 动态 X 权重非负，X 全部大于 0。
+- `MultiConfig=1` 的 symbol 必须存在动态 X 或固定 X=5 的规则。
+- `RespinCountWeight` 必须包含 8 项，且权重非负、总和大于 0。
+- Bonus 的正权重 index 数量必须覆盖 Respin 可选的最大数量。
+- Bonus 中 symbol 0 位置权重为 0。
+- `ITEM_COUNT` 能覆盖 ReelConfig 中的最大 symbol id。
+- 每个 `DoubleWeight_X` 长度为 `DoubleMaxTimes + 1`。
+- `DoubleWeight_100` 必须存在。
+- 所有 DoubleWeight 非负且权重总和大于 0。
 
-1. 当前玩法是 Ways 消除玩法，不是固定线玩法。
-2. 原始牌面是 5x6，实际计算牌面为 45554。
-3. Base 和 Free 使用相同有效结构，但分别读取 `GRID_DISABLES / GRID_DISABLES_FREE`。
-4. Scatter 只用于最终牌面触发 free，不直接派彩。
-5. Scatter 触发条件是最终有效牌面 Scatter 数量 >= 3。
-6. free 次数由 `FREE_COUNT_LIST` 和 `choose_index` 决定，不由 `SCATTER_MULTIPLES` 决定。
-7. `choose_index=5` 时，free 次数和倍乘档位分别独立随机。
-8. base 倍乘框档位由 `WinBoxLevelUpRate` 权重抽取。
-9. base 未升级时使用 `GoldSymbolWeight`。
-10. base 升级时使用 `LevelUpGoldWeight`。
-11. Free 使用 `FreeGoldSymbolWeight_n`，其中 `n` 对应 free general。
-12. 金色 symbol 算奖时按原 symbol 参与，第一次消除后变 Wild。
-13. Wild 可以替代普通 symbol，但 Scatter 和 Wild 自身不派普通奖。
-14. 消除补牌从本次停轴上方继续取 symbol。
-15. 当前 math 逻辑中没有 JP。
-16. 所有直接概率配置均使用万分比。
-17. `WinBoxLevelUpRate`、`FREE_RANDOM_COUNT_WEIGHTS`、`FREE_RANDOM_MULTI_WEIGHTS` 是权重，不是万分比概率。
+## 11. MJWL 格式兼容文件
+
+目录和文件名已按 MJWL 格式整理，并将 `mjwl_` 前缀替换为 `xml_`。缺失的通用
+配置文件直接复制自 MJWL，用于保持部署目录结构兼容。
+
+当前水果机数学流程不读取复制来的 Ways、活动和通用控制配置；
+`xml_rand_ex_0.conf` 与 `xml_free_rand_ex_0.conf` 已改为当前
+`ReelConfig` 的占位轴。后续接入其他模块前，需要将其中的 MJWL 内容替换为 XML
+的正式配置。

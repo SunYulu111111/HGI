@@ -2,10 +2,19 @@
 
 from __future__ import annotations
 
+import csv
 import unittest
-from fractions import Fraction
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
-from simulation import build_symbol_bets, simulate
+from simulation import (
+    append_simulation_results,
+    build_symbol_bets,
+    parse_bet_multis,
+    simulation,
+    simulation_all,
+    simulate,
+)
 from theme_math import ThemeMath
 
 
@@ -49,12 +58,14 @@ class ThemeMathTest(unittest.TestCase):
     def test_configuration_matches_fruit_machine_symbols(self):
         self.assertEqual(self.math.base_bet, 100_000)
         self.assertEqual(self.math.item_count, 10)
-        self.assertEqual(set(self.math.item_prizes), set(range(2, 10)))
         self.assertEqual(
             len(self.math.reel_config),
             len(self.math.multi_config),
         )
-        self.assertTrue(self.math.double_enabled)
+        self.assertEqual(self.math.high_symbol_weights, [40, 30, 20])
+        self.assertEqual(self.math.mid_symbol_weights, [20, 15, 10])
+        self.assertEqual(self.math.symbol_multi_weights, [100, 100, 100])
+        self.assertEqual(self.math.respin_count_weights, [100] * 8)
         self.assertEqual(self.math.double_max_times, 10)
         self.assertEqual(self.math.double_multiple, 2)
         self.assertEqual(
@@ -79,7 +90,7 @@ class ThemeMathTest(unittest.TestCase):
                     "1000,512,256,128,64,32,16,8,4,2,1",
                 )
 
-    def test_normal_spin_uses_index_symbol_prize_and_multiplier(self):
+    def test_normal_spin_uses_configured_multiplier_as_x(self):
         self.force_trigger_index(14)  # symbol 3, multiplier 3
 
         result = self.math.spin({3: 100_000})
@@ -88,8 +99,9 @@ class ThemeMathTest(unittest.TestCase):
         self.assertEqual(result["trigger_symbol_id"], 3)
         self.assertFalse(result["is_bonus"])
         self.assertEqual(result["total_bet"], 100_000)
-        self.assertEqual(result["total_win"], 2_400_000)
-        self.assertEqual(result["win_items"][0]["item_prize"], 800_000)
+        self.assertEqual(result["total_win"], 3)
+        self.assertEqual(result["win_items"][0]["multi_config"], 3)
+        self.assertEqual(result["win_items"][0]["x"], 3)
         self.assertEqual(result["win_items"][0]["multiplier"], 3)
 
     def test_symbol_two_high_multiplier_formula(self):
@@ -97,7 +109,60 @@ class ThemeMathTest(unittest.TestCase):
 
         result = self.math.spin({2: 100_000})
 
-        self.assertEqual(result["total_win"], 100_000_000)
+        self.assertEqual(result["total_win"], 50)
+
+    def test_multi_config_one_uses_symbol_multiplier_rules(self):
+        cases = (
+            (15, {3: 100_000}, 40, 0, 40),
+            (1, {6: 300_000}, 20, 0, 60),
+            (4, {9: 200_000}, 5, None, 10),
+        )
+        for trigger_index, bets, expected_x, expected_index, expected_win in cases:
+            with self.subTest(trigger_index=trigger_index):
+                self.force_trigger_index(trigger_index)
+                result = self.math.spin(bets)
+                outcome = result["outcomes"][0]
+                self.assertEqual(outcome["multi_config"], 1)
+                self.assertEqual(outcome["x"], expected_x)
+                self.assertEqual(outcome["symbol_multi_index"], expected_index)
+                self.assertEqual(result["total_win"], expected_win)
+
+    def test_high_and_mid_symbols_share_one_multi_index_per_spin(self):
+        self.force_trigger_index(9)
+        self.math.symbol_multi_weights = [0, 0, 1]
+        self.math.respin_count_weights = [0] * 7 + [1]
+
+        result = self.math.spin(
+            {symbol_id: 100_000 for symbol_id in range(2, 10)}
+        )
+
+        dynamic_outcomes = [
+            outcome
+            for outcome in result["outcomes"]
+            if outcome["multi_config"] == 1
+            and outcome["symbol_id"] in (3, 4, 5, 6, 7, 8)
+        ]
+        self.assertEqual(result["symbol_multi_index"], 2)
+        self.assertEqual(
+            {outcome["symbol_multi_index"] for outcome in dynamic_outcomes},
+            {2},
+        )
+        self.assertEqual(
+            {
+                outcome["x"]
+                for outcome in dynamic_outcomes
+                if outcome["symbol_id"] in (3, 4, 5)
+            },
+            {20},
+        )
+        self.assertEqual(
+            {
+                outcome["x"]
+                for outcome in dynamic_outcomes
+                if outcome["symbol_id"] in (6, 7, 8)
+            },
+            {10},
+        )
 
     def test_unselected_winning_symbol_does_not_pay(self):
         self.force_trigger_index(14)  # symbol 3
@@ -108,47 +173,34 @@ class ThemeMathTest(unittest.TestCase):
         self.assertEqual(result["win_items"], [])
         self.assertEqual(result["outcomes"][0]["symbol_id"], 3)
 
-    def test_bonus_selects_eight_distinct_indexes(self):
+    def test_bonus_respin_count_selects_between_one_and_eight_indexes(self):
         self.force_trigger_index(9)  # symbol 0
 
-        result = self.math.spin({symbol_id: 100_000 for symbol_id in range(2, 10)})
+        minimum_result = self.math.spin(
+            {symbol_id: 100_000 for symbol_id in range(2, 10)}
+        )
+        self.math.respin_count_weights = [0] * 7 + [1]
+        maximum_result = self.math.spin(
+            {symbol_id: 100_000 for symbol_id in range(2, 10)}
+        )
 
-        self.assertTrue(result["is_bonus"])
-        self.assertEqual(len(result["winning_indexes"]), 8)
-        self.assertEqual(len(set(result["winning_indexes"])), 8)
-        self.assertNotIn(9, result["winning_indexes"])
-        self.assertNotIn(21, result["winning_indexes"])
+        self.assertTrue(minimum_result["is_bonus"])
+        self.assertEqual(minimum_result["respin_count"], 1)
+        self.assertEqual(len(minimum_result["winning_indexes"]), 1)
+        self.assertEqual(maximum_result["respin_count"], 8)
+        self.assertEqual(len(maximum_result["winning_indexes"]), 8)
+        self.assertEqual(len(set(maximum_result["winning_indexes"])), 8)
+        self.assertNotIn(9, maximum_result["winning_indexes"])
+        self.assertNotIn(21, maximum_result["winning_indexes"])
 
-    def test_each_symbol_and_all_symbols_have_exact_point_seven_rtp(self):
-        total_weight = sum(self.math.win_weights)
-        self.assertEqual(total_weight, 30_000)
+    def test_win_weights_keep_bonus_disabled(self):
+        self.assertEqual(sum(self.math.win_weights), 30_000)
         self.assertEqual(self.math.win_weights[9], 0)
         self.assertEqual(self.math.win_weights[21], 0)
 
-        for symbol_id in range(2, 10):
-            bets = {symbol_id: self.math.base_bet}
-            weighted_win = sum(
-                weight * self.math._settle_index(index, bets)["win"]
-                for index, weight in enumerate(self.math.win_weights)
-            )
-            with self.subTest(symbol_id=symbol_id):
-                self.assertEqual(
-                    Fraction(weighted_win, total_weight * self.math.base_bet),
-                    Fraction(7, 10),
-                )
-
-        bets = {symbol_id: self.math.base_bet for symbol_id in range(2, 10)}
-        weighted_win = sum(
-            weight * self.math._settle_index(index, bets)["win"]
-            for index, weight in enumerate(self.math.win_weights)
-        )
-        self.assertEqual(
-            Fraction(weighted_win, total_weight * sum(bets.values())),
-            Fraction(7, 10),
-        )
-
     def test_bonus_repeated_symbol_indexes_pay_independently(self):
         self.force_trigger_index(9)
+        self.math.respin_count_weights = [0] * 7 + [1]
         self.math.bonus_win_weights = [0] * len(self.math.bonus_win_weights)
         for index in range(8):
             self.math.bonus_win_weights[index] = 1
@@ -161,8 +213,8 @@ class ThemeMathTest(unittest.TestCase):
             for outcome in result["outcomes"]
             if outcome["symbol_id"] == 2
         ]
-        self.assertEqual(symbol_two_wins, [100_000_000, 200_000_000])
-        self.assertEqual(result["total_win"], 300_000_000)
+        self.assertEqual(symbol_two_wins, [50, 100])
+        self.assertEqual(result["total_win"], 150)
 
     def test_multiple_symbol_bets_have_independent_amounts(self):
         self.force_trigger_index(1)  # symbol 6, multiplier 1
@@ -170,7 +222,7 @@ class ThemeMathTest(unittest.TestCase):
         result = self.math.spin({2: 100_000, 6: 300_000, 9: 200_000})
 
         self.assertEqual(result["total_bet"], 600_000)
-        self.assertEqual(result["total_win"], 1_200_000)
+        self.assertEqual(result["total_win"], 60)
 
     def test_invalid_bets_are_rejected(self):
         invalid_bets = (
@@ -275,13 +327,13 @@ class ThemeMathTest(unittest.TestCase):
 
         result = math.spin({3: 100_000}, double_times=2)
 
-        self.assertEqual(result["base_win"], 2_400_000)
+        self.assertEqual(result["base_win"], 3)
         self.assertEqual(result["double_result"]["attempted_times"], 2)
         self.assertEqual(
             result["double_result"]["double_weight_key"],
-            "DoubleWeight_25",
+            "DoubleWeight_1",
         )
-        self.assertEqual(result["total_win"], 9_600_000)
+        self.assertEqual(result["total_win"], 12)
 
     def test_double_is_not_attempted_without_a_win(self):
         self.force_trigger_index(14)  # symbol 3，玩家只押symbol 2
@@ -339,6 +391,70 @@ class SimulationBetMultiTest(unittest.TestCase):
         for bet_multi in invalid_values:
             with self.subTest(bet_multi=bet_multi), self.assertRaises(ValueError):
                 build_symbol_bets(self.math, bet_multi)
+
+    def test_simulation_returns_rzcs_style_checkpoint_rows(self):
+        bet_multi = [0, 0, 1, 2, 0, 0, 0, 0, 0, 0]
+
+        rows = simulation(
+            spin_times=5,
+            bet_multi=bet_multi,
+            double_times=0,
+            seed=7,
+            report_interval=2,
+        )
+
+        self.assertEqual([row["SPIN"] for row in rows], [2, 4, 5])
+        self.assertEqual(rows[-1]["BET_MULTI"], bet_multi)
+        self.assertEqual(rows[-1]["DOUBLE_TIMES"], 0)
+        self.assertEqual(rows[-1]["总押注"], 1_500_000)
+        self.assertEqual(rows[-1]["rtp"], rows[-1]["rtp_check"])
+        self.assertIn("status", rows[-1])
+        self.assertEqual(rows[-1]["symbol_2_bet"], 500_000)
+        self.assertEqual(rows[-1]["symbol_3_bet"], 1_000_000)
+
+    def test_simulation_all_runs_parameter_combinations(self):
+        bet_multi = [0, 0, 1, 1, 0, 0, 0, 0, 0, 0]
+
+        rows = simulation_all(
+            spin_times=2,
+            bet_multis=[bet_multi],
+            double_times_values=[0, 1],
+            seeds=[7, 8],
+            report_interval=0,
+            print_updates=False,
+        )
+
+        self.assertEqual(len(rows), 4)
+        self.assertTrue(all(row["ok"] for row in rows))
+        self.assertEqual({row["DOUBLE_TIMES"] for row in rows}, {0, 1})
+        self.assertEqual({row["SEED"] for row in rows}, {7, 8})
+
+    def test_simulation_results_append_to_csv(self):
+        row = simulate(
+            3,
+            bet_multi=[0, 0, 1, 1, 0, 0, 0, 0, 0, 0],
+            seed=7,
+        )
+        row["ok"] = True
+
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "simulate_result.csv"
+            append_simulation_results([row], path=path)
+            with path.open("r", newline="", encoding="utf-8-sig") as file_obj:
+                rows = list(csv.DictReader(file_obj))
+
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["SPIN"], "3")
+        self.assertEqual(rows[0]["BET_MULTI"], "[0, 0, 1, 1, 0, 0, 0, 0, 0, 0]")
+
+    def test_parse_multiple_bet_multi_groups(self):
+        self.assertEqual(
+            parse_bet_multis("0,0,1,0,0,0,0,0,0,0;0,0,0,2,0,0,0,0,0,0"),
+            [
+                [0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 2, 0, 0, 0, 0, 0, 0],
+            ],
+        )
 
 
 if __name__ == "__main__":

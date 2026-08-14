@@ -18,7 +18,8 @@ class ThemeMath:
 
     BET_SYMBOL_IDS = tuple(range(2, 10))
     BONUS_SYMBOL_ID = 0
-    BONUS_PICK_COUNT = 8
+    BONUS_MIN_PICK_COUNT = 1
+    BONUS_MAX_PICK_COUNT = 8
     DEFAULT_GAME_CONFIG_FILE = Path("special") / "xml_game_config.conf"
     DEFAULT_GAME_SERVER_CONFIG_FILE = Path("special") / "xml_game_server.conf"
 
@@ -46,9 +47,20 @@ class ThemeMath:
         game_info = server_config["Game Info"]
         self.base_bet = self._parse_positive_int(main.get("BaseBet"), "BaseBet")
         self.item_count = self._parse_positive_int(main.get("ITEM_COUNT"), "ITEM_COUNT")
-        self.item_prizes = self._load_item_prizes(main)
         self.reel_config = self._parse_int_list(game_info.get("ReelConfig"), "ReelConfig")
         self.multi_config = self._parse_int_list(game_info.get("MultiConfig"), "MultiConfig")
+        self.high_symbol_weights = self._parse_int_list(
+            game_info.get("HighSymbolWeight"),
+            "HighSymbolWeight",
+        )
+        self.mid_symbol_weights = self._parse_int_list(
+            game_info.get("MidSymbolWeight"),
+            "MidSymbolWeight",
+        )
+        self.symbol_multi_weights = self._parse_int_list(
+            game_info.get("SymbolMultiWeight"),
+            "SymbolMultiWeight",
+        )
         self.win_weights = self._parse_int_list(
             game_info.get("WinWeightConfig"),
             "WinWeightConfig",
@@ -57,9 +69,9 @@ class ThemeMath:
             game_info.get("BonusWinWeightConfig"),
             "BonusWinWeightConfig",
         )
-        self.double_enabled = self._parse_enabled(
-            game_info.get("DoubleEnabled"),
-            "DoubleEnabled",
+        self.respin_count_weights = self._parse_int_list(
+            game_info.get("RespinCountWeight"),
+            "RespinCountWeight",
         )
         self.double_max_times = self._parse_nonnegative_int(
             game_info.get("DoubleMaxTimes"),
@@ -105,14 +117,24 @@ class ThemeMath:
         is_bonus = trigger_symbol_id == self.BONUS_SYMBOL_ID
 
         if is_bonus:
+            respin_count = self._weighted_index(self.respin_count_weights) + 1
             winning_indexes = self._weighted_sample_without_replacement(
                 self.bonus_win_weights,
-                self.BONUS_PICK_COUNT,
+                respin_count,
             )
         else:
+            respin_count = 0
             winning_indexes = [trigger_index]
 
-        outcomes = [self._settle_index(index, bets) for index in winning_indexes]
+        symbol_multi_index = self._select_symbol_multi_index(winning_indexes)
+        outcomes = [
+            self._settle_index(
+                index,
+                bets,
+                symbol_multi_index=symbol_multi_index,
+            )
+            for index in winning_indexes
+        ]
         paid_items = [outcome.copy() for outcome in outcomes if outcome["win"] > 0]
         base_win = sum(outcome["win"] for outcome in outcomes)
         total_bet = sum(bets.values())
@@ -135,14 +157,18 @@ class ThemeMath:
             "trigger_index": trigger_index,
             "trigger_symbol_id": trigger_symbol_id,
             "is_bonus": is_bonus,
+            "respin_count": respin_count,
             "winning_indexes": winning_indexes,
             "winning_symbol_ids": [outcome["symbol_id"] for outcome in outcomes],
+            "symbol_multi_index": symbol_multi_index,
             "outcomes": outcomes if return_detail else [],
             "win_items": paid_items if return_detail else [],
             "double_result": double_result,
             "spin_info": {
                 "trigger": trigger,
                 "bonus_pick_count": len(winning_indexes) if is_bonus else 0,
+                "respin_count": respin_count,
+                "symbol_multi_index": symbol_multi_index,
                 "double_attempted_times": double_result["attempted_times"],
             },
         }
@@ -193,8 +219,6 @@ class ThemeMath:
     def select_double_times(self, win_amount: int, total_bet: int) -> int:
         """按赢钱倍数对应的权重一次选出允许成功倍乘的次数。"""
 
-        if not self.double_enabled:
-            raise ValueError("翻倍玩法未启用")
         _, weights = self.get_double_weight_config(win_amount, total_bet)
         return self._weighted_index(weights)
 
@@ -208,8 +232,6 @@ class ThemeMath:
     ) -> dict:
         """按本局预选次数执行一次翻倍，超过预选次数时失败归零。"""
 
-        if not self.double_enabled:
-            raise ValueError("翻倍玩法未启用")
         self._validate_win_amount(win_amount)
         if isinstance(completed_times, bool) or not isinstance(completed_times, int):
             raise TypeError("completed_times 必须是整数")
@@ -254,9 +276,6 @@ class ThemeMath:
             raise TypeError("double_times 必须是整数")
         if double_times < 0 or double_times > self.double_max_times:
             raise ValueError(f"double_times 必须为 0-{self.double_max_times}")
-        if double_times > 0 and not self.double_enabled:
-            raise ValueError("翻倍玩法未启用")
-
         total_bet = self.base_bet if total_bet is None else total_bet
         if isinstance(total_bet, bool) or not isinstance(total_bet, int):
             raise TypeError("total_bet 必须是整数")
@@ -300,8 +319,7 @@ class ThemeMath:
             "failed": bool(rounds and not rounds[-1]["success"]),
             "total_win": current_win,
             "can_double": (
-                self.double_enabled
-                and current_win > 0
+                current_win > 0
                 and len(rounds) < self.double_max_times
             ),
             "rounds": rounds,
@@ -315,31 +333,85 @@ class ThemeMath:
         if win_amount < minimum:
             raise ValueError(f"win_amount 必须大于等于 {minimum}")
 
-    def _settle_index(self, index: int, bets: Mapping[int, int]) -> dict:
+    def _select_symbol_multi_index(
+        self,
+        winning_indexes: Sequence[int],
+    ) -> int | None:
+        """同一次 spin 的所有 High/Mid symbol 共用一个倍率下标。"""
+
+        needs_dynamic_multiplier = any(
+            self.multi_config[index] == 1
+            and self.reel_config[index] in (3, 4, 5, 6, 7, 8)
+            for index in winning_indexes
+        )
+        if not needs_dynamic_multiplier:
+            return None
+        return self._weighted_index(self.symbol_multi_weights)
+
+    def _settle_index(
+        self,
+        index: int,
+        bets: Mapping[int, int],
+        symbol_multi_index: int | None = None,
+    ) -> dict:
         symbol_id = self.reel_config[index]
-        multiplier = self.multi_config[index]
+        configured_multiplier = self.multi_config[index]
         bet = bets.get(symbol_id, 0)
-        item_prize = self.item_prizes.get(symbol_id, 0)
-        win = self._calculate_win(bet, item_prize, multiplier)
+        multiplier, symbol_multi_index = self._get_win_multiplier(
+            symbol_id,
+            configured_multiplier,
+            symbol_multi_index=symbol_multi_index,
+        )
+        win = self._calculate_win(bet, multiplier)
         return {
             "index": index,
             "position": index + 1,
             "symbol_id": symbol_id,
             "bet": bet,
-            "item_prize": item_prize,
+            "multi_config": configured_multiplier,
+            "symbol_multi_index": symbol_multi_index,
+            "x": multiplier,
             "multiplier": multiplier,
             "win": win,
         }
 
-    def _calculate_win(self, bet: int, item_prize: int, multiplier: int) -> int:
+    def _get_win_multiplier(
+        self,
+        symbol_id: int,
+        configured_multiplier: int,
+        symbol_multi_index: int | None = None,
+    ) -> tuple[int, int | None]:
+        """按 MultiConfig 和 symbol 档位获取本次派彩 X。"""
+
+        if configured_multiplier != 1:
+            return configured_multiplier, None
+        if symbol_id in (3, 4, 5):
+            selected_index = (
+                self._weighted_index(self.symbol_multi_weights)
+                if symbol_multi_index is None
+                else symbol_multi_index
+            )
+            return self.high_symbol_weights[selected_index], selected_index
+        if symbol_id in (6, 7, 8):
+            selected_index = (
+                self._weighted_index(self.symbol_multi_weights)
+                if symbol_multi_index is None
+                else symbol_multi_index
+            )
+            return self.mid_symbol_weights[selected_index], selected_index
+        if symbol_id == 9:
+            return 5, None
+        raise ValueError(
+            f"symbol {symbol_id} 的 MultiConfig 为 1，但没有配置 X 获取规则"
+        )
+
+    def _calculate_win(self, bet: int, multiplier: int) -> int:
         if bet == 0:
             return 0
-        numerator = bet * item_prize * multiplier
+        numerator = bet * multiplier
         win, remainder = divmod(numerator, self.base_bet)
         if remainder:
-            raise ValueError(
-                "派彩结果不是整数，请检查 bet、BaseBet、ITEM_PRIZE 和 MultiConfig"
-            )
+            raise ValueError("派彩结果不是整数，请检查 bet、BaseBet 和 X")
         return win
 
     def _weighted_index(
@@ -375,15 +447,6 @@ class ThemeMath:
             selected.append(index)
             candidates.remove(index)
         return selected
-
-    def _load_item_prizes(self, main) -> dict[int, int]:
-        prizes: dict[int, int] = {}
-        for symbol_id in self.BET_SYMBOL_IDS:
-            key = f"ITEM_PRIZE_{symbol_id}"
-            if key not in main:
-                raise ValueError(f"缺少 {key}")
-            prizes[symbol_id] = int(main[key].strip())
-        return prizes
 
     def _load_double_weight_tiers(self, game_info) -> dict[int, list[int]]:
         tiers: dict[int, list[int]] = {}
@@ -424,15 +487,57 @@ class ThemeMath:
             raise ValueError(f"ReelConfig 包含无效 symbol: {sorted(invalid_symbols)}")
         if any(multiplier <= 0 for multiplier in self.multi_config):
             raise ValueError("MultiConfig 的倍数必须全部大于 0")
+        symbol_multi_lengths = {
+            len(self.symbol_multi_weights),
+            len(self.high_symbol_weights),
+            len(self.mid_symbol_weights),
+        }
+        if len(symbol_multi_lengths) != 1 or not self.symbol_multi_weights:
+            raise ValueError(
+                "SymbolMultiWeight、HighSymbolWeight 和 MidSymbolWeight "
+                "必须非空且长度一致"
+            )
+        if any(weight < 0 for weight in self.symbol_multi_weights):
+            raise ValueError("SymbolMultiWeight 不能包含负权重")
+        if sum(self.symbol_multi_weights) <= 0:
+            raise ValueError("SymbolMultiWeight 的权重总和必须大于 0")
+        if any(value <= 0 for value in self.high_symbol_weights):
+            raise ValueError("HighSymbolWeight 的 X 必须全部大于 0")
+        if any(value <= 0 for value in self.mid_symbol_weights):
+            raise ValueError("MidSymbolWeight 的 X 必须全部大于 0")
+        unsupported_dynamic_symbols = {
+            symbol_id
+            for symbol_id, multiplier in zip(self.reel_config, self.multi_config)
+            if multiplier == 1 and symbol_id not in {0, 3, 4, 5, 6, 7, 8, 9}
+        }
+        if unsupported_dynamic_symbols:
+            raise ValueError(
+                "以下 symbol 的 MultiConfig 为 1，但没有 X 获取规则: "
+                f"{sorted(unsupported_dynamic_symbols)}"
+            )
         if any(weight < 0 for weight in self.win_weights):
             raise ValueError("WinWeightConfig 不能包含负权重")
         if sum(self.win_weights) <= 0:
             raise ValueError("WinWeightConfig 的权重总和必须大于 0")
         if any(weight < 0 for weight in self.bonus_win_weights):
             raise ValueError("BonusWinWeightConfig 不能包含负权重")
-        if sum(weight > 0 for weight in self.bonus_win_weights) < self.BONUS_PICK_COUNT:
+        if len(self.respin_count_weights) != self.BONUS_MAX_PICK_COUNT:
             raise ValueError(
-                f"BonusWinWeightConfig 至少需要 {self.BONUS_PICK_COUNT} 个正权重"
+                f"RespinCountWeight 必须包含 {self.BONUS_MAX_PICK_COUNT} 项"
+            )
+        if any(weight < 0 for weight in self.respin_count_weights):
+            raise ValueError("RespinCountWeight 不能包含负权重")
+        if sum(self.respin_count_weights) <= 0:
+            raise ValueError("RespinCountWeight 的权重总和必须大于 0")
+        max_respin_count = max(
+            index + 1
+            for index, weight in enumerate(self.respin_count_weights)
+            if weight > 0
+        )
+        if sum(weight > 0 for weight in self.bonus_win_weights) < max_respin_count:
+            raise ValueError(
+                "BonusWinWeightConfig 的正权重 index 数量不能满足 "
+                f"RespinCountWeight 可选的最大数量 {max_respin_count}"
             )
         bonus_recursion_indexes = [
             index
@@ -444,10 +549,8 @@ class ThemeMath:
                 "BonusWinWeightConfig 中 symbol 0 位置的权重必须为 0: "
                 f"{bonus_recursion_indexes}"
             )
-        if any(prize < 0 for prize in self.item_prizes.values()):
-            raise ValueError("ITEM_PRIZE 不能包含负数")
-        if self.double_enabled and self.double_max_times <= 0:
-            raise ValueError("启用翻倍玩法时 DoubleMaxTimes 必须大于 0")
+        if self.double_max_times <= 0:
+            raise ValueError("DoubleMaxTimes 必须大于 0")
         if self.double_multiple != 2:
             raise ValueError("DoubleMultiple 必须为 2")
         double_weight_configs = {
@@ -494,15 +597,6 @@ class ThemeMath:
         if result < 0:
             raise ValueError(f"{key} 不能为负数")
         return result
-
-    @staticmethod
-    def _parse_enabled(value: str | None, key: str) -> bool:
-        if value is None:
-            raise ValueError(f"缺少 {key}")
-        result = int(value.strip())
-        if result not in (0, 1):
-            raise ValueError(f"{key} 只能为 0 或 1")
-        return bool(result)
 
     @staticmethod
     def _parse_int_list(value: str | None, key: str) -> list[int]:

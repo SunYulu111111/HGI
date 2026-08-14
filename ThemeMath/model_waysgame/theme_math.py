@@ -25,8 +25,8 @@ class ThemeMath(WaysGame):
 
     # 配置里的 GoldSymbolWeight 对应第 2、3、4 列，内部下标是 1、2、3。
     SPECIAL_CONFIG_DIR = "special"
-    DEFAULT_GAME_CONFIG_FILE = str(Path(SPECIAL_CONFIG_DIR) / "game_config.conf")
-    DEFAULT_GAME_SERVER_CONFIG_FILE = str(Path(SPECIAL_CONFIG_DIR) / "game_server.conf")
+    DEFAULT_GAME_CONFIG_FILE = str(Path(SPECIAL_CONFIG_DIR) / "xxx_game_config.conf")
+    DEFAULT_GAME_SERVER_CONFIG_FILE = str(Path(SPECIAL_CONFIG_DIR) / "xxx_game_server.conf")
     GOLD_COLUMNS = (1, 2, 3)
     GOLD_BASE = 10000
     GOLD_SYMBOL_OFFSET = 100
@@ -533,7 +533,7 @@ class ThemeMath(WaysGame):
         return parser
 
     def load_free_choice_config(self) -> tuple[list[int], list[list[int]], list[int], list[int]]:
-        """从 game_config.conf 读取 1-4 类 free 的次数和消除倍数。"""
+        """从 xxx_game_config.conf 读取 1-4 类 free 的次数和消除倍数。"""
 
         path = self.project_dir / self.game_config_file
         parser = self._read_config_file(path)

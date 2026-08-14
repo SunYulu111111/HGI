@@ -19,7 +19,7 @@ class ThemeMath(LinesGame):
     """Thin wrapper for a fixed-line game model."""
 
     SPECIAL_CONFIG_DIR = "special"
-    DEFAULT_GAME_CONFIG_FILE = str(Path(SPECIAL_CONFIG_DIR) / "game_config.conf")
+    DEFAULT_GAME_CONFIG_FILE = str(Path(SPECIAL_CONFIG_DIR) / "xxx_game_config.conf")
     FREE_REEL_CONFIG_DIR = "free_reel_config"
 
     def __init__(self, base_bet: int = 10000, **kwargs):
