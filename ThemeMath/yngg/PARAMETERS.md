@@ -8,20 +8,21 @@
 
 - 使用 `COL_COUNT=6` 和 `ROW_COUNT=5` 生成 6 列 × 5 行盘面。
 - 使用 `ITEM_COUNT=13` 定义 0–12 共 13 个原始图标。
-- 使用 `WILD_ID=1` 指定 Wild。
-- 使用 `FEATURE_ID=2`、`BONUS_ID=2` 指定 Bonus 功能图标。
-- 使用 `SUPER_SCATTER_ID=13` 表示完成转化后的 Super Scatter；该动态结果不计入原始图标数量。
 - 使用 `USE_WILDS` 决定哪些普通图标允许 Wild 参与。
 - 使用 `BASE_NUMS` 指定普通图标至少需要 5 个才能起奖。
 - 使用 `ITEM_PRIZES_3` 至 `ITEM_PRIZES_12` 根据 Cluster 数量计算赔付。
+- 使用 `LINE_MODE`、`BOTH_SIDES`、`FULL_WILD_LINE`、`RULE_COUNT` 和可选的 `LINE_RULES_N` 保留通用 Pay Line 格式。
+- 使用 `SCATTER_MODE`、`SCATTER_ID`、`SCATTER_COLS`、`SCATTER_SERIAL`、`SCATTER_MULTIPLES` 和 `SCATTER_PRIZES` 保留通用 Scatter 格式。
 - 使用 `GRID_DISABLES` 和 `GRID_DISABLES_FREE` 决定主游戏、免费游戏的有效格子。
 
 `ThemeMath.cal_item_list()` 读取以上参数，完成 Cluster 查找、Wild 参与判断和赔付计算。
 
-`special/yngg_game_server.conf` 提供 Scatter 转化参数：
+`special/yngg_game_server.conf` 提供特殊图标 ID 和 Scatter 转化参数：
 
+- 使用 `WILD_ID=1` 指定 Wild。
+- 使用 `FEATURE_ID`、`BONUS_ID`、`COIN_ID`、`CLOVER_ID`、`POT_ID`、`MULTIPLIER_ID`、`COLLECTOR_ID`、`JACKPOT_ID` 指定金色玩法相关图标。
+- 使用 `SUPER_SCATTER_ID=13` 表示完成转化后的 Super Scatter；该动态结果不计入原始图标数量。
 - 使用 `SuperScatterSourceId=0` 指定 Super Scatter 的原始图标与 Scatter 相同。
-- 使用 `SuperScatterId=13` 指定转化后的结果图标。
 - 使用 `SuperScatterProbability=200` 设置独立转化概率；概率单位为万分比，200/10000 等于 1/50。
 
 初始盘面和每次消除补牌后，所有新出现的 Scatter 都会分别执行一次转化判断。

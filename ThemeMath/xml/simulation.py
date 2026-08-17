@@ -46,6 +46,7 @@ Bet_Multi = [0, 0, 1, 1, 1, 1, 1, 1, 1, 1]
 Double_Times = 0
 BET_MULTIS = [Bet_Multi]
 DOUBLE_TIMES = [Double_Times]
+GROUP_INDEXES = [0]
 SEEDS = [None]
 RESULT_CSV = Path(__file__).resolve().with_name("simulate_result.csv")
 SYMBOL_IDS = tuple(range(2, 10))
@@ -96,6 +97,7 @@ RESPIN_COUNT_REPORT_FIELDS = [
 RESULT_CSV_FIELDS = [
     "BET_MULTI",
     "DOUBLE_TIMES",
+    "GROUP_INDEX",
     "SEED",
     "SPIN",
     "总押注",
@@ -124,6 +126,9 @@ RESULT_CSV_FIELDS = [
     "倍乘成功",
     "倍乘失败",
     "倍乘成功率",
+    "砍分次数",
+    "砍分率",
+    "砍前赢钱",
     *DOUBLE_SELECTED_REPORT_FIELDS,
     *DOUBLE_WEIGHT_REPORT_FIELDS,
     *SYMBOL_REPORT_FIELDS,
@@ -193,6 +198,8 @@ status_model = {
     "double_attempt_count": 0,
     "double_success_count": 0,
     "double_fail_count": 0,
+    "control_cut_count": 0,
+    "control_original_win": 0,
     "double_selected_counts": [0] * 11,
     "double_weight_key_counts": {key: 0 for key in DOUBLE_WEIGHT_KEYS},
     "symbol_bets": {symbol_id: 0 for symbol_id in SYMBOL_IDS},
@@ -207,6 +214,7 @@ statics_columns = [
         "fields": [
             "BET_MULTI",
             "DOUBLE_TIMES",
+            "GROUP_INDEX",
             "SEED",
             "SPIN",
             "总押注",
@@ -247,6 +255,9 @@ statics_columns = [
             "倍乘成功",
             "倍乘失败",
             "倍乘成功率",
+            "砍分次数",
+            "砍分率",
+            "砍前赢钱",
         ],
     },
     {
@@ -309,6 +320,10 @@ def record_spin(
     status["double_attempt_count"] += double_result["attempted_times"]
     status["double_success_count"] += double_result["success_times"]
     status["double_fail_count"] += int(double_result["failed"])
+    control_result = result["control_result"]
+    if control_result["is_cut"]:
+        status["control_cut_count"] += 1
+        status["control_original_win"] += control_result["original_base_win"]
     weight_key = double_result["double_weight_key"]
     if weight_key is not None:
         status["double_weight_key_counts"].setdefault(weight_key, 0)
@@ -319,6 +334,7 @@ def build_simulation_row(
     status: dict,
     bet_multi: list[int],
     double_times: int,
+    group_index: int,
     seed: int | None,
 ) -> dict:
     """构建一个与 RZCS 报表风格一致的累计结果行。"""
@@ -335,6 +351,7 @@ def build_simulation_row(
         {
             "BET_MULTI": list(bet_multi),
             "DOUBLE_TIMES": double_times,
+            "GROUP_INDEX": group_index,
             "SEED": "" if seed is None else seed,
             "总押注": total_bet,
             "rtp": total_win / total_bet if total_bet else 0,
@@ -361,6 +378,9 @@ def build_simulation_row(
                 if double_attempt_count
                 else 0
             ),
+            "砍分次数": status["control_cut_count"],
+            "砍分率": status["control_cut_count"] / spins if spins else 0,
+            "砍前赢钱": status["control_original_win"],
             "base_win_times": status["base"]["fruit"][0],
             "base_win_rate": status["base"]["fruit"][0] / spins if spins else 0,
             "错误": "",
@@ -369,6 +389,7 @@ def build_simulation_row(
             "seed": seed,
             "bet_multi": list(bet_multi),
             "double_times": double_times,
+            "group_index": group_index,
             "bets": {
                 symbol_id: status["symbol_bets"][symbol_id] // spins
                 for symbol_id in SYMBOL_IDS
@@ -419,6 +440,7 @@ def simulation(
     spin_times: int = SPIN_TIMES,
     bet_multi: list[int] | None = None,
     double_times: int | None = None,
+    group_index: int = 0,
     seed: int | None = None,
     report_interval: int = REPORT_INTERVAL,
     print_updates: bool = False,
@@ -443,17 +465,32 @@ def simulation(
             bets,
             return_detail=True,
             double_times=double_times,
+            group_index=group_index,
         )
         record_spin(status, result, bets)
         spins = status["base"]["spin"]
         if report_interval > 0 and spins % report_interval == 0:
-            row = build_simulation_row(status, bet_multi, double_times, seed)
+            row = build_simulation_row(
+                status,
+                bet_multi,
+                double_times,
+                group_index,
+                seed,
+            )
             rows.append(row)
             if print_updates:
                 status_handler.print_table([row])
 
     if not rows or rows[-1]["SPIN"] != status["base"]["spin"]:
-        rows.append(build_simulation_row(status, bet_multi, double_times, seed))
+        rows.append(
+            build_simulation_row(
+                status,
+                bet_multi,
+                double_times,
+                group_index,
+                seed,
+            )
+        )
     rows[-1]["status"] = status
     return rows
 
@@ -462,6 +499,7 @@ def simulate(
     spins: int,
     bet_multi: list[int] | None = None,
     double_times: int | None = None,
+    group_index: int = 0,
     seed: int | None = None,
 ) -> dict:
     """兼容旧调用方式，返回最后一个累计结果行。"""
@@ -470,6 +508,7 @@ def simulate(
         spin_times=spins,
         bet_multi=bet_multi,
         double_times=double_times,
+        group_index=group_index,
         seed=seed,
         report_interval=0,
     )[-1]
@@ -479,6 +518,7 @@ def simulation_all(
     spin_times: int = SPIN_TIMES,
     bet_multis: list[list[int]] | None = None,
     double_times_values: list[int] | None = None,
+    group_indexes: list[int] | None = None,
     seeds: list[int | None] | None = None,
     report_interval: int = REPORT_INTERVAL,
     print_updates: bool = True,
@@ -487,34 +527,38 @@ def simulation_all(
 
     bet_multis = BET_MULTIS if bet_multis is None else bet_multis
     double_times_values = DOUBLE_TIMES if double_times_values is None else double_times_values
+    group_indexes = GROUP_INDEXES if group_indexes is None else group_indexes
     seeds = SEEDS if seeds is None else seeds
     results = []
     for bet_multi in bet_multis:
         for double_times in double_times_values:
-            for seed in seeds:
-                try:
-                    rows = simulation(
-                        spin_times=spin_times,
-                        bet_multi=bet_multi,
-                        double_times=double_times,
-                        seed=seed,
-                        report_interval=report_interval if print_updates else 0,
-                        print_updates=print_updates,
-                    )
-                    final_row = rows[-1]
-                    final_row["ok"] = True
-                    results.append(final_row)
-                except Exception as exc:
-                    results.append(
-                        {
-                            "ok": False,
-                            "BET_MULTI": list(bet_multi),
-                            "DOUBLE_TIMES": double_times,
-                            "SEED": "" if seed is None else seed,
-                            "SPIN": spin_times,
-                            "错误": str(exc),
-                        }
-                    )
+            for group_index in group_indexes:
+                for seed in seeds:
+                    try:
+                        rows = simulation(
+                            spin_times=spin_times,
+                            bet_multi=bet_multi,
+                            double_times=double_times,
+                            group_index=group_index,
+                            seed=seed,
+                            report_interval=report_interval if print_updates else 0,
+                            print_updates=print_updates,
+                        )
+                        final_row = rows[-1]
+                        final_row["ok"] = True
+                        results.append(final_row)
+                    except Exception as exc:
+                        results.append(
+                            {
+                                "ok": False,
+                                "BET_MULTI": list(bet_multi),
+                                "DOUBLE_TIMES": double_times,
+                                "GROUP_INDEX": group_index,
+                                "SEED": "" if seed is None else seed,
+                                "SPIN": spin_times,
+                                "错误": str(exc),
+                            }
+                        )
     return results
 
 
@@ -528,7 +572,7 @@ def print_summary(result: dict | list[dict]) -> None:
     print(f"模拟次数: {result['SPIN']}")
     print(
         f"Bet_Multi: {result['BET_MULTI']}, Double_Times: {result['DOUBLE_TIMES']}, "
-        f"Seed: {result['SEED']}"
+        f"Group_Index: {result['GROUP_INDEX']}, Seed: {result['SEED']}"
     )
     print(f"总押注: {result['总押注']}")
     print(f"Base赢钱: {result['Base赢钱']}")
@@ -664,6 +708,11 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="逗号分隔的玩家倍乘尝试次数。",
     )
+    parser.add_argument(
+        "--group-indexes",
+        default=None,
+        help="逗号分隔的玩家control group index。",
+    )
     parser.add_argument("--seeds", default=None, help="逗号分隔的随机种子或none。")
     parser.add_argument("--seed", type=int, default=None, help="单个随机种子，兼容参数。")
     parser.add_argument("--report-interval", type=int, default=REPORT_INTERVAL)
@@ -690,6 +739,7 @@ if __name__ == "__main__":
         spin_times=args.spins,
         bet_multis=bet_multis,
         double_times_values=parse_int_list(args.double_times),
+        group_indexes=parse_int_list(args.group_indexes),
         seeds=seeds,
         report_interval=args.report_interval,
         print_updates=args.print_updates,

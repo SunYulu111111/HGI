@@ -119,6 +119,10 @@ win = 200000 / 100000 * 100000 * 40
 4. 依次结算抽中的 index。
 5. Bonus 权重中 symbol 0 位置必须为 0，禁止递归触发 Bonus。
 
+Bonus 不包含保底逻辑。额外 index 只由 `BonusWinWeightConfig` 决定，不会根据
+玩家下注的 symbol 过滤或补选，因此额外 symbol 可能完全不包含玩家下注的
+symbol，此时 Bonus 派彩可以为 0。
+
 当前 `WinWeightConfig` 中 symbol 0 对应的 index `9`、`21` 权重均为 0，
 因此基础配置不会通过普通 spin 触发 Bonus。保留 Bonus 逻辑供后续控制配置使用。
 
@@ -175,6 +179,37 @@ win_multiple = base_win / total_bet
 - `DoubleWeight`
 
 当前数学逻辑读取 `[Game Info]`；控制段用于后续接入控制 index 时覆盖基础配置。
+
+### 6.4 Control Group 砍分
+
+基础派彩完成后、倍乘开始前，根据玩家 `group_index` 读取
+`special_config/slot_control_group.conf` 中
+`control_group_cut_multiple[group_index]`：
+
+- 阈值为 0 时不砍分。
+- `base_win / total_bet` 严格大于阈值时触发砍分。
+- 砍分会完全替换原基础开奖结果，然后再进入倍乘流程。
+
+如果原始 Spin 触发 Bonus，会先完成以下步骤：
+
+1. 按 `RespinCountWeight` 获取完整额外 symbol 数量。
+2. 生成并结算本次 Bonus 的全部额外 index。
+3. 使用完整 Bonus 总赢分计算 `base_win / total_bet`。
+4. 未超过 `RespinMaxMulti` 阈值时保留整个 Bonus；超过阈值时丢弃整个 Bonus，并按下述普通砍分
+   规则重新生成一个受控 Spin 结果。
+
+砍分结果选择：
+
+1. 如果 symbol 2-9 中存在玩家未下注的 symbol，从所有未下注 symbol 中随机
+   选择一个，再随机选择该 symbol 的一个轮盘位置。因为该 symbol 未下注，最终
+   基础派彩为 0。
+2. 如果玩家已下注全部 symbol，只比较 symbol 3-9 的下注额；从最低下注额的
+   symbol 中随机选择一个，并强制使用该 symbol 的 `MultiConfig=3` 位置。
+3. 多个未下注 symbol 或多个并列最低下注 symbol 均随机选择，不使用固定优先级。
+
+结果中的 `control_result` 会记录 group、阈值、原始基础赢分、原始赢分倍数、
+原始 trigger、完整 `original_bonus_result`、是否重新 Spin、砍分原因及强制后的
+symbol/index。
 
 ## 7. RTP
 
@@ -241,6 +276,8 @@ result = math.spin(
 - `double_result.attempted_times`：实际尝试次数。
 - `double_result.success_times`：成功次数。
 - `double_result.failed`：是否因超过允许次数而归零。
+- `group_index`：本次使用的玩家控制组下标。
+- `control_result`：砍分判断和强制结果明细。
 
 ## 9. 模拟
 
@@ -256,6 +293,7 @@ Bet_Multi = [0, 0, 1, 1, 1, 1, 1, 1, 1, 1]
 Double_Times = 0
 BET_MULTIS = [Bet_Multi]
 DOUBLE_TIMES = [Double_Times]
+GROUP_INDEXES = [0]
 SEEDS = [None]
 ```
 
@@ -285,6 +323,7 @@ python simulation.py \
   --spins 100000 \
   --bet-multi "0,0,1,1,1,1,1,1,1,1" \
   --double-times "0" \
+  --group-indexes "0" \
   --seed 7
 ```
 
@@ -295,6 +334,7 @@ python simulation.py \
   --spins 100000 \
   --bet-multis "0,0,1,1,1,1,1,1,1,1;0,0,2,0,0,0,0,0,0,0" \
   --double-times "0,1,2" \
+  --group-indexes "0,12" \
   --seeds "7,8"
 ```
 
@@ -313,6 +353,7 @@ python simulation.py \
 - Bonus 额外 symbol 总数、平均数量及 1-8 个的分布。
 - `>5x` 至 `>1000x` 分布。
 - 翻倍尝试、成功和失败次数。
+- Control group 砍分次数、频率及砍分前原始赢分。
 - 抽中的倍乘次数分布。
 - 各 `DoubleWeight_X` 档位使用次数。
 - symbol `2-9` 各自的累计下注、命中次数、赢钱和 RTP。

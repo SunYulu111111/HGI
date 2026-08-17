@@ -71,6 +71,7 @@ class ThemeMathTest(unittest.TestCase):
             self.math.respin_count_weights,
             [0, 0, 100, 100, 100, 100, 100, 100],
         )
+        self.assertEqual(self.math.control_group_cut_multiples[12], 20)
         self.assertEqual(self.math.double_max_times, 10)
         self.assertEqual(self.math.double_multiple, 2)
         self.assertEqual(
@@ -179,6 +180,81 @@ class ThemeMathTest(unittest.TestCase):
         self.assertEqual(result["win_items"], [])
         self.assertEqual(result["outcomes"][0]["symbol_id"], 3)
 
+    def test_control_cut_uses_an_unbet_symbol(self):
+        self.force_trigger_index(3)  # symbol 2，X=100
+
+        result = self.math.spin({2: 100_000}, group_index=12)
+
+        self.assertTrue(result["control_result"]["is_cut"])
+        self.assertEqual(
+            result["control_result"]["cut_reason"],
+            "unbet_symbol",
+        )
+        self.assertEqual(result["control_result"]["original_base_win"], 10_000_000)
+        self.assertEqual(result["trigger_symbol_id"], 3)
+        self.assertEqual(result["trigger_index"], 14)
+        self.assertEqual(result["base_win"], 0)
+
+    def test_control_cut_uses_lowest_bet_symbol_x3_when_all_are_bet(self):
+        self.force_trigger_index(3)  # symbol 2，X=100
+        bets = {
+            2: 10_000_000,
+            3: 200_000,
+            4: 200_000,
+            5: 100_000,
+            6: 200_000,
+            7: 200_000,
+            8: 200_000,
+            9: 200_000,
+        }
+
+        result = self.math.spin(bets, group_index=12)
+
+        self.assertTrue(result["control_result"]["is_cut"])
+        self.assertEqual(
+            result["control_result"]["cut_reason"],
+            "minimum_bet_symbol_x3",
+        )
+        self.assertEqual(result["trigger_symbol_id"], 5)
+        self.assertEqual(result["trigger_index"], 8)
+        self.assertEqual(result["base_win"], 300_000)
+
+    def test_control_cut_evaluates_complete_bonus_before_regenerated_spin(self):
+        self.force_trigger_index(9)
+        self.math.respin_count_weights = [0, 0, 1, 0, 0, 0, 0, 0]
+        self.math.bonus_win_weights = [0] * len(self.math.bonus_win_weights)
+        for index in (2, 3, 4):
+            self.math.bonus_win_weights[index] = 1
+
+        result = self.math.spin({2: 100_000}, group_index=12)
+
+        control_result = result["control_result"]
+        bonus_result = control_result["original_bonus_result"]
+        self.assertTrue(control_result["is_cut"])
+        self.assertTrue(control_result["original_is_bonus"])
+        self.assertTrue(control_result["regenerated_spin"])
+        self.assertEqual(bonus_result["respin_count"], 3)
+        self.assertEqual(bonus_result["winning_indexes"], [2, 3, 4])
+        self.assertEqual(bonus_result["winning_symbol_ids"], [2, 2, 9])
+        self.assertEqual(bonus_result["total_win"], 15_000_000)
+        self.assertEqual(control_result["original_base_win"], 15_000_000)
+        self.assertFalse(result["is_bonus"])
+        self.assertEqual(result["respin_count"], 0)
+        self.assertEqual(result["winning_indexes"], [14])
+        self.assertEqual(result["base_win"], 0)
+
+    def test_zero_control_cut_multiple_disables_cut(self):
+        self.force_trigger_index(3)
+
+        result = self.math.spin({2: 100_000}, group_index=1)
+
+        self.assertFalse(result["control_result"]["is_cut"])
+        self.assertEqual(result["base_win"], 10_000_000)
+
+    def test_invalid_control_group_index_is_rejected(self):
+        with self.assertRaises(ValueError):
+            self.math.spin({2: 100_000}, group_index=99)
+
     def test_bonus_respin_count_uses_configured_minimum_and_maximum(self):
         self.force_trigger_index(9)  # symbol 0
 
@@ -198,6 +274,20 @@ class ThemeMathTest(unittest.TestCase):
         self.assertEqual(len(set(maximum_result["winning_indexes"])), 8)
         self.assertNotIn(9, maximum_result["winning_indexes"])
         self.assertNotIn(21, maximum_result["winning_indexes"])
+
+    def test_bonus_does_not_guarantee_a_bet_symbol(self):
+        self.force_trigger_index(9)
+        self.math.respin_count_weights = [0, 0, 1, 0, 0, 0, 0, 0]
+        self.math.bonus_win_weights = [0] * len(self.math.bonus_win_weights)
+        for index in (0, 1, 4):  # symbol 8、6、9，不包含玩家下注的symbol 2
+            self.math.bonus_win_weights[index] = 1
+
+        result = self.math.spin({2: 100_000})
+
+        self.assertEqual(result["respin_count"], 3)
+        self.assertEqual(result["winning_indexes"], [0, 1, 4])
+        self.assertNotIn(2, result["winning_symbol_ids"])
+        self.assertEqual(result["total_win"], 0)
 
     def test_each_symbol_has_point_seven_rtp_without_bonus(self):
         total_weight = sum(self.math.win_weights)

@@ -5,7 +5,7 @@
 - 6 列 × 5 行。
 - 图标 0 为 Scatter，也是 Super Scatter 的原始图标；1 为 Wild，2 为所有翻金币相关功能图标。
 - 普通图标使用 3–12，ID 越大赔付越低。
-- 每个出现在牌面上的 Scatter 均有 1/50 概率转化为 Super Scatter。
+- 牌面上出现scatter时，有1/50 概率转化为 Super Scatter将其中一个转化成superscatter。
 - 相同图标横向或纵向相邻形成 Cluster，至少 5 个起奖。
 - Wild 可以加入 Cluster，但不能单独中奖。
 - 每轮只消除实际中奖 Cluster 的位置，然后按原停轴上方顺序补牌，直到无奖。
@@ -19,8 +19,8 @@
 
 ## 免费游戏
 
-- 至少 3 个 Scatter 类图标且没有 Super Scatter：普通免费，10 次。
-- 至少 3 个 Scatter 类图标且其中至少 1 个转化为 Super Scatter：超级免费，10 次。
+- 3 个 Scatter 类图标且没有 Super Scatter：普通免费，10 次。
+- 3 个 Scatter 类图标且其中有 1 个转化为 Super Scatter：超级免费，10 次。
 - 免费游戏中 2/3 个 FS 分别追加 2/4 次。
 - 普通免费中的金色区域在金币玩法触发后清除。
 - 超级免费中的金色区域持续到玩法结束。

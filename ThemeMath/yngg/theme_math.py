@@ -71,11 +71,28 @@ class ThemeMath(CountGame):
         if not self.game_server_config.has_section("Game Info"):
             raise ValueError(f"{self.game_server_config_file} missing [Game Info]")
         game_info = self.game_server_config["Game Info"]
+        self.FREE_SPIN_ID = int(game_info.get("ScatterId", self.FREE_SPIN_ID))
+        self.WILD_ID = int(game_info.get("WILD_ID", self.WILD_ID))
+        self.FEATURE_ID = int(game_info.get("FEATURE_ID", self.FEATURE_ID))
+        self.BONUS_ID = int(game_info.get("BONUS_ID", self.FEATURE_ID))
+        self.COIN_ID = int(game_info.get("COIN_ID", self.FEATURE_ID))
+        self.CLOVER_ID = int(game_info.get("CLOVER_ID", self.FEATURE_ID))
+        self.POT_ID = int(game_info.get("POT_ID", self.FEATURE_ID))
+        self.MULTIPLIER_ID = int(
+            game_info.get("MULTIPLIER_ID", self.FEATURE_ID)
+        )
+        self.COLLECTOR_ID = int(
+            game_info.get("COLLECTOR_ID", self.FEATURE_ID)
+        )
+        self.JACKPOT_ID = int(game_info.get("JACKPOT_ID", self.FEATURE_ID))
         self.SUPER_SCATTER_SOURCE_ID = int(
             game_info.get("SuperScatterSourceId", self.FREE_SPIN_ID)
         )
         self.SUPER_SCATTER_ID = int(
-            game_info.get("SuperScatterId", self.SUPER_SCATTER_ID)
+            game_info.get(
+                "SUPER_SCATTER_ID",
+                game_info.get("SuperScatterId", self.SUPER_SCATTER_ID),
+            )
         )
         self.SUPER_SCATTER_PROBABILITY = int(
             game_info.get("SuperScatterProbability", "0")
@@ -116,8 +133,25 @@ class ThemeMath(CountGame):
                 weights,
             )
             setattr(self, attribute, weights)
-        if not 0 <= self.SUPER_SCATTER_SOURCE_ID < self.config.item_count:
-            raise ValueError("SuperScatterSourceId outside symbol range")
+        original_symbol_ids = (
+            self.FREE_SPIN_ID,
+            self.WILD_ID,
+            self.FEATURE_ID,
+            self.BONUS_ID,
+            self.COIN_ID,
+            self.CLOVER_ID,
+            self.POT_ID,
+            self.MULTIPLIER_ID,
+            self.COLLECTOR_ID,
+            self.JACKPOT_ID,
+            self.SUPER_SCATTER_SOURCE_ID,
+        )
+        if any(
+            not 0 <= symbol_id < self.config.item_count
+            for symbol_id in original_symbol_ids
+        ):
+            raise ValueError("game server symbol ID outside original symbol range")
+        self.wild_id = self.WILD_ID
         if not 0 <= self.SUPER_SCATTER_ID <= self.config.item_count:
             raise ValueError("SuperScatterId outside supported transformed range")
         if self.SUPER_SCATTER_SOURCE_ID == self.SUPER_SCATTER_ID:

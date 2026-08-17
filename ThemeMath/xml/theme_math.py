@@ -2,7 +2,8 @@
 
 玩家可分别对 symbol 2-9 下注。每局先按 WinWeightConfig 抽取一个轮盘
 index；若该位置是 symbol 0，则按 BonusWinWeightConfig 加权、不放回地
-抽取八个不同 index。赢钱后可选择翻倍，成功则赢钱乘 2 并可继续，失败归零。
+抽取配置数量的不同 index。基础赢分可能按玩家 control group 进行砍分；
+赢钱后可选择翻倍，成功则赢钱乘 2 并可继续，失败归零。
 """
 
 from __future__ import annotations
@@ -22,26 +23,36 @@ class ThemeMath:
     BONUS_MAX_PICK_COUNT = 8
     DEFAULT_GAME_CONFIG_FILE = Path("special") / "xml_game_config.conf"
     DEFAULT_GAME_SERVER_CONFIG_FILE = Path("special") / "xml_game_server.conf"
+    DEFAULT_CONTROL_GROUP_CONFIG_FILE = (
+        Path("special_config") / "slot_control_group.conf"
+    )
 
     def __init__(
         self,
         project_dir: str | Path | None = None,
         game_config_file: str | Path = DEFAULT_GAME_CONFIG_FILE,
         game_server_config_file: str | Path = DEFAULT_GAME_SERVER_CONFIG_FILE,
+        control_group_config_file: str | Path = DEFAULT_CONTROL_GROUP_CONFIG_FILE,
         rng: random.Random | None = None,
     ):
         self.project_dir = Path(project_dir or Path(__file__).resolve().parent)
         self.game_config_file = self._resolve_config_path(game_config_file)
         self.game_server_config_file = self._resolve_config_path(game_server_config_file)
+        self.control_group_config_file = self._resolve_config_path(
+            control_group_config_file
+        )
         self.rng = rng or random.Random()
 
         game_config = self._read_config(self.game_config_file)
         server_config = self._read_config(self.game_server_config_file)
+        control_group_config = self._read_config(self.control_group_config_file)
         self.game_server_config = server_config
         if not game_config.has_section("MAIN"):
             raise ValueError(f"{self.game_config_file} 缺少 [MAIN]")
         if not server_config.has_section("Game Info"):
             raise ValueError(f"{self.game_server_config_file} 缺少 [Game Info]")
+        if not control_group_config.has_section("MAIN"):
+            raise ValueError(f"{self.control_group_config_file} 缺少 [MAIN]")
 
         main = game_config["MAIN"]
         game_info = server_config["Game Info"]
@@ -87,6 +98,10 @@ class ThemeMath:
             "DoubleWeight",
         )
         self.double_weight_tiers = self._load_double_weight_tiers(game_info)
+        self.control_group_cut_multiples = self._parse_int_list(
+            control_group_config["MAIN"].get("control_group_cut_multiple"),
+            "control_group_cut_multiple",
+        )
         self._validate_configuration()
         self.last_ng_result: dict = {}
 
@@ -95,6 +110,7 @@ class ThemeMath:
         symbol_bets: Mapping[int, int],
         return_detail: bool = True,
         double_times: int = 0,
+        group_index: int = 0,
     ) -> dict:
         """执行一次水果机 spin。"""
 
@@ -102,6 +118,7 @@ class ThemeMath:
             symbol_bets,
             return_detail=return_detail,
             double_times=double_times,
+            group_index=group_index,
         )
 
     def ng_spin(
@@ -109,6 +126,7 @@ class ThemeMath:
         symbol_bets: Mapping[int, int],
         return_detail: bool = False,
         double_times: int = 0,
+        group_index: int = 0,
     ) -> dict:
         """校验各 symbol 注额、抽取轮盘位置并结算。"""
 
@@ -139,6 +157,37 @@ class ThemeMath:
         paid_items = [outcome.copy() for outcome in outcomes if outcome["win"] > 0]
         base_win = sum(outcome["win"] for outcome in outcomes)
         total_bet = sum(bets.values())
+        control_result = self._apply_control_cut(
+            group_index=group_index,
+            bets=bets,
+            total_bet=total_bet,
+            base_win=base_win,
+            trigger_index=trigger_index,
+            trigger_symbol_id=trigger_symbol_id,
+            is_bonus=is_bonus,
+            respin_count=respin_count,
+            winning_indexes=winning_indexes,
+            outcomes=outcomes,
+            symbol_multi_index=symbol_multi_index,
+        )
+        if control_result["is_cut"]:
+            trigger_index = control_result["forced_index"]
+            trigger_symbol_id = control_result["forced_symbol_id"]
+            is_bonus = False
+            respin_count = 0
+            winning_indexes = [trigger_index]
+            symbol_multi_index = self._select_symbol_multi_index(winning_indexes)
+            outcomes = [
+                self._settle_index(
+                    trigger_index,
+                    bets,
+                    symbol_multi_index=symbol_multi_index,
+                )
+            ]
+            paid_items = [
+                outcome.copy() for outcome in outcomes if outcome["win"] > 0
+            ]
+            base_win = sum(outcome["win"] for outcome in outcomes)
         double_result = self.apply_double_up(
             base_win,
             double_times,
@@ -157,6 +206,8 @@ class ThemeMath:
             "total_win": double_result["total_win"],
             "trigger_index": trigger_index,
             "trigger_symbol_id": trigger_symbol_id,
+            "group_index": group_index,
+            "control_result": control_result,
             "is_bonus": is_bonus,
             "respin_count": respin_count,
             "winning_indexes": winning_indexes,
@@ -167,6 +218,7 @@ class ThemeMath:
             "double_result": double_result,
             "spin_info": {
                 "trigger": trigger,
+                "control_result": control_result,
                 "bonus_pick_count": len(winning_indexes) if is_bonus else 0,
                 "respin_count": respin_count,
                 "symbol_multi_index": symbol_multi_index,
@@ -198,6 +250,134 @@ class ThemeMath:
                 )
             bets[symbol_id] = bet
         return dict(sorted(bets.items()))
+
+    def get_control_group_cut_multiple(self, group_index: int) -> int:
+        """读取玩家 control group 对应的基础赢分砍分阈值。"""
+
+        if isinstance(group_index, bool) or not isinstance(group_index, int):
+            raise TypeError("group_index 必须是整数")
+        if not 0 <= group_index < len(self.control_group_cut_multiples):
+            raise ValueError(
+                f"group_index 必须为 0-{len(self.control_group_cut_multiples) - 1}"
+            )
+        return self.control_group_cut_multiples[group_index]
+
+    def _apply_control_cut(
+        self,
+        group_index: int,
+        bets: Mapping[int, int],
+        total_bet: int,
+        base_win: int,
+        trigger_index: int,
+        trigger_symbol_id: int,
+        is_bonus: bool,
+        respin_count: int,
+        winning_indexes: Sequence[int],
+        outcomes: Sequence[dict],
+        symbol_multi_index: int | None,
+    ) -> dict:
+        """超过 control group 阈值时选择一个受控的新开奖结果。"""
+
+        cut_multiple = self.get_control_group_cut_multiple(group_index)
+        original_win_multiple = base_win / total_bet if total_bet else 0
+        result = {
+            "group_index": group_index,
+            "cut_multiple": cut_multiple,
+            "is_cut": False,
+            "original_base_win": base_win,
+            "original_win_multiple": original_win_multiple,
+            "original_trigger_index": trigger_index,
+            "original_trigger_symbol_id": trigger_symbol_id,
+            "original_is_bonus": is_bonus,
+            "original_bonus_result": (
+                {
+                    "respin_count": respin_count,
+                    "winning_indexes": list(winning_indexes),
+                    "winning_symbol_ids": [
+                        outcome["symbol_id"] for outcome in outcomes
+                    ],
+                    "symbol_multi_index": symbol_multi_index,
+                    "outcomes": [outcome.copy() for outcome in outcomes],
+                    "total_win": base_win,
+                }
+                if is_bonus
+                else None
+            ),
+            "cut_reason": None,
+            "regenerated_spin": False,
+            "forced_index": None,
+            "forced_symbol_id": None,
+        }
+        if cut_multiple <= 0 or base_win <= total_bet * cut_multiple:
+            return result
+
+        forced_index, forced_symbol_id, reason = self._select_control_cut_index(
+            bets
+        )
+        result.update(
+            {
+                "is_cut": True,
+                "cut_reason": reason,
+                "regenerated_spin": True,
+                "forced_index": forced_index,
+                "forced_symbol_id": forced_symbol_id,
+            }
+        )
+        return result
+
+    def _select_control_cut_index(
+        self,
+        bets: Mapping[int, int],
+    ) -> tuple[int, int, str]:
+        """按未下注 symbol 或最低下注 symbol 的 *3 位置选择结果。"""
+
+        unbet_symbols = [
+            symbol_id
+            for symbol_id in self.BET_SYMBOL_IDS
+            if symbol_id not in bets
+        ]
+        if unbet_symbols:
+            symbol_id = self._random_choice(unbet_symbols)
+            indexes = [
+                index
+                for index, reel_symbol_id in enumerate(self.reel_config)
+                if reel_symbol_id == symbol_id
+            ]
+            if not indexes:
+                raise ValueError(f"ReelConfig 中找不到 symbol {symbol_id}")
+            return (
+                self._random_choice(indexes),
+                symbol_id,
+                "unbet_symbol",
+            )
+
+        controlled_symbols = tuple(range(3, 10))
+        minimum_bet = min(bets[symbol_id] for symbol_id in controlled_symbols)
+        minimum_symbols = [
+            symbol_id
+            for symbol_id in controlled_symbols
+            if bets[symbol_id] == minimum_bet
+        ]
+        symbol_id = self._random_choice(minimum_symbols)
+        indexes = [
+            index
+            for index, (reel_symbol_id, multiplier) in enumerate(
+                zip(self.reel_config, self.multi_config)
+            )
+            if reel_symbol_id == symbol_id and multiplier == 3
+        ]
+        if not indexes:
+            raise ValueError(f"ReelConfig 中找不到 symbol {symbol_id} 的 *3 位置")
+        return (
+            self._random_choice(indexes),
+            symbol_id,
+            "minimum_bet_symbol_x3",
+        )
+
+    def _random_choice(self, values: Sequence[int]) -> int:
+        if not values:
+            raise ValueError("随机候选列表不能为空")
+        return values[self.rng.randrange(len(values))]
 
     def get_double_weight_config(
         self,
@@ -536,6 +716,25 @@ class ThemeMath:
             )
         if any(prize <= 0 for prize in self.item_prizes.values()):
             raise ValueError("ITEM_PRIZE 必须全部大于 0")
+        if not self.control_group_cut_multiples:
+            raise ValueError("control_group_cut_multiple 不能为空")
+        if any(value < 0 for value in self.control_group_cut_multiples):
+            raise ValueError("control_group_cut_multiple 不能包含负数")
+        missing_x3_symbols = [
+            symbol_id
+            for symbol_id in range(3, 10)
+            if not any(
+                reel_symbol_id == symbol_id and multiplier == 3
+                for reel_symbol_id, multiplier in zip(
+                    self.reel_config,
+                    self.multi_config,
+                )
+            )
+        ]
+        if missing_x3_symbols:
+            raise ValueError(
+                f"以下 symbol 缺少 MultiConfig=3 的砍分位置: {missing_x3_symbols}"
+            )
         if any(weight < 0 for weight in self.win_weights):
             raise ValueError("WinWeightConfig 不能包含负权重")
         if sum(self.win_weights) <= 0:

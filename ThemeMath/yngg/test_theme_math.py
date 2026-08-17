@@ -82,6 +82,57 @@ class ThemeMathTest(unittest.TestCase):
         self.assertEqual(result[0][:2], [13, 13])
         self.assertEqual(result[1][0], 0)
 
+    def test_game_config_only_contains_common_math_fields(self):
+        game_config = self.math._read_config_file(
+            self.math.project_dir / self.math.DEFAULT_GAME_CONFIG_FILE
+        )["MAIN"]
+        allowed_fields = {
+            "VERSION",
+            "COL_COUNT",
+            "ROW_COUNT",
+            "ITEM_COUNT",
+            "PRIZE_RATE",
+            "LINE_MODE",
+            "USE_WILDS",
+            "BASE_NUMS",
+            "BOTH_SIDES",
+            "FULL_WILD_LINE",
+            "RULE_COUNT",
+            "SCATTER_MODE",
+            "SCATTER_ID",
+            "SCATTER_COLS",
+            "SCATTER_SERIAL",
+            "SCATTER_MULTIPLES",
+            "SCATTER_PRIZES",
+            "GRID_DISABLES",
+            "GRID_DISABLES_FREE",
+        }
+        unexpected_fields = {
+            key
+            for key in game_config
+            if key not in allowed_fields
+            and not key.startswith("ITEM_PRIZES_")
+            and not key.startswith("LINE_RULES_")
+        }
+        self.assertEqual(unexpected_fields, set())
+
+        server = self.math.game_server_config["Game Info"]
+        moved_fields = {
+            "WILD_ID": 1,
+            "FEATURE_ID": 2,
+            "BONUS_ID": 2,
+            "COIN_ID": 2,
+            "CLOVER_ID": 2,
+            "POT_ID": 2,
+            "MULTIPLIER_ID": 2,
+            "COLLECTOR_ID": 2,
+            "JACKPOT_ID": 2,
+            "SUPER_SCATTER_ID": 13,
+        }
+        for key, value in moved_fields.items():
+            self.assertNotIn(key, game_config)
+            self.assertEqual(int(server[key]), value)
+
     def test_special_symbol_probability_config(self):
         self.assertEqual(self.math.SCATTER_COUNT_WEIGHTS, (1000, 100, 50, 5))
         self.assertEqual(
