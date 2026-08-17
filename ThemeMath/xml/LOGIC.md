@@ -70,13 +70,12 @@ symbol_bet % BaseBet == 0
 `HighSymbolWeight`、`MidSymbolWeight` 读取 X。`MultiConfig != 1` 的位置
 仍直接使用其固定 X，不受共享下标影响。
 
-symbol 2 的轮盘位置必须直接在 `MultiConfig` 配置非 1 的 X。当前
-`ITEM_PRIZE_*` 仅为通用文件格式占位，不参与派彩。
+symbol 2 的轮盘位置必须直接在 `MultiConfig` 配置非 1 的 X。
 
 单个中奖 index 的派彩公式为：
 
 ```text
-win = symbol_bet / BaseBet * X
+win = symbol_bet / BaseBet * ITEM_PRIZE_symbol_id * X
 ```
 
 未下注的中奖 symbol 派彩为 0。同一个 symbol 在 Bonus 中通过多个不同 index
@@ -87,24 +86,26 @@ win = symbol_bet / BaseBet * X
 ```text
 symbol 3下注 = 100000
 BaseBet = 100000
+ITEM_PRIZE_3 = 100000
 index 14的MultiConfig = 3
 X = 3
 
-win = 100000 / 100000 * 3
-    = 3
+win = 100000 / 100000 * 100000 * 3
+    = 300000
 ```
 
 动态 X 示例：
 
 ```text
 symbol 3下注 = 200000
+ITEM_PRIZE_3 = 100000
 该位置MultiConfig = 1
 SymbolMultiWeight抽中的下标 = 0
 HighSymbolWeight[0] = 40
 X = 40
 
-win = 200000 / 100000 * 40
-    = 80
+win = 200000 / 100000 * 100000 * 40
+    = 8000000
 ```
 
 ## 5. Bonus
@@ -112,7 +113,8 @@ win = 200000 / 100000 * 40
 普通 spin 抽到 `symbol 0` 时：
 
 1. 按 `RespinCountWeight` 抽取额外获取的 symbol 数量。
-2. 数组下标 `0-7` 分别表示 `1-8` 个，因此最少 1 个、最多 8 个。
+2. 数组下标 `0-7` 分别表示 `1-8` 个；权重可将某些数量关闭。当前前两项为
+   0，因此实际可抽取 `3-8` 个。
 3. 使用 `BonusWinWeightConfig`，按权重不放回抽取对应数量的不同 index。
 4. 依次结算抽中的 index。
 5. Bonus 权重中 symbol 0 位置必须为 0，禁止递归触发 Bonus。
@@ -176,27 +178,22 @@ win_multiple = base_win / total_bet
 
 ## 7. RTP
 
-当前 `WinWeightConfig` 总权重为 `30000`，symbol 0 的两个位置权重为 0。
+当前 `WinWeightConfig` 总权重为 `1500`，symbol 0 的两个位置权重为 0。
+在当前等权 `SymbolMultiWeight` 下：
 
-新派彩规则下，单个 symbol 的基础 RTP 由以下内容共同决定：
+- High symbol 动态 X 的期望值为 30。
+- Mid symbol 动态 X 的期望值为 15。
+- symbol `2-9` 各自的“位置权重 × 期望 X”总和均为 `1050`。
+- `ITEM_PRIZE_2-9` 与 `BaseBet` 均为 `100000`。
 
-- 该 symbol 各轮盘位置的 `WinWeightConfig`。
-- 非 1 的固定 `MultiConfig`。
-- `MultiConfig=1` 时动态 X 的期望值。
-- `BaseBet`。
-
-单个 symbol 下注一个 BaseBet 时：
+因此任意单个 symbol 下注一个 BaseBet、不倍乘时：
 
 ```text
-RTP(symbol) =
-    Σ(位置权重 * 该位置期望X)
-    / (WinWeightConfig总权重 * BaseBet)
+RTP = 1050 / 1500 = 0.7
 ```
 
-现有 `WinWeightConfig` 是旧派彩公式下的配置，改用 X 后不再保证基础 RTP 为
-0.7；如仍需目标 RTP 0.7，需要按新公式重新调整开奖权重或 X 配置。
-
-翻倍后的实际 RTP 还会受到 `DoubleWeight_X` 和玩家尝试次数影响。
+全部 symbol 各下注一个 BaseBet 时，总 RTP 同样为 0.7。翻倍后的实际 RTP
+还会受到 `DoubleWeight_X` 和玩家尝试次数影响。
 
 ## 8. 代码接口
 
@@ -235,6 +232,7 @@ result = math.spin(
 - `winning_indexes`：实际结算的 index。
 - `outcomes`：各 index 的派彩明细。
 - `outcomes[].multi_config`：该位置原始 `MultiConfig`。
+- `outcomes[].item_prize`：中奖 symbol 的 `ITEM_PRIZE`。
 - `outcomes[].symbol_multi_index`：动态 X 抽中的下标；固定 X 时为 `None`。
 - `outcomes[].x`：本次实际使用的 X。
 - `symbol_multi_index`：本次 spin 的 High/Mid 共享动态 X 下标。
@@ -328,6 +326,7 @@ python simulation.py \
 - symbol id、倍数和权重合法。
 - `SymbolMultiWeight`、`HighSymbolWeight`、`MidSymbolWeight` 非空且长度一致。
 - 动态 X 权重非负，X 全部大于 0。
+- `ITEM_PRIZE_2-9` 全部大于 0。
 - `MultiConfig=1` 的 symbol 必须存在动态 X 或固定 X=5 的规则。
 - `RespinCountWeight` 必须包含 8 项，且权重非负、总和大于 0。
 - Bonus 的正权重 index 数量必须覆盖 Respin 可选的最大数量。

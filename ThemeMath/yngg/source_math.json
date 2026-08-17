@@ -13,7 +13,8 @@
     "connection": [
       "horizontal",
       "vertical"
-    ]
+    ],
+    "original_symbol_count": 13
   },
   "paytable": [
     {
@@ -122,7 +123,42 @@
     "wild": 1,
     "golden_feature_symbols": 2,
     "paying_symbols": "3-12 (payout descending)",
-    "super_scatter": 13
+    "super_scatter_source": 0,
+    "super_scatter_result": 13
+  },
+  "super_scatter_conversion": {
+    "probability": "1/50",
+    "probability_per_10000": 200
+  },
+  "special_symbol_generation": {
+    "scatter_count_weights": [
+      1000,
+      100,
+      50,
+      5
+    ],
+    "base_no_win_bonus_count_weights": [
+      80,
+      20
+    ],
+    "base_win_bonus_count_weights": [
+      90,
+      10
+    ],
+    "free_golden_bonus_count_weights": [
+      60,
+      40
+    ],
+    "free_no_golden_bonus_count_weights": [
+      30,
+      70
+    ],
+    "drop_special_symbol_weights": [
+      998,
+      1,
+      1
+    ],
+    "free_bonus_guaranteed": true
   },
   "coin_values_x_bet": [
     0.2,
@@ -155,6 +191,51 @@
     "major": 100,
     "grand": 5000
   },
+  "bonus_generation": {
+    "symbol_types": [
+      "coin",
+      "clover",
+      "pot",
+      "jackpot"
+    ],
+    "symbol_type_weights": [
+      1000,
+      100,
+      10,
+      1
+    ],
+    "coin_value_weights": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "clover_multiplier_weights": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "jackpot_type_weights": [
+      1,
+      1,
+      1,
+      1
+    ]
+  },
   "free_games": {
     "free": {
       "trigger": "3 scatters",
@@ -184,7 +265,7 @@
     "reference_reels": "C:\\Users\\sunyulu\\le-king-demo-extract\\numeric\\reels\\strips"
   },
   "limitations": [
-    "Reference reel strips do not contain HGI feature-generation probabilities.",
-    "Golden feature outcomes must be supplied by authoritative server data."
+    "Reference reel strips do not contain HGI scatter or feature symbols.",
+    "Configured local bonus weights can be overridden by authoritative server rounds."
   ]
 }

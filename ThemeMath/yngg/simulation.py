@@ -38,7 +38,10 @@ def simulation(
         "hit_frequency": hit_count / spin_times,
         "average_cascades": cascade_count / spin_times,
         "free_game": free_game,
-        "note": "Base/free strips only; unpublished server feature RNG is excluded.",
+        "note": (
+            "Configured Scatter/Bonus and golden-area RNG are included; "
+            "free-session guarantee state is not simulated."
+        ),
     }
 
 

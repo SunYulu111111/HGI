@@ -1,33 +1,33 @@
-# yngg / Si Botak Desa 数学说明
-
-## 数据来源
-
-玩法以 `HGI_SLOT_《印尼鬼怪》策划案.md` 为准，Le King demo 只提供参考滚轮：
-
-- `numeric/reels/strips/default.csv`：基础数学滚轮。
-- `numeric/reels/strips/fs.csv`：免费游戏数学滚轮。
-
-运行 `python -B ThemeMath\yngg\build_from_demo.py --demo-dir <目录>` 可重新生成配置。
+# yngg / Si Botak Desa 基础与玩法逻辑
 
 ## 基础玩法
 
 - 6 列 × 5 行。
-- 图标 0 为 Free Spin，1 为 Wild，2 为所有翻金币相关功能图标。
+- 图标 0 为 Scatter，也是 Super Scatter 的原始图标；1 为 Wild，2 为所有翻金币相关功能图标。
 - 普通图标使用 3–12，ID 越大赔付越低。
-- Super Scatter 为 13。
+- 每个出现在牌面上的 Scatter 均有 1/50 概率转化为 Super Scatter。
 - 相同图标横向或纵向相邻形成 Cluster，至少 5 个起奖。
 - Wild 可以加入 Cluster，但不能单独中奖。
 - 每轮只消除实际中奖 Cluster 的位置，然后按原停轴上方顺序补牌，直到无奖。
 - 押注档位：100,000 / 200,000 / 500,000 / 1,000,000 / 2,000,000 / 5,000,000 / 10,000,000 / 20,000,000。
+- 原始轴不直接包含 Scatter 和 Bonus，特殊图标在盘面生成后替换普通图标。
+- Scatter 出现 0/1/2/3 个的相对权重为 1000/100/50/5。
+- Base 没有 Scatter 且没有中奖时，Bonus 出现 0/1 个的相对权重为 80/20。
+- Base 没有 Scatter 且存在中奖时，Bonus 出现 0/1 个的相对权重为 90/10。
+- 特殊图标只会随机替换当前不参与中奖的图标位置，不改变已经形成的 Cluster 奖励。
+- 每个消除后掉落的图标按 998/1/1 的相对权重决定不替换、替换为 Scatter、替换为 Bonus。
 
 ## 免费游戏
 
-- 3 个 Scatter：普通免费，10 次。
-- 2 个 Scatter + 1 个 Super Scatter：超级免费，10 次。
+- 至少 3 个 Scatter 类图标且没有 Super Scatter：普通免费，10 次。
+- 至少 3 个 Scatter 类图标且其中至少 1 个转化为 Super Scatter：超级免费，10 次。
 - 免费游戏中 2/3 个 FS 分别追加 2/4 次。
 - 普通免费中的金色区域在金币玩法触发后清除。
 - 超级免费中的金色区域持续到玩法结束。
 - 触发 Scatter/Super Scatter 的位置进入免费时直接成为金色区域。
+- Free 已存在金色区域时，Bonus 出现 0/1 个的相对权重为 60/40。
+- Free 没有金色区域时，Bonus 出现 0/1 个的相对权重为 30/70。
+- 一轮完整 Free 中至少出现一次 Bonus；如果此前均未出现，则在最后一次 Free Spin 强制生成 1 个。
 
 ## 金色玩法
 
@@ -37,32 +37,11 @@
 - 聚宝盆：按从上到下、从左到右顺序收集当前金币及已结算聚宝盆，不收集 JP。
 - JP：MINI 10x、MINOR 25x、MAJOR 100x、GRAND 5000x。
 
-功能图标生成概率不在策划案中，需通过 `golden_rounds` 注入服务器结果，数学层负责确定性结算：
+每个金色位置先抽取类型，再根据该类型抽取具体结果：
 
-```python
-{
-    "initial_board": [[...], [...], [...], [...], [...], [...]],
-    "scatter_count": 3,
-    "super_scatter_count": 0,
-    "bonus_count": 1,
-    "golden_rounds": [
-        [
-            {"position": [0, 0], "type": "coin", "value": 5},
-            {"position": [1, 0], "type": "clover", "multiplier": 2},
-            {"position": [2, 0], "type": "jackpot", "tier": "mini"},
-        ]
-    ],
-}
-```
-
-聚宝盆导致重翻后，下一项 `golden_rounds` 必须给出所有被重新生成格子的结果。
-
-## 验证
-
-```powershell
-python -B ThemeMath\yngg\test_theme_math.py
-python -B ThemeMath\symbol_count.py --root ThemeMath\yngg --symbol-max 13 --dry-run
-python -B ThemeMath\yngg\simulation.py --spins 10000
-```
-
-模拟结果只覆盖参考滚轮及 Cluster Cascade，不包含未知的服务器功能概率。
+- 金币/四叶草/聚宝盆/JP 的类型权重为 1000/100/10/1。
+- 金币档位根据各自权重抽取。
+- 四叶草倍数档位根据各自权重抽取。
+- JP 档位根据各自权重抽取。
+- 当前金币、四叶草和 JP 的各档位权重均为 1。
+- 聚宝盆出现后，除已结算聚宝盆外的格子按相同规则重新生成，直到没有新聚宝盆。

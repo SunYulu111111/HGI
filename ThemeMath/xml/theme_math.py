@@ -47,6 +47,7 @@ class ThemeMath:
         game_info = server_config["Game Info"]
         self.base_bet = self._parse_positive_int(main.get("BaseBet"), "BaseBet")
         self.item_count = self._parse_positive_int(main.get("ITEM_COUNT"), "ITEM_COUNT")
+        self.item_prizes = self._load_item_prizes(main)
         self.reel_config = self._parse_int_list(game_info.get("ReelConfig"), "ReelConfig")
         self.multi_config = self._parse_int_list(game_info.get("MultiConfig"), "MultiConfig")
         self.high_symbol_weights = self._parse_int_list(
@@ -357,17 +358,19 @@ class ThemeMath:
         symbol_id = self.reel_config[index]
         configured_multiplier = self.multi_config[index]
         bet = bets.get(symbol_id, 0)
+        item_prize = self.item_prizes.get(symbol_id, 0)
         multiplier, symbol_multi_index = self._get_win_multiplier(
             symbol_id,
             configured_multiplier,
             symbol_multi_index=symbol_multi_index,
         )
-        win = self._calculate_win(bet, multiplier)
+        win = self._calculate_win(bet, item_prize, multiplier)
         return {
             "index": index,
             "position": index + 1,
             "symbol_id": symbol_id,
             "bet": bet,
+            "item_prize": item_prize,
             "multi_config": configured_multiplier,
             "symbol_multi_index": symbol_multi_index,
             "x": multiplier,
@@ -405,13 +408,20 @@ class ThemeMath:
             f"symbol {symbol_id} 的 MultiConfig 为 1，但没有配置 X 获取规则"
         )
 
-    def _calculate_win(self, bet: int, multiplier: int) -> int:
+    def _calculate_win(
+        self,
+        bet: int,
+        item_prize: int,
+        multiplier: int,
+    ) -> int:
         if bet == 0:
             return 0
-        numerator = bet * multiplier
+        numerator = bet * item_prize * multiplier
         win, remainder = divmod(numerator, self.base_bet)
         if remainder:
-            raise ValueError("派彩结果不是整数，请检查 bet、BaseBet 和 X")
+            raise ValueError(
+                "派彩结果不是整数，请检查 bet、BaseBet、ITEM_PRIZE 和 X"
+            )
         return win
 
     def _weighted_index(
@@ -447,6 +457,15 @@ class ThemeMath:
             selected.append(index)
             candidates.remove(index)
         return selected
+
+    def _load_item_prizes(self, main) -> dict[int, int]:
+        prizes: dict[int, int] = {}
+        for symbol_id in self.BET_SYMBOL_IDS:
+            key = f"ITEM_PRIZE_{symbol_id}"
+            if key not in main:
+                raise ValueError(f"缺少 {key}")
+            prizes[symbol_id] = int(main[key].strip())
+        return prizes
 
     def _load_double_weight_tiers(self, game_info) -> dict[int, list[int]]:
         tiers: dict[int, list[int]] = {}
@@ -515,6 +534,8 @@ class ThemeMath:
                 "以下 symbol 的 MultiConfig 为 1，但没有 X 获取规则: "
                 f"{sorted(unsupported_dynamic_symbols)}"
             )
+        if any(prize <= 0 for prize in self.item_prizes.values()):
+            raise ValueError("ITEM_PRIZE 必须全部大于 0")
         if any(weight < 0 for weight in self.win_weights):
             raise ValueError("WinWeightConfig 不能包含负权重")
         if sum(self.win_weights) <= 0:
