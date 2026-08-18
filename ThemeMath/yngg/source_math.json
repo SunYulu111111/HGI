@@ -128,7 +128,11 @@
   },
   "super_scatter_conversion": {
     "probability": "1/50",
-    "probability_per_10000": 200
+    "probability_per_10000": 200,
+    "maximum_conversions_per_spin": 1,
+    "base_initial_rolls": 1,
+    "base_drop_scatter_rolls_when_no_super": true,
+    "free_final_board_rolls": 1
   },
   "special_symbol_generation": {
     "scatter_count_weights": [
@@ -145,6 +149,10 @@
       90,
       10
     ],
+    "base_bonus_max_scatter_count": 2,
+    "base_bonus_blocks_future_drop_specials": true,
+    "base_drop_max_special_symbols_per_cascade": 1,
+    "base_drop_requires_scatter_count_below": 3,
     "free_golden_bonus_count_weights": [
       60,
       40
@@ -158,7 +166,8 @@
       1,
       1
     ],
-    "free_bonus_guaranteed": true
+    "free_bonus_guaranteed": true,
+    "free_bonus_no_candidate": "skip"
   },
   "coin_values_x_bet": [
     0.2,

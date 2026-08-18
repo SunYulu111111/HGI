@@ -23,20 +23,28 @@
 - 使用 `FEATURE_ID`、`BONUS_ID`、`COIN_ID`、`CLOVER_ID`、`POT_ID`、`MULTIPLIER_ID`、`COLLECTOR_ID`、`JACKPOT_ID` 指定金色玩法相关图标。
 - 使用 `SUPER_SCATTER_ID=13` 表示完成转化后的 Super Scatter；该动态结果不计入原始图标数量。
 - 使用 `SuperScatterSourceId=0` 指定 Super Scatter 的原始图标与 Scatter 相同。
-- 使用 `SuperScatterProbability=200` 设置独立转化概率；概率单位为万分比，200/10000 等于 1/50。
+- 使用 `SuperScatterProbability=200` 设置每个 Spin 的转化概率；概率单位为万分比，200/10000 等于 1/50。
 
-初始盘面和每次消除补牌后，所有新出现的 Scatter 都会分别执行一次转化判断。
+Base 初始特殊图标生成后执行一次转化判断；后续掉落生成 Scatter 且盘面没有 Super Scatter 时，对该 Scatter 单独执行转化判断。Free 在全部消除和掉落结束后，对最终盘面执行一次转化判断。
 
 同一配置文件还提供初始特殊图标及掉落替换权重：
 
 - `ScatterCountProbability=1000,100,50,5`：下标 0–3 分别表示生成 0–3 个 Scatter。
-- `BaseNoWinBonusCountProbability=80,20`：Base 无 Scatter、无奖时生成 0/1 个 Bonus 的权重。
-- `BaseWinBonusCountProbability=90,10`：Base 无 Scatter、有奖时生成 0/1 个 Bonus 的权重。
+- `BaseNoWinBonusCountProbability=80,20`：Base 中 Scatter 数量为 0–2 且无奖时生成 0/1 个 Bonus 的权重。
+- `BaseWinBonusCountProbability=90,10`：Base 中 Scatter 数量为 0–2 且有奖时生成 0/1 个 Bonus 的权重。
 - `FreeGoldenBonusCountProbability=60,40`：Free 已有金框时生成 0/1 个 Bonus 的权重。
 - `FreeNoGoldenBonusCountProbability=30,70`：Free 没有金框时生成 0/1 个 Bonus 的权重。
 - `DropSpecialSymbolProbability=998,1,1`：每个掉落图标对应“不替换/Scatter/Bonus”的权重。
 
 `ThemeMath.place_special_symbols()` 先计算当前中奖位置，再从不参与中奖的候选位置中随机选择并替换，因此不会破坏已有 Cluster。
+
+Base 初始 Scatter 数量达到 3 个时跳过 Bonus 抽取。Base 每轮掉落最多放置 1 个特殊图标，并在放置前检查：
+
+- 盘面存在 Bonus 时，本轮不读取 `DropSpecialSymbolProbability`。
+- Scatter 与 Super Scatter 总数达到 3 个时，本轮不读取 `DropSpecialSymbolProbability`。
+- 其余情况按新掉落图标数量逐个抽取，首次抽中 Scatter 或 Bonus 后停止。
+- 候选位置仅限本轮新掉落且不参与中奖的普通图标。
+- Free 不使用上述 Base 限制。
 
 ## 2. 普通轴与免费轴
 

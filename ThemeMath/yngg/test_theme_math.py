@@ -57,7 +57,7 @@ class ThemeMathTest(unittest.TestCase):
             {"mini": 10, "minor": 25, "major": 100, "grand": 5000},
         )
 
-    def test_super_scatter_uses_scatter_source_and_one_in_fifty_rate(self):
+    def test_super_scatter_rolls_once_and_converts_at_most_one(self):
         self.assertEqual(self.math.config.item_count, 13)
         self.assertEqual(len(self.math.config.item_prizes), 13)
         self.assertEqual(len(self.math.config.use_wilds), 13)
@@ -75,12 +75,53 @@ class ThemeMathTest(unittest.TestCase):
         ]
         with patch(
             "theme_math.random.randrange",
-            side_effect=[0, 199, 200],
-        ):
+            side_effect=[199, 1],
+        ) as rng:
             result, positions = self.math.apply_super_scatter_conversion(board)
-        self.assertEqual(positions, [(0, 0), (0, 1)])
-        self.assertEqual(result[0][:2], [13, 13])
+        self.assertEqual(rng.call_count, 2)
+        self.assertEqual(positions, [(0, 1)])
+        self.assertEqual(result[0][:2], [0, 13])
         self.assertEqual(result[1][0], 0)
+        with patch("theme_math.random.randrange", return_value=200):
+            unchanged, positions = self.math.apply_super_scatter_conversion(board)
+        self.assertEqual(unchanged, board)
+        self.assertEqual(positions, [])
+
+    def test_free_final_board_super_scatter_conversion_rolls_once(self):
+        board = [
+            [0, 3, 4, 5, 6],
+            [0, 4, 5, 6, 7],
+            [0, 5, 6, 7, 8],
+            [6, 7, 8, 9, 10],
+            [7, 8, 9, 10, 11],
+            [8, 9, 10, 11, 12],
+        ]
+        state = {
+            "source_type": "normal",
+            "columns": [[3, 4, 5, 6, 7] for _ in range(6)],
+            "top_indexes": [0] * 6,
+            "row": 5,
+            "col": 6,
+        }
+        with patch(
+            "theme_math.random.randrange",
+            side_effect=[0, 2],
+        ):
+            result = self.math.evaluate_cascades(
+                board,
+                state,
+                free_game=True,
+                free_mode="free",
+                feature_outcome={"activated": False},
+            )
+        self.assertEqual(result["scatter_count"], 2)
+        self.assertEqual(result["super_scatter_count"], 1)
+        self.assertEqual(result["total_scatter_count"], 3)
+        self.assertEqual(result["retrigger_spins"], 4)
+        self.assertEqual(
+            result["spin_info"]["super_scatter_positions"],
+            [(2, 0)],
+        )
 
     def test_game_config_only_contains_common_math_fields(self):
         game_config = self.math._read_config_file(
@@ -116,7 +157,6 @@ class ThemeMathTest(unittest.TestCase):
         }
         self.assertEqual(unexpected_fields, set())
 
-        server = self.math.game_server_config["Game Info"]
         moved_fields = {
             "WILD_ID": 1,
             "FEATURE_ID": 2,
@@ -131,7 +171,7 @@ class ThemeMathTest(unittest.TestCase):
         }
         for key, value in moved_fields.items():
             self.assertNotIn(key, game_config)
-            self.assertEqual(int(server[key]), value)
+            self.assertEqual(getattr(self.math, key), value)
 
     def test_special_symbol_probability_config(self):
         self.assertEqual(self.math.SCATTER_COUNT_WEIGHTS, (1000, 100, 50, 5))
@@ -200,13 +240,29 @@ class ThemeMathTest(unittest.TestCase):
         with patch.object(
             self.math,
             "weighted_random_index",
-            return_value=2,
+            side_effect=[2, 1],
         ) as chooser:
             scatter_symbols = self.math.choose_initial_special_symbol_ids(
                 no_win_board,
                 free_game=False,
             )
-        self.assertEqual(scatter_symbols, [0, 0])
+        self.assertEqual(scatter_symbols, [0, 0, self.math.FEATURE_ID])
+        self.assertEqual(chooser.call_count, 2)
+        self.assertEqual(
+            chooser.call_args_list[1].args[0],
+            self.math.BASE_NO_WIN_BONUS_COUNT_WEIGHTS,
+        )
+
+        with patch.object(
+            self.math,
+            "weighted_random_index",
+            return_value=3,
+        ) as chooser:
+            scatter_only = self.math.choose_initial_special_symbol_ids(
+                no_win_board,
+                free_game=False,
+            )
+        self.assertEqual(scatter_only, [0, 0, 0])
         self.assertEqual(chooser.call_count, 1)
 
     def test_free_bonus_count_uses_golden_state_and_last_spin_guarantee(self):
@@ -276,8 +332,8 @@ class ThemeMathTest(unittest.TestCase):
         board = [
             [12, 12, 12, 3, 4],
             [12, 12, 5, 6, 7],
-            [8, 9, 10, 11, 12],
-            [3, 4, 5, 6, 7],
+            [8, 9, 10, 11, 0],
+            [3, 4, 5, 6, 0],
             [4, 5, 6, 7, 8],
             [5, 6, 7, 8, 9],
         ]
@@ -299,14 +355,9 @@ class ThemeMathTest(unittest.TestCase):
             patch.object(
                 self.math,
                 "choose_drop_special_symbol_id",
-                side_effect=[0, 0, 0, None, None],
+                return_value=0,
             ),
-            patch.object(
-                self.math,
-                "convert_super_scatter_symbol",
-                side_effect=lambda symbol_id: symbol_id,
-            ),
-            patch("theme_math.random.randrange", return_value=0),
+            patch("theme_math.random.randrange", side_effect=[0, 200]),
         ):
             result = self.math.evaluate_cascades(
                 board,
@@ -318,7 +369,7 @@ class ThemeMathTest(unittest.TestCase):
         self.assertTrue(result["is_trigger_free"])
         self.assertEqual(
             len(result["rounds"][0]["drop_info"]["special_placements"]),
-            3,
+            1,
         )
         self.assertEqual(
             result["next_free_golden_squares"],
@@ -329,6 +380,157 @@ class ThemeMathTest(unittest.TestCase):
                 if value == self.math.FREE_SPIN_ID
             ],
         )
+
+    def test_base_bonus_suppresses_later_drop_scatters(self):
+        board = [
+            [12, 12, 12, 3, 4],
+            [12, 12, 5, 6, 7],
+            [8, 9, 10, 11, 12],
+            [3, 4, 5, 6, 7],
+            [4, 5, 6, 7, 8],
+            [5, 6, 7, 8, 2],
+        ]
+        state = {
+            "source_type": "normal",
+            "columns": [[3, 4, 5, 6, 7] for _ in range(6)],
+            "top_indexes": [0] * 6,
+            "row": 5,
+            "col": 6,
+        }
+        win_items = self.math.cal_item_list(board, return_detail=True)["items"]
+        with patch.object(
+            self.math,
+            "choose_drop_special_symbol_id",
+            return_value=0,
+        ) as chooser:
+            result, drop_info = self.math.drop_cluster_symbols(
+                board,
+                win_items,
+                state,
+                free_game=False,
+            )
+        self.assertEqual(drop_info["special_placements"], [])
+        self.assertEqual(drop_info["special_block_reason"], "bonus_present")
+        chooser.assert_not_called()
+        self.assertEqual(self.math.count_symbol(result, self.math.FEATURE_ID), 1)
+
+    def test_base_drop_stops_after_first_special_symbol(self):
+        board = [
+            [12, 12, 12, 3, 4],
+            [12, 12, 5, 6, 7],
+            [8, 9, 10, 11, 12],
+            [3, 4, 5, 6, 7],
+            [4, 5, 6, 7, 8],
+            [5, 6, 7, 8, 9],
+        ]
+        state = {
+            "source_type": "normal",
+            "columns": [[3, 4, 5, 6, 7] for _ in range(6)],
+            "top_indexes": [0] * 6,
+            "row": 5,
+            "col": 6,
+        }
+        win_items = self.math.cal_item_list(board, return_detail=True)["items"]
+        with (
+            patch.object(
+                self.math,
+                "choose_drop_special_symbol_id",
+                side_effect=[None, 2, 0],
+            ) as chooser,
+            patch("theme_math.random.randrange", return_value=0),
+        ):
+            _, drop_info = self.math.drop_cluster_symbols(
+                board,
+                win_items,
+                state,
+                free_game=False,
+            )
+        self.assertEqual(
+            [
+                placement["symbol_id"]
+                for placement in drop_info["special_placements"]
+            ],
+            [self.math.FEATURE_ID],
+        )
+        self.assertEqual(chooser.call_count, 2)
+        self.assertIsNone(drop_info["special_block_reason"])
+
+    def test_base_dropped_scatter_can_convert_to_super_scatter(self):
+        board = [
+            [12, 12, 12, 3, 4],
+            [12, 12, 5, 6, 7],
+            [8, 9, 10, 11, 12],
+            [3, 4, 5, 6, 7],
+            [4, 5, 6, 7, 8],
+            [5, 6, 7, 8, 9],
+        ]
+        state = {
+            "source_type": "normal",
+            "columns": [[3, 4, 5, 6, 7] for _ in range(6)],
+            "top_indexes": [0] * 6,
+            "row": 5,
+            "col": 6,
+        }
+        win_items = self.math.cal_item_list(board, return_detail=True)["items"]
+        with (
+            patch.object(
+                self.math,
+                "choose_drop_special_symbol_id",
+                return_value=self.math.FREE_SPIN_ID,
+            ),
+            patch("theme_math.random.randrange", side_effect=[0, 199]),
+        ):
+            result, drop_info = self.math.drop_cluster_symbols(
+                board,
+                win_items,
+                state,
+                free_game=False,
+            )
+        self.assertEqual(
+            drop_info["special_placements"][0]["source_symbol_id"],
+            self.math.FREE_SPIN_ID,
+        )
+        self.assertEqual(
+            drop_info["special_placements"][0]["symbol_id"],
+            self.math.SUPER_SCATTER_ID,
+        )
+        self.assertEqual(len(drop_info["super_scatter_positions"]), 1)
+        self.assertEqual(
+            self.math.count_symbol(result, self.math.SUPER_SCATTER_ID),
+            1,
+        )
+
+    def test_base_drop_special_is_blocked_at_three_scatters(self):
+        board = [
+            [12, 12, 12, 3, 4],
+            [12, 12, 5, 6, 7],
+            [8, 9, 10, 11, 0],
+            [3, 4, 5, 6, 0],
+            [4, 5, 6, 7, 0],
+            [5, 6, 7, 8, 9],
+        ]
+        state = {
+            "source_type": "normal",
+            "columns": [[3, 4, 5, 6, 7] for _ in range(6)],
+            "top_indexes": [0] * 6,
+            "row": 5,
+            "col": 6,
+        }
+        win_items = self.math.cal_item_list(board, return_detail=True)["items"]
+        with patch.object(
+            self.math,
+            "choose_drop_special_symbol_id",
+            return_value=self.math.FEATURE_ID,
+        ) as chooser:
+            _, drop_info = self.math.drop_cluster_symbols(
+                board,
+                win_items,
+                state,
+                free_game=False,
+            )
+        self.assertEqual(drop_info["special_placements"], [])
+        self.assertEqual(drop_info["special_block_reason"], "scatter_limit")
+        chooser.assert_not_called()
 
     def test_last_free_spin_forces_bonus_when_none_was_seen(self):
         board = [
@@ -370,6 +572,36 @@ class ThemeMathTest(unittest.TestCase):
         )
         self.assertEqual(already_seen["bonus_count"], 0)
         self.assertEqual(already_seen["forced_free_bonus_placements"], [])
+
+    def test_last_free_spin_skips_guarantee_without_candidate(self):
+        board = [[self.math.FREE_SPIN_ID] * 5 for _ in range(6)]
+        state = {
+            "source_type": "normal",
+            "columns": [[3, 4, 5, 6, 7] for _ in range(6)],
+            "top_indexes": [0] * 6,
+            "row": 5,
+            "col": 6,
+        }
+        with patch.object(
+            self.math,
+            "apply_super_scatter_conversion",
+            side_effect=lambda item_list: (
+                [list(column) for column in item_list],
+                [],
+            ),
+        ):
+            result = self.math.evaluate_cascades(
+                board,
+                state,
+                free_game=True,
+                free_mode="free",
+                remaining_spins=1,
+                bonus_seen=False,
+                feature_outcome={"activated": False},
+            )
+        self.assertEqual(result["bonus_count"], 0)
+        self.assertFalse(result["free_bonus_seen"])
+        self.assertEqual(result["forced_free_bonus_placements"], [])
 
     @patch.object(ThemeMath, "choose_drop_special_symbol_id", return_value=None)
     def test_fix_results_never_win_and_zero_results_trigger_bonus(self, _drop_choice):
@@ -578,6 +810,7 @@ class ThemeMathTest(unittest.TestCase):
         )
         self.assertEqual(self.math.get_retrigger_spins(2), 2)
         self.assertEqual(self.math.get_retrigger_spins(3), 4)
+        self.assertEqual(self.math.get_retrigger_spins(4), 4)
 
     def test_trigger_positions_seed_free_game_golden_squares(self):
         board = [
