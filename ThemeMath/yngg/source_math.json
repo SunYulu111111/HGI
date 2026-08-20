@@ -123,8 +123,8 @@
     "wild": 1,
     "golden_feature_symbols": 2,
     "paying_symbols": "3-12 (payout descending)",
-    "super_scatter_source": 0,
-    "super_scatter_result": 13
+    "super_scatter": 0,
+    "super_scatter_distinction": "position_state"
   },
   "super_scatter_conversion": {
     "probability": "1/50",
@@ -132,10 +132,17 @@
     "maximum_conversions_per_spin": 1,
     "base_initial_rolls": 1,
     "base_drop_scatter_rolls_when_no_super": true,
-    "free_final_board_rolls": 1
+    "free_initial_rolls": 1,
+    "free_drop_scatter_rolls_when_no_super": true
   },
   "special_symbol_generation": {
     "scatter_count_weights": [
+      1000,
+      100,
+      50,
+      5
+    ],
+    "free_scatter_count_weights": [
       1000,
       100,
       50,
@@ -153,6 +160,8 @@
     "base_bonus_blocks_future_drop_specials": true,
     "base_drop_max_special_symbols_per_cascade": 1,
     "base_drop_requires_scatter_count_below": 3,
+    "free_drop_max_special_symbols_per_cascade": 1,
+    "free_drop_requires_scatter_count_below": 3,
     "free_golden_bonus_count_weights": [
       60,
       40
@@ -162,6 +171,11 @@
       70
     ],
     "drop_special_symbol_weights": [
+      998,
+      1,
+      1
+    ],
+    "free_drop_special_symbol_weights": [
       998,
       1,
       1
@@ -230,6 +244,10 @@
       1,
       1
     ],
+    "coin_tier_thresholds": [
+      5,
+      25
+    ],
     "clover_multiplier_weights": [
       1,
       1,
@@ -243,7 +261,9 @@
       1,
       1,
       1
-    ]
+    ],
+    "maximum_pot_count": 5,
+    "pot_overflow": "redraw_without_pot"
   },
   "free_games": {
     "free": {
@@ -257,7 +277,8 @@
     "retrigger": {
       "2_scatters": 2,
       "3_scatters": 4
-    }
+    },
+    "initial_golden_squares": []
   },
   "bet_scopes": [
     100000,

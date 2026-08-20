@@ -19,8 +19,8 @@ Base 盘面中 Scatter 数量不超过 2 个时仍可出现 Bonus。每轮消除
 - 最终盘面累计至少 3 个 Scatter 类图标且没有 Super Scatter时，进入普通免费游戏，获得 10 次 Free Spin。
 - 最终盘面累计至少 3 个 Scatter 类图标且包含 Super Scatter 时，进入超级免费游戏，获得 10 次 Free Spin。
 - Free Spin 中出现 2 个 Scatter 类图标追加 2 次；出现 3 个及以上追加 4 次。Super Scatter 计入 Scatter 类图标总数。
-- 触发免费游戏的 Scatter 和 Super Scatter 位置在进入 Free 时直接成为金色区域。
 - 一轮完整 Free 至少尝试生成一次 Bonus；如果此前一直没有出现，则在最后一次 Free Spin 执行保底。
+- Free 的每轮消除掉落同样最多生成 1 个特殊图标；盘面已有 Bonus 或 Scatter 类图标达到 3 个时，本轮不再生成。
 
 普通免费游戏中的金色区域会持续保留，触发金色玩法后清空。超级免费游戏中的金色区域在金色玩法触发后仍然保留，直到本轮超级免费结束。
 
@@ -37,6 +37,8 @@ Base 盘面中 Scatter 数量不超过 2 个时仍可出现 Bonus。每轮消除
 
 同一轮先结算全部四叶草，再按从上到下、从左到右的顺序结算聚宝盆。所有已结算聚宝盆都会保留，其余位置重新生成结果；如果再次出现聚宝盆，则继续重翻，直到没有新聚宝盆。
 
+一整轮金色玩法最多出现 5 个聚宝盆；达到上限后，后续位置不再生成聚宝盆。
+
 金色玩法最终奖励为当前金币与聚宝盆金额之和，加上过程中获得的全部 JP 奖励。
 
 ## 第二部分：数值逻辑
@@ -45,7 +47,7 @@ Base 盘面中 Scatter 数量不超过 2 个时仍可出现 Bonus。每轮消除
 
 - 押注档位为 100,000 / 200,000 / 500,000 / 1,000,000 / 2,000,000 / 5,000,000 / 10,000,000 / 20,000,000。
 - 原始图标 ID 为 0–12：Scatter 使用 0，Wild 使用 1，主盘 Bonus 使用 2，普通赔付图标使用 3–12。
-- Super Scatter 由 Scatter 转化，结果 ID 为 13，不计入原始图标数量。
+- Super Scatter 由普通 Scatter 转化，仍使用 ID 0，通过 Super Scatter 位置状态区分。
 - `ITEM_PRIZES_3` 至 `ITEM_PRIZES_12` 的数组下标为 Cluster 数量减 1，奖值以万分之一下注为单位。
 
 普通图标赔付倍数：
@@ -71,20 +73,20 @@ Base 按以下顺序处理：
    - 初始盘面有奖时读取 `BaseWinBonusCountProbability`，下标 0/1 对应 0/1 个 Bonus，当前权重为 90/10。
 4. Bonus 在 Scatter 之后放置。候选位置不足时按 Scatter、Bonus 的抽取顺序放满可用位置，超出数量丢弃。
 
-Free 先按 `ScatterCountProbability` 生成 Scatter，再独立判断 Bonus：
+Free 先按 `FreeScatterCountProbability` 生成 Scatter；数组下标 0–3 对应生成 0–3 个，当前权重为 1000/100/50/5。随后独立判断 Bonus：
 
 - Spin 开始时已有金色区域，读取 `FreeGoldenBonusCountProbability`，下标 0/1 对应 0/1 个 Bonus，当前权重为 60/40。
 - Spin 开始时没有金色区域，读取 `FreeNoGoldenBonusCountProbability`，下标 0/1 对应 0/1 个 Bonus，当前权重为 30/70。
 
 ### 消除掉落中的特殊图标
 
-Base 每轮消除补牌后先检查最终补牌盘面：
+Base 和 Free 每轮消除补牌后使用相同流程检查最终补牌盘面：
 
 - 盘面已有 Bonus：本轮不生成特殊图标。
 - Scatter 与 Super Scatter 总数达到 3 个：本轮不生成特殊图标。
-- 其余情况才对本轮新掉落图标依次读取 `DropSpecialSymbolProbability`，直到首次抽中特殊图标或全部检查结束。
+- 其余情况才对本轮新掉落图标依次读取掉落权重，直到首次抽中特殊图标或全部检查结束。
 
-`DropSpecialSymbolProbability` 的结果为：
+Base 读取 `DropSpecialSymbolProbability`，Free 读取 `FreeDropSpecialSymbolProbability`；两者当前权重均为：
 
 - 下标 0：不替换，当前权重 998。
 - 下标 1：生成 Scatter，当前权重 1。
@@ -92,19 +94,19 @@ Base 每轮消除补牌后先检查最终补牌盘面：
 
 替换候选仅限本轮新掉落、当前不参与中奖的普通图标位置。抽中特殊图标后，从候选中随机替换 1 个并停止本轮判断，因此每次掉落过程最多出现 1 个特殊图标；没有候选位置时不放置。替换不会改变本轮已经形成的 Cluster。
 
-如果 Base 掉落生成 Scatter：
+如果掉落生成 Scatter：
 
 - 牌面尚无 Super Scatter 时，立即读取 `SuperScatterProbability`；命中后将本次掉落的 Scatter 转化为 Super Scatter。
 - 牌面已经存在 Super Scatter 时，不再执行转化判断，本次图标保持普通 Scatter。
-
-Free 不使用 Base 的单次掉落限制，仍对每个新掉落图标分别读取 `DropSpecialSymbolProbability`，并只替换本轮新掉落的非中奖位置。
 
 ### Super Scatter 转化
 
 - Base 初始特殊图标放置结束后，若存在普通 Scatter 且尚无 Super Scatter，则读取一次 `SuperScatterProbability`；命中后随机转化 1 个。
 - Base 后续掉落 Scatter 按上一节规则即时判断；一旦盘面已有 Super Scatter，后续 Scatter 不再转化。
-- Free 在全部消除和掉落结束后，对最终盘面读取一次 `SuperScatterProbability`；命中后随机转化 1 个。
+- Free 不生成或转化 Super Scatter。
 - `SuperScatterProbability` 当前值为 200，按万分比计算，即 1/50。
+
+Super Scatter 不使用专门 Symbol ID，盘面仍保留 Scatter ID 0，通过 Super Scatter 位置状态区分并在消除掉落时同步更新坐标。
 
 ### 免费游戏触发与状态
 
@@ -115,7 +117,7 @@ Free 不使用 Base 的单次掉落限制，仍对每个新掉落图标分别读
 - Free 中总数为 2 时，使用 `FreeSpinRetrigger` 下标 2，追加 2 次。
 - Free 中总数达到 3 个及以上时，使用 `FreeSpinRetrigger` 最后一档，追加 4 次。
 
-触发位置作为 Free 初始金色区域。Base 同一 Spin 同时满足金色玩法和免费游戏时，先完成金色玩法结算，再进入免费游戏；Base 消除产生的其他金色区域不带入 Free。
+Base 触发免费游戏时不带入任何初始金色区域；Base 消除产生的金色区域也不带入 Free。
 
 每轮 Free 维护“是否已经出现 Bonus”的状态，初始为否，任意 Spin 出现 Bonus 后更新为是，Free 结束时清理。最后一次 Free Spin 仍未出现 Bonus 时，等待全部消除结束，再从最终无奖盘面的普通图标中随机替换 1 个 Bonus；如果最终盘面没有可替换普通图标，则本次不放置。
 
@@ -138,7 +140,7 @@ Free 不使用 Base 的单次掉落限制，仍对每个新掉落图标分别读
 - jackpot：`BONUS_JP_MULTIPLE` 与 `BONUS_JP_TYPE_PROBABILITY` 按 MINI、MINOR、MAJOR、GRAND 顺序对应。
 - pot 不再抽取具体档位。
 
-金币倍数为 0.2/0.5/1/2/3/4/5/10/15/20/25/50/100/250/500，当前各档权重均为 1。四叶草倍数为 2/3/4/5/10/20，当前各档权重均为 1。JP 倍数为 MINI 10x、MINOR 25x、MAJOR 100x、GRAND 5000x，当前四档权重均为 1。
+金币倍数为 0.2/0.5/1/2/3/4/5/10/15/20/25/50/100/250/500，当前各档权重均为 1。小于 `coin_multi_1=5` 显示为铜币；大于等于 5 且小于 `coin_multi_2=25` 显示为银币；大于等于 25 显示为金币。四叶草倍数为 2/3/4/5/10/20，当前各档权重均为 1。JP 倍数为 MINI 10x、MINOR 25x、MAJOR 100x、GRAND 1000x，当前四档权重均为 1。
 
 ### 金色玩法结算顺序
 
@@ -149,9 +151,11 @@ Free 不使用 Base 的单次掉落限制，仍对每个新掉落图标分别读
 5. 重复四叶草、聚宝盆和重翻流程，直到本轮没有新聚宝盆。
 6. 每次出现 JP 时立即累计对应 JP 奖励。玩法结束时，再结算当前金币与聚宝盆金额之和。
 
+`bonus_max_round=5` 限制整轮金色玩法累计最多生成 5 个聚宝盆。达到上限后，后续类型抽取排除 pot，并按 coin、clover、jackpot 的原相对权重重新抽取。
+
 ### 特殊情况处理
 
 - 特殊图标候选位置不足：按抽取顺序使用全部可用位置，超出数量丢弃。
 - Base 掉落抽中特殊图标但没有可用候选位置：本轮不放置特殊图标。
 - Free Bonus 保底没有候选位置：最终盘面没有可替换普通图标时，本次不放置，不替换中奖位置，也不额外增加 Free Spin。
-- Base 已有 Bonus 或 Scatter 类图标达到 3 个：后续掉落不再读取特殊图标权重。
+- Base 或 Free 已有 Bonus，或 Scatter 类图标达到 3 个：本轮掉落不再读取特殊图标权重。

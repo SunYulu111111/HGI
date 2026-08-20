@@ -17,34 +17,35 @@
 
 `ThemeMath.cal_item_list()` 读取以上参数，完成 Cluster 查找、Wild 参与判断和赔付计算。
 
-`special/yngg_game_server.conf` 提供特殊图标 ID 和 Scatter 转化参数：
+`special/yngg_game_server.conf` 提供特殊图标生成及 Scatter 转化参数。Wild ID 1、主盘 Bonus ID 2、Scatter 与 Super Scatter 共用 ID 0；Super Scatter 通过 `super_scatter_positions` 位置状态区分，不使用专门 ID：
 
-- 使用 `WILD_ID=1` 指定 Wild。
-- 使用 `FEATURE_ID`、`BONUS_ID`、`COIN_ID`、`CLOVER_ID`、`POT_ID`、`MULTIPLIER_ID`、`COLLECTOR_ID`、`JACKPOT_ID` 指定金色玩法相关图标。
-- 使用 `SUPER_SCATTER_ID=13` 表示完成转化后的 Super Scatter；该动态结果不计入原始图标数量。
-- 使用 `SuperScatterSourceId=0` 指定 Super Scatter 的原始图标与 Scatter 相同。
 - 使用 `SuperScatterProbability=200` 设置每个 Spin 的转化概率；概率单位为万分比，200/10000 等于 1/50。
+- 使用 `coin_multi_1=5`、`coin_multi_2=25` 将金币倍数划分为铜币、银币和金币。
+- 使用 `bonus_max_round=5` 限制整轮 Bonus 累计最多生成 5 个聚宝盆；达到上限后排除 pot 并按其他类型权重重抽。
 
-Base 初始特殊图标生成后执行一次转化判断；后续掉落生成 Scatter 且盘面没有 Super Scatter 时，对该 Scatter 单独执行转化判断。Free 在全部消除和掉落结束后，对最终盘面执行一次转化判断。
+Base 初始特殊图标生成后执行一次转化判断；Base 后续掉落生成 Scatter 且盘面没有 Super Scatter 时，对该 Scatter 单独执行转化判断。Free 不生成 Super Scatter。
+
+转化不会修改盘面 Symbol ID。消除掉落时同步更新 `super_scatter_positions` 中的位置，最终通过 `spin_info.super_scatter_positions` 返回给调用方。
 
 同一配置文件还提供初始特殊图标及掉落替换权重：
 
 - `ScatterCountProbability=1000,100,50,5`：下标 0–3 分别表示生成 0–3 个 Scatter。
+- `FreeScatterCountProbability=1000,100,50,5`：Free 下标 0–3 分别表示生成 0–3 个 Scatter。
 - `BaseNoWinBonusCountProbability=80,20`：Base 中 Scatter 数量为 0–2 且无奖时生成 0/1 个 Bonus 的权重。
 - `BaseWinBonusCountProbability=90,10`：Base 中 Scatter 数量为 0–2 且有奖时生成 0/1 个 Bonus 的权重。
 - `FreeGoldenBonusCountProbability=60,40`：Free 已有金框时生成 0/1 个 Bonus 的权重。
 - `FreeNoGoldenBonusCountProbability=30,70`：Free 没有金框时生成 0/1 个 Bonus 的权重。
 - `DropSpecialSymbolProbability=998,1,1`：每个掉落图标对应“不替换/Scatter/Bonus”的权重。
+- `FreeDropSpecialSymbolProbability=998,1,1`：Free 每个掉落图标对应“不替换/Scatter/Bonus”的权重。
 
 `ThemeMath.place_special_symbols()` 先计算当前中奖位置，再从不参与中奖的候选位置中随机选择并替换，因此不会破坏已有 Cluster。
 
-Base 初始 Scatter 数量达到 3 个时跳过 Bonus 抽取。Base 每轮掉落最多放置 1 个特殊图标，并在放置前检查：
+Base 初始 Scatter 数量达到 3 个时跳过 Bonus 抽取。Base 和 Free 每轮掉落最多放置 1 个特殊图标，并在放置前检查：
 
-- 盘面存在 Bonus 时，本轮不读取 `DropSpecialSymbolProbability`。
-- Scatter 与 Super Scatter 总数达到 3 个时，本轮不读取 `DropSpecialSymbolProbability`。
+- 盘面存在 Bonus 时，本轮不读取对应模式的掉落权重。
+- Scatter 与 Super Scatter 总数达到 3 个时，本轮不读取对应模式的掉落权重。
 - 其余情况按新掉落图标数量逐个抽取，首次抽中 Scatter 或 Bonus 后停止。
 - 候选位置仅限本轮新掉落且不参与中奖的普通图标。
-- Free 不使用上述 Base 限制。
 
 ## 2. 普通轴与免费轴
 
@@ -89,6 +90,7 @@ Base 初始 Scatter 数量达到 3 个时跳过 Bonus 抽取。Base 每轮掉落
 
 `fg_spin()` 的免费玩法参数：
 
+- Base 触发 Free 后，第一次调用 `fg_spin()` 时使用空的 `golden_squares`，不传入 Scatter 位置或 Base 消除位置。
 - 使用 `free_mode="free"` 执行普通免费游戏。
 - 使用 `free_mode="super_free"` 执行超级免费游戏。
 - 使用 `golden_squares` 传入上一轮保留的金色格位置。
@@ -162,6 +164,7 @@ JP 使用两个按下标对应的数组：
 
 - 使用 `initial_board` 指定初始盘面。
 - 使用 `scatter_count`、`super_scatter_count`、`bonus_count` 指定功能图标数量。
+- 使用 `super_scatter_positions` 指定共用 Scatter ID 0 的 Super Scatter 位置；数量需与 `super_scatter_count` 一致。
 - 使用 `golden_rounds` 指定各轮金色位置结果。
 - 使用 `feature_win` 或 `feature_win_multiple` 指定额外 Bonus 奖励。
 

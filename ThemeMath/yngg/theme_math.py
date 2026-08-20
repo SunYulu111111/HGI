@@ -35,7 +35,6 @@ class ThemeMath(CountGame):
     MULTIPLIER_ID = FEATURE_ID
     COLLECTOR_ID = FEATURE_ID
     JACKPOT_ID = FEATURE_ID
-    SUPER_SCATTER_ID = 13
     MIN_CLUSTER_SIZE = 5
     PAYING_SYMBOL_IDS = tuple(range(3, 13))
 
@@ -88,17 +87,19 @@ class ThemeMath(CountGame):
         self.SUPER_SCATTER_SOURCE_ID = int(
             game_info.get("SuperScatterSourceId", self.FREE_SPIN_ID)
         )
-        self.SUPER_SCATTER_ID = int(
-            game_info.get(
-                "SUPER_SCATTER_ID",
-                game_info.get("SuperScatterId", self.SUPER_SCATTER_ID),
-            )
-        )
         self.SUPER_SCATTER_PROBABILITY = int(
             game_info.get("SuperScatterProbability", "0")
         )
+        self.COIN_MULTI_1 = float(game_info.get("coin_multi_1", "5"))
+        self.COIN_MULTI_2 = float(game_info.get("coin_multi_2", "25"))
+        self.BONUS_MAX_ROUND = int(game_info.get("bonus_max_round", "5"))
         probability_fields = (
             ("SCATTER_COUNT_WEIGHTS", "ScatterCountProbability", 4),
+            (
+                "FREE_SCATTER_COUNT_WEIGHTS",
+                "FreeScatterCountProbability",
+                4,
+            ),
             (
                 "BASE_NO_WIN_BONUS_COUNT_WEIGHTS",
                 "BaseNoWinBonusCountProbability",
@@ -122,6 +123,11 @@ class ThemeMath(CountGame):
             (
                 "DROP_SPECIAL_SYMBOL_WEIGHTS",
                 "DropSpecialSymbolProbability",
+                3,
+            ),
+            (
+                "FREE_DROP_SPECIAL_SYMBOL_WEIGHTS",
+                "FreeDropSpecialSymbolProbability",
                 3,
             ),
         )
@@ -152,12 +158,12 @@ class ThemeMath(CountGame):
         ):
             raise ValueError("game server symbol ID outside original symbol range")
         self.wild_id = self.WILD_ID
-        if not 0 <= self.SUPER_SCATTER_ID <= self.config.item_count:
-            raise ValueError("SuperScatterId outside supported transformed range")
-        if self.SUPER_SCATTER_SOURCE_ID == self.SUPER_SCATTER_ID:
-            raise ValueError("SuperScatterSourceId and SuperScatterId must differ")
         if not 0 <= self.SUPER_SCATTER_PROBABILITY <= self.PROBABILITY_DENOMINATOR:
             raise ValueError("SuperScatterProbability must be between 0 and 10000")
+        if not 0 < self.COIN_MULTI_1 < self.COIN_MULTI_2:
+            raise ValueError("coin_multi_1 and coin_multi_2 must be increasing")
+        if self.BONUS_MAX_ROUND <= 0:
+            raise ValueError("bonus_max_round must be positive")
 
     def _load_bonus_config(self) -> None:
         if not self.bonus_config.has_section("GENERAL"):
@@ -234,12 +240,17 @@ class ThemeMath(CountGame):
     def apply_super_scatter_conversion(
         self,
         item_list,
+        super_scatter_positions: set[tuple[int, int]] | None = None,
     ) -> tuple[list[list[int]], list[tuple[int, int]]]:
-        """Roll once per Spin and convert at most one final-board Scatter."""
+        """Mark at most one Scatter position as Super without changing its ID."""
 
         board = self._clone_board(item_list)
-        if self.count_symbol(board, self.SUPER_SCATTER_ID) > 0:
-            return board, []
+        existing_positions = set(super_scatter_positions or ())
+        for column, row in existing_positions:
+            if board[column][row] != self.FREE_SPIN_ID:
+                raise ValueError("Super Scatter position must contain Scatter ID 0")
+        if existing_positions:
+            return board, sorted(existing_positions)
         scatter_positions = [
             (column, row)
             for column, values in enumerate(board)
@@ -254,7 +265,6 @@ class ThemeMath(CountGame):
         ):
             return board, []
         position = scatter_positions[random.randrange(len(scatter_positions))]
-        board[position[0]][position[1]] = self.SUPER_SCATTER_ID
         return board, [position]
 
     def get_nonwinning_symbol_positions(
@@ -327,7 +337,12 @@ class ThemeMath(CountGame):
     ) -> list[int]:
         """Choose initial Scatter and Bonus counts from server-configured weights."""
 
-        scatter_count = self.weighted_random_index(self.SCATTER_COUNT_WEIGHTS)
+        scatter_weights = (
+            self.FREE_SCATTER_COUNT_WEIGHTS
+            if free_game
+            else self.SCATTER_COUNT_WEIGHTS
+        )
+        scatter_count = self.weighted_random_index(scatter_weights)
         special_symbol_ids = [self.FREE_SPIN_ID] * scatter_count
         bonus_count = 0
 
@@ -358,11 +373,19 @@ class ThemeMath(CountGame):
         special_symbol_ids.extend([self.FEATURE_ID] * bonus_count)
         return special_symbol_ids
 
-    def choose_drop_special_symbol_id(self) -> int | None:
+    def choose_drop_special_symbol_id(
+        self,
+        free_game: bool = False,
+    ) -> int | None:
         """Choose no replacement, Scatter or Bonus for one dropped symbol."""
 
+        weights = (
+            self.FREE_DROP_SPECIAL_SYMBOL_WEIGHTS
+            if free_game
+            else self.DROP_SPECIAL_SYMBOL_WEIGHTS
+        )
         special_type = self.weighted_random_index(
-            self.DROP_SPECIAL_SYMBOL_WEIGHTS
+            weights
         )
         if special_type == 1:
             return self.FREE_SPIN_ID
@@ -470,6 +493,9 @@ class ThemeMath(CountGame):
                 special_symbol_ids,
                 free_game=free_game,
             )
+        converted_positions = []
+        if not free_game:
+            board, converted_positions = self.apply_super_scatter_conversion(board)
         spin_info = self.last_spin_info.copy()
         spin_info.update(
             {
@@ -477,7 +503,7 @@ class ThemeMath(CountGame):
                 "free_mode": free_mode,
                 "super_scatter_source_id": self.SUPER_SCATTER_SOURCE_ID,
                 "super_scatter_probability": self.SUPER_SCATTER_PROBABILITY,
-                "super_scatter_positions": [],
+                "super_scatter_positions": converted_positions,
                 "initial_special_placements": initial_special_placements,
             }
         )
@@ -495,7 +521,13 @@ class ThemeMath(CountGame):
             feature_outcome=feature_outcome,
         )
 
-    def evaluate(self, item_list, return_detail: bool = True, free_game: bool = False) -> dict:
+    def evaluate(
+        self,
+        item_list,
+        return_detail: bool = True,
+        free_game: bool = False,
+        super_scatter_positions: set[tuple[int, int]] | None = None,
+    ) -> dict:
         """Evaluate one board without removing or refilling symbols."""
 
         result = self.cal_item_list(
@@ -505,17 +537,16 @@ class ThemeMath(CountGame):
             row=self.config.row_count,
             col=self.config.col_count,
         )
+        super_scatter_count = len(super_scatter_positions or ())
+        total_scatter_count = self.count_symbol(item_list, self.FREE_SPIN_ID)
         detail = {
             "item_list": [list(column) for column in item_list],
             "total_win": result["total_win"],
             "win_items": result["items"],
             "win_positions": result["win_positions"],
-            "free_spin_count": self.count_symbol(item_list, self.FREE_SPIN_ID),
-            "super_scatter_count": self.count_symbol(item_list, self.SUPER_SCATTER_ID),
-            "total_scatter_count": (
-                self.count_symbol(item_list, self.FREE_SPIN_ID)
-                + self.count_symbol(item_list, self.SUPER_SCATTER_ID)
-            ),
+            "free_spin_count": total_scatter_count - super_scatter_count,
+            "super_scatter_count": super_scatter_count,
+            "total_scatter_count": total_scatter_count,
             "bonus_count": self.count_symbol(item_list, self.FEATURE_ID),
             "spin_info": self.last_spin_info,
         }
@@ -596,6 +627,7 @@ class ThemeMath(CountGame):
         free_game: bool = False,
         free_mode: str | None = None,
         golden_squares: set[tuple[int, int]] | None = None,
+        super_scatter_positions: set[tuple[int, int]] | None = None,
         remaining_spins: int | None = None,
         bonus_seen: bool = False,
         feature_outcome: dict | None = None,
@@ -610,9 +642,15 @@ class ThemeMath(CountGame):
         rounds: list[dict] = []
         all_win_items: list[dict] = []
         cluster_win = 0
-        converted_positions = list(
-            (spin_info or {}).get("super_scatter_positions", [])
+        current_super_scatter_positions = set(
+            super_scatter_positions
+            or (spin_info or {}).get("super_scatter_positions", [])
         )
+        if free_game and current_super_scatter_positions:
+            raise ValueError("Free game cannot contain Super Scatter")
+        for column, row in current_super_scatter_positions:
+            if board[column][row] != self.FREE_SPIN_ID:
+                raise ValueError("Super Scatter position must contain Scatter ID 0")
 
         for cascade_index in range(1, max_cascades + 1):
             round_result = self.cal_item_list(
@@ -630,8 +668,9 @@ class ThemeMath(CountGame):
                 round_result["items"],
                 spin_state,
                 free_game=free_game,
+                super_scatter_positions=current_super_scatter_positions,
             )
-            converted_positions.extend(
+            current_super_scatter_positions = set(
                 drop_info.get("super_scatter_positions", [])
             )
             cluster_win += round_result["total_win"]
@@ -663,25 +702,44 @@ class ThemeMath(CountGame):
                 [self.FEATURE_ID],
                 free_game=True,
             )
-        if free_game:
-            board, free_converted_positions = self.apply_super_scatter_conversion(
-                board
-            )
-            converted_positions.extend(free_converted_positions)
         result_spin_info = dict(spin_info or self.last_spin_info)
         result_spin_info["super_scatter_positions"] = sorted(
-            set(converted_positions)
+            current_super_scatter_positions
         )
 
         feature_outcome_injected = feature_outcome is not None
         injected = self.resolve_feature_outcome(feature_outcome, golden_squares=state)
+        if injected["super_scatter_positions"] is not None:
+            current_super_scatter_positions = set(
+                injected["super_scatter_positions"]
+            )
+            if free_game and current_super_scatter_positions:
+                raise ValueError("Free game cannot contain Super Scatter")
+            for column, row in current_super_scatter_positions:
+                if board[column][row] != self.FREE_SPIN_ID:
+                    raise ValueError(
+                        "Super Scatter position must contain Scatter ID 0"
+                    )
+            result_spin_info["super_scatter_positions"] = sorted(
+                current_super_scatter_positions
+            )
         had_golden_squares = bool(state)
         scatter_count = injected["scatter_count"]
         if scatter_count is None:
-            scatter_count = self.count_symbol(board, self.FREE_SPIN_ID)
+            scatter_count = (
+                self.count_symbol(board, self.FREE_SPIN_ID)
+                - len(current_super_scatter_positions)
+            )
         super_scatter_count = injected["super_scatter_count"]
         if super_scatter_count is None:
-            super_scatter_count = self.count_symbol(board, self.SUPER_SCATTER_ID)
+            super_scatter_count = len(current_super_scatter_positions)
+        elif (
+            injected["super_scatter_positions"] is not None
+            and super_scatter_count != len(current_super_scatter_positions)
+        ):
+            raise ValueError(
+                "super_scatter_count does not match super_scatter_positions"
+            )
         bonus_count = injected["bonus_count"]
         if bonus_count is None or forced_free_bonus_placements:
             bonus_count = self.count_symbol(board, self.FEATURE_ID)
@@ -726,12 +784,6 @@ class ThemeMath(CountGame):
         )
 
         uncapped_total = cluster_win + injected["feature_win"]
-        trigger_positions = sorted(
-            (column, row)
-            for column, values in enumerate(board)
-            for row, value in enumerate(values)
-            if value in (self.FREE_SPIN_ID, self.SUPER_SCATTER_ID)
-        )
         result = {
             "item_list": initial_board,
             "final_item_list": board,
@@ -742,6 +794,9 @@ class ThemeMath(CountGame):
             "win_items": all_win_items if return_detail else [],
             "scatter_count": scatter_count,
             "super_scatter_count": super_scatter_count,
+            "super_scatter_positions": sorted(
+                current_super_scatter_positions
+            ),
             "total_scatter_count": total_scatter_count,
             "bonus_count": bonus_count,
             "free_bonus_seen": bonus_seen or bonus_count > 0,
@@ -752,7 +807,7 @@ class ThemeMath(CountGame):
             "free_mode": free_mode or (triggered_mode["name"] if triggered_mode else None),
             "retrigger_spins": retrigger_spins,
             "golden_squares": sorted(state),
-            "next_free_golden_squares": trigger_positions if triggered_mode else [],
+            "next_free_golden_squares": [],
             "feature_win": injected["feature_win"],
             "feature_events": injected["events"] if return_detail else [],
             "golden_rounds": injected["golden_rounds"],
@@ -776,6 +831,7 @@ class ThemeMath(CountGame):
         win_items: list[dict],
         spin_state: dict,
         free_game: bool = False,
+        super_scatter_positions: set[tuple[int, int]] | None = None,
     ) -> tuple[list[list[int]], dict]:
         """Remove only winning cluster positions, then refill from above."""
 
@@ -788,28 +844,30 @@ class ThemeMath(CountGame):
         }
         refill_items = []
         dropped_positions: set[tuple[int, int]] = set()
-        requested_special_ids = []
         dropped_symbol_count = 0
+        current_super_positions = set(super_scatter_positions or ())
+        updated_super_positions: set[tuple[int, int]] = set()
         for column, values in enumerate(board):
-            survivors = [
-                value
+            survivor_rows = [
+                row
                 for row, value in enumerate(values)
                 if (column, row) not in remove_positions
             ]
+            survivors = [values[row] for row in survivor_rows]
             count = len(values) - len(survivors)
             top_before = spin_state["top_indexes"][column]
             new_items = self.take_symbols_above(spin_state, column, count)
             dropped_symbol_count += len(new_items)
-            if free_game:
-                for _ in new_items:
-                    special_symbol_id = self.choose_drop_special_symbol_id()
-                    if special_symbol_id is not None:
-                        requested_special_ids.append(special_symbol_id)
             board[column] = new_items + survivors
             dropped_positions.update(
                 (column, row)
                 for row in range(count)
             )
+            for survivor_index, old_row in enumerate(survivor_rows):
+                if (column, old_row) in current_super_positions:
+                    updated_super_positions.add(
+                        (column, count + survivor_index)
+                    )
             refill_items.append(
                 {
                     "col": column,
@@ -819,90 +877,108 @@ class ThemeMath(CountGame):
                 }
             )
         special_block_reason = None
-        dropped_super_scatter_positions = []
-        if free_game:
-            board, special_placements = self.place_special_symbols(
+        special_placements = []
+        total_scatter_count = self.count_symbol(board, self.FREE_SPIN_ID)
+        if self.count_symbol(board, self.FEATURE_ID) > 0:
+            special_block_reason = "bonus_present"
+        elif total_scatter_count >= 3:
+            special_block_reason = "scatter_limit"
+        else:
+            candidates = self.get_nonwinning_symbol_positions(
                 board,
-                requested_special_ids,
-                free_game=True,
+                free_game=free_game,
                 candidate_positions=dropped_positions,
             )
-        else:
-            special_placements = []
-            total_scatter_count = (
-                self.count_symbol(board, self.FREE_SPIN_ID)
-                + self.count_symbol(board, self.SUPER_SCATTER_ID)
-            )
-            if self.count_symbol(board, self.FEATURE_ID) > 0:
-                special_block_reason = "bonus_present"
-            elif total_scatter_count >= 3:
-                special_block_reason = "scatter_limit"
-            else:
-                candidates = self.get_nonwinning_symbol_positions(
-                    board,
-                    free_game=False,
-                    candidate_positions=dropped_positions,
+            selected_symbol_id = None
+            for _ in range(dropped_symbol_count):
+                selected_symbol_id = self.choose_drop_special_symbol_id(
+                    free_game=free_game
                 )
-                selected_symbol_id = None
-                for _ in range(dropped_symbol_count):
-                    selected_symbol_id = self.choose_drop_special_symbol_id()
-                    if selected_symbol_id is not None:
-                        break
-                if selected_symbol_id is not None and candidates:
-                    candidate_index = random.randrange(len(candidates))
-                    column, row = candidates[candidate_index]
-                    board[column][row] = selected_symbol_id
-                    result_symbol_id = selected_symbol_id
-                    if (
-                        selected_symbol_id == self.FREE_SPIN_ID
-                        and self.count_symbol(board, self.SUPER_SCATTER_ID) == 0
-                        and random.randrange(self.PROBABILITY_DENOMINATOR)
-                        < self.SUPER_SCATTER_PROBABILITY
-                    ):
-                        result_symbol_id = self.SUPER_SCATTER_ID
-                        board[column][row] = result_symbol_id
-                        dropped_super_scatter_positions.append((column, row))
-                    special_placements.append(
-                        {
-                            "position": (column, row),
-                            "source_symbol_id": selected_symbol_id,
-                            "symbol_id": result_symbol_id,
-                        }
-                    )
+                if selected_symbol_id is not None:
+                    break
+            if selected_symbol_id is not None and candidates:
+                candidate_index = random.randrange(len(candidates))
+                column, row = candidates[candidate_index]
+                board[column][row] = selected_symbol_id
+                result_symbol_id = selected_symbol_id
+                is_super_scatter = False
+                if (
+                    not free_game
+                    and selected_symbol_id == self.FREE_SPIN_ID
+                    and not updated_super_positions
+                    and random.randrange(self.PROBABILITY_DENOMINATOR)
+                    < self.SUPER_SCATTER_PROBABILITY
+                ):
+                    is_super_scatter = True
+                    updated_super_positions.add((column, row))
+                special_placements.append(
+                    {
+                        "position": (column, row),
+                        "source_symbol_id": selected_symbol_id,
+                        "symbol_id": result_symbol_id,
+                        "is_super_scatter": is_super_scatter,
+                    }
+                )
         return board, {
             "remove_positions": sorted(remove_positions),
             "winning_item_ids": sorted(winning_ids),
             "refill_items": refill_items,
             "special_placements": special_placements,
             "special_block_reason": special_block_reason,
-            "super_scatter_positions": dropped_super_scatter_positions,
+            "super_scatter_positions": sorted(updated_super_positions),
             "source_type": spin_state["source_type"],
         }
 
     # Backward-compatible name used by earlier yngg tests/tools.
     drop_super_cascade_symbols = drop_cluster_symbols
 
+    def get_coin_tier(self, value: float) -> str:
+        if value < self.COIN_MULTI_1:
+            return "bronze"
+        if value < self.COIN_MULTI_2:
+            return "silver"
+        return "gold"
+
+    def choose_bonus_symbol_type(self, allow_pot: bool = True) -> str:
+        candidates = [
+            (kind, weight)
+            for kind, weight in zip(
+                self.BONUS_SYMBOL_TYPES,
+                self.BONUS_SYMBOL_TYPE_WEIGHTS,
+            )
+            if allow_pot or kind != "pot"
+        ]
+        selected_index = self.weighted_random_index(
+            tuple(weight for _, weight in candidates)
+        )
+        return candidates[selected_index][0]
+
     def generate_golden_round(
         self,
         positions: set[tuple[int, int]],
+        existing_pot_count: int = 0,
     ) -> list[dict]:
         """Generate one reveal round by choosing type before type-specific value."""
 
         reveals = []
+        pot_count = existing_pot_count
         for position in sorted(positions, key=lambda value: (value[1], value[0])):
-            kind = self.BONUS_SYMBOL_TYPES[
-                self.weighted_random_index(self.BONUS_SYMBOL_TYPE_WEIGHTS)
-            ]
+            kind = self.choose_bonus_symbol_type(
+                allow_pot=pot_count < self.BONUS_MAX_ROUND
+            )
             reveal = {"position": list(position), "type": kind}
             if kind == "coin":
                 value = self.COIN_VALUES[
                     self.weighted_random_index(self.COIN_VALUE_WEIGHTS)
                 ]
                 reveal["value"] = int(value) if value.is_integer() else value
+                reveal["coin_tier"] = self.get_coin_tier(value)
             elif kind == "clover":
                 reveal["multiplier"] = self.GREEN_CLOVER_MULTIPLIERS[
                     self.weighted_random_index(self.CLOVER_MULTIPLIER_WEIGHTS)
                 ]
+            elif kind == "pot":
+                pot_count += 1
             elif kind == "jackpot":
                 reveal["tier"] = self.JACKPOT_TIERS[
                     self.weighted_random_index(self.JACKPOT_TYPE_WEIGHTS)
@@ -922,15 +998,20 @@ class ThemeMath(CountGame):
         persistent_pots: set[tuple[int, int]] = set()
         positions_to_reveal = all_positions
         rounds = []
+        total_pot_count = 0
 
         for _ in range(self.MAX_GOLDEN_ROUNDS):
-            reveals = self.generate_golden_round(positions_to_reveal)
+            reveals = self.generate_golden_round(
+                positions_to_reveal,
+                existing_pot_count=total_pot_count,
+            )
             rounds.append(reveals)
             new_pots = {
                 tuple(reveal["position"])
                 for reveal in reveals
                 if reveal["type"] == "pot"
             }
+            total_pot_count += len(new_pots)
             if not new_pots:
                 return rounds
             persistent_pots.update(new_pots)
@@ -957,6 +1038,7 @@ class ThemeMath(CountGame):
                 "golden_result": None,
                 "scatter_count": None,
                 "super_scatter_count": None,
+                "super_scatter_positions": None,
                 "bonus_count": None,
             }
         feature_win = int(outcome.get("feature_win", 0))
@@ -976,6 +1058,17 @@ class ThemeMath(CountGame):
             raise ValueError("feature events must be a list")
         if golden_result:
             events = list(events) + golden_result["events"]
+        raw_super_positions = outcome.get("super_scatter_positions")
+        parsed_super_positions = (
+            None
+            if raw_super_positions is None
+            else sorted(
+                {
+                    self._parse_position(position)
+                    for position in raw_super_positions
+                }
+            )
+        )
         return {
             "feature_win": feature_win,
             "events": [dict(event) for event in events],
@@ -989,6 +1082,7 @@ class ThemeMath(CountGame):
             "super_scatter_count": self._optional_nonnegative_int(
                 outcome.get("super_scatter_count")
             ),
+            "super_scatter_positions": parsed_super_positions,
             "bonus_count": self._optional_nonnegative_int(outcome.get("bonus_count")),
         }
 
@@ -1011,6 +1105,7 @@ class ThemeMath(CountGame):
         cells: dict[tuple[int, int], dict] = {}
         jackpot_multiple = 0.0
         event_log: list[dict] = []
+        pot_count = 0
 
         for round_index, reveals in enumerate(rounds, 1):
             if not isinstance(reveals, list):
@@ -1026,13 +1121,22 @@ class ThemeMath(CountGame):
                     value = float(cell["value"])
                     if value not in self.COIN_VALUES:
                         raise ValueError(f"unsupported coin multiple: {value}")
-                    cells[position] = {"type": "coin", "value": value}
+                    cells[position] = {
+                        "type": "coin",
+                        "value": value,
+                        "coin_tier": self.get_coin_tier(value),
+                    }
                 elif kind == "clover":
                     multiplier = int(cell["multiplier"])
                     if multiplier not in self.GREEN_CLOVER_MULTIPLIERS:
                         raise ValueError(f"unsupported clover multiplier: {multiplier}")
                     cells[position] = {"type": "clover", "multiplier": multiplier}
                 elif kind == "pot":
+                    pot_count += 1
+                    if pot_count > self.BONUS_MAX_ROUND:
+                        raise ValueError(
+                            f"golden feature exceeds pot limit={self.BONUS_MAX_ROUND}"
+                        )
                     cells[position] = {"type": "pot", "value": float(cell.get("value", 0))}
                 elif kind == "jackpot":
                     tier = str(cell["tier"]).lower()
@@ -1108,6 +1212,7 @@ class ThemeMath(CountGame):
             "total_win": round(total_multiple * self.base_bet),
             "area_multiple": area_multiple,
             "jackpot_multiple": jackpot_multiple,
+            "pot_count": pot_count,
             "cells": [
                 {"position": position, **cell}
                 for position, cell in sorted(

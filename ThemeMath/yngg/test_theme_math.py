@@ -56,6 +56,58 @@ class ThemeMathTest(unittest.TestCase):
             self.math.JACKPOT_MULTIPLIERS,
             {"mini": 10, "minor": 25, "major": 100, "grand": 5000},
         )
+        self.assertEqual(self.math.COIN_MULTI_1, 5)
+        self.assertEqual(self.math.COIN_MULTI_2, 25)
+        self.assertEqual(self.math.BONUS_MAX_ROUND, 5)
+
+    def test_coin_tiers_follow_server_thresholds(self):
+        self.assertEqual(self.math.get_coin_tier(4), "bronze")
+        self.assertEqual(self.math.get_coin_tier(5), "silver")
+        self.assertEqual(self.math.get_coin_tier(24), "silver")
+        self.assertEqual(self.math.get_coin_tier(25), "gold")
+
+    def test_bonus_redraws_without_pot_after_five_pots(self):
+        positions = {
+            (0, 0),
+            (1, 0),
+            (2, 0),
+            (3, 0),
+            (4, 0),
+            (5, 0),
+            (0, 1),
+        }
+
+        def choose_index(weights):
+            weights = tuple(weights)
+            if weights == self.math.BONUS_SYMBOL_TYPE_WEIGHTS:
+                return 2
+            return 0
+
+        with patch.object(
+            self.math,
+            "weighted_random_index",
+            side_effect=choose_index,
+        ):
+            reveals = self.math.generate_golden_round(positions)
+        self.assertEqual(
+            sum(reveal["type"] == "pot" for reveal in reveals),
+            5,
+        )
+        non_pots = [reveal for reveal in reveals if reveal["type"] != "pot"]
+        self.assertEqual([reveal["type"] for reveal in non_pots], ["coin", "coin"])
+        self.assertTrue(
+            all(reveal["coin_tier"] == "bronze" for reveal in non_pots)
+        )
+
+        pot_round = [
+            {"position": list(position), "type": "pot"}
+            for position in sorted(positions)[:6]
+        ]
+        with self.assertRaisesRegex(ValueError, "pot limit=5"):
+            self.math.resolve_golden_feature(
+                [pot_round],
+                golden_squares=set(positions),
+            )
 
     def test_super_scatter_rolls_once_and_converts_at_most_one(self):
         self.assertEqual(self.math.config.item_count, 13)
@@ -63,7 +115,6 @@ class ThemeMathTest(unittest.TestCase):
         self.assertEqual(len(self.math.config.use_wilds), 13)
         self.assertEqual(len(self.math.config.base_nums), 13)
         self.assertEqual(self.math.SUPER_SCATTER_SOURCE_ID, 0)
-        self.assertEqual(self.math.SUPER_SCATTER_ID, 13)
         self.assertEqual(self.math.SUPER_SCATTER_PROBABILITY, 200)
         board = [
             [0, 0, 3, 4, 5],
@@ -80,21 +131,21 @@ class ThemeMathTest(unittest.TestCase):
             result, positions = self.math.apply_super_scatter_conversion(board)
         self.assertEqual(rng.call_count, 2)
         self.assertEqual(positions, [(0, 1)])
-        self.assertEqual(result[0][:2], [0, 13])
+        self.assertEqual(result, board)
         self.assertEqual(result[1][0], 0)
         with patch("theme_math.random.randrange", return_value=200):
             unchanged, positions = self.math.apply_super_scatter_conversion(board)
         self.assertEqual(unchanged, board)
         self.assertEqual(positions, [])
 
-    def test_free_final_board_super_scatter_conversion_rolls_once(self):
+    def test_free_drop_uses_free_weights_without_super_conversion(self):
         board = [
-            [0, 3, 4, 5, 6],
-            [0, 4, 5, 6, 7],
-            [0, 5, 6, 7, 8],
-            [6, 7, 8, 9, 10],
-            [7, 8, 9, 10, 11],
+            [12, 12, 12, 3, 4],
+            [12, 12, 5, 6, 7],
             [8, 9, 10, 11, 12],
+            [3, 4, 5, 6, 7],
+            [4, 5, 6, 7, 8],
+            [5, 6, 7, 8, 9],
         ]
         state = {
             "source_type": "normal",
@@ -103,25 +154,79 @@ class ThemeMathTest(unittest.TestCase):
             "row": 5,
             "col": 6,
         }
-        with patch(
-            "theme_math.random.randrange",
-            side_effect=[0, 2],
+        win_items = self.math.cal_item_list(
+            board,
+            return_detail=True,
+            free_game=True,
+        )["items"]
+        with (
+            patch.object(
+                self.math,
+                "weighted_random_index",
+                return_value=1,
+            ) as chooser,
+            patch("theme_math.random.randrange", return_value=0),
         ):
-            result = self.math.evaluate_cascades(
+            result, drop_info = self.math.drop_cluster_symbols(
                 board,
+                win_items,
                 state,
                 free_game=True,
-                free_mode="free",
-                feature_outcome={"activated": False},
             )
-        self.assertEqual(result["scatter_count"], 2)
-        self.assertEqual(result["super_scatter_count"], 1)
-        self.assertEqual(result["total_scatter_count"], 3)
-        self.assertEqual(result["retrigger_spins"], 4)
         self.assertEqual(
-            result["spin_info"]["super_scatter_positions"],
-            [(2, 0)],
+            chooser.call_args_list[0].args[0],
+            self.math.FREE_DROP_SPECIAL_SYMBOL_WEIGHTS,
         )
+        self.assertEqual(
+            drop_info["special_placements"][0]["symbol_id"],
+            self.math.FREE_SPIN_ID,
+        )
+        self.assertFalse(
+            drop_info["special_placements"][0]["is_super_scatter"]
+        )
+        self.assertEqual(drop_info["super_scatter_positions"], [])
+        self.assertEqual(
+            self.math.count_symbol(result, self.math.FREE_SPIN_ID),
+            1,
+        )
+
+    def test_super_scatter_position_moves_with_surviving_scatter(self):
+        board = [
+            [0, 12, 12, 12, 4],
+            [5, 12, 12, 6, 7],
+            [8, 9, 10, 11, 12],
+            [3, 4, 5, 6, 7],
+            [4, 5, 6, 7, 8],
+            [5, 6, 7, 8, 9],
+        ]
+        state = {
+            "source_type": "normal",
+            "columns": [
+                [5, 6, 7],
+                [8, 9],
+                [3],
+                [4],
+                [5],
+                [6],
+            ],
+            "top_indexes": [0] * 6,
+            "row": 5,
+            "col": 6,
+        }
+        win_items = self.math.cal_item_list(board, return_detail=True)["items"]
+        with patch.object(
+            self.math,
+            "choose_drop_special_symbol_id",
+            return_value=None,
+        ):
+            result, drop_info = self.math.drop_cluster_symbols(
+                board,
+                win_items,
+                state,
+                super_scatter_positions={(0, 0)},
+            )
+        self.assertEqual(drop_info["super_scatter_positions"], [(0, 3)])
+        self.assertEqual(result[0][3], self.math.FREE_SPIN_ID)
 
     def test_game_config_only_contains_common_math_fields(self):
         game_config = self.math._read_config_file(
@@ -167,7 +272,6 @@ class ThemeMathTest(unittest.TestCase):
             "MULTIPLIER_ID": 2,
             "COLLECTOR_ID": 2,
             "JACKPOT_ID": 2,
-            "SUPER_SCATTER_ID": 13,
         }
         for key, value in moved_fields.items():
             self.assertNotIn(key, game_config)
@@ -175,6 +279,10 @@ class ThemeMathTest(unittest.TestCase):
 
     def test_special_symbol_probability_config(self):
         self.assertEqual(self.math.SCATTER_COUNT_WEIGHTS, (1000, 100, 50, 5))
+        self.assertEqual(
+            self.math.FREE_SCATTER_COUNT_WEIGHTS,
+            (1000, 100, 50, 5),
+        )
         self.assertEqual(
             self.math.BASE_NO_WIN_BONUS_COUNT_WEIGHTS,
             (80, 20),
@@ -189,6 +297,10 @@ class ThemeMathTest(unittest.TestCase):
             (30, 70),
         )
         self.assertEqual(self.math.DROP_SPECIAL_SYMBOL_WEIGHTS, (998, 1, 1))
+        self.assertEqual(
+            self.math.FREE_DROP_SPECIAL_SYMBOL_WEIGHTS,
+            (998, 1, 1),
+        )
 
     def test_base_bonus_count_uses_win_specific_weights(self):
         no_win_board = [
@@ -286,6 +398,10 @@ class ThemeMathTest(unittest.TestCase):
             )
         self.assertEqual(symbols, [self.math.FEATURE_ID])
         self.assertEqual(
+            chooser.call_args_list[0].args[0],
+            self.math.FREE_SCATTER_COUNT_WEIGHTS,
+        )
+        self.assertEqual(
             chooser.call_args_list[1].args[0],
             self.math.FREE_GOLDEN_BONUS_COUNT_WEIGHTS,
         )
@@ -373,12 +489,7 @@ class ThemeMathTest(unittest.TestCase):
         )
         self.assertEqual(
             result["next_free_golden_squares"],
-            [
-                (column, row)
-                for column, values in enumerate(result["final_item_list"])
-                for row, value in enumerate(values)
-                if value == self.math.FREE_SPIN_ID
-            ],
+            [],
         )
 
     def test_base_bonus_suppresses_later_drop_scatters(self):
@@ -492,11 +603,14 @@ class ThemeMathTest(unittest.TestCase):
         )
         self.assertEqual(
             drop_info["special_placements"][0]["symbol_id"],
-            self.math.SUPER_SCATTER_ID,
+            self.math.FREE_SPIN_ID,
+        )
+        self.assertTrue(
+            drop_info["special_placements"][0]["is_super_scatter"]
         )
         self.assertEqual(len(drop_info["super_scatter_positions"]), 1)
         self.assertEqual(
-            self.math.count_symbol(result, self.math.SUPER_SCATTER_ID),
+            self.math.count_symbol(result, self.math.FREE_SPIN_ID),
             1,
         )
 
@@ -657,7 +771,12 @@ class ThemeMathTest(unittest.TestCase):
         self.assertEqual(
             result,
             [
-                {"position": [0, 0], "type": "coin", "value": 500},
+                {
+                    "position": [0, 0],
+                    "type": "coin",
+                    "value": 500,
+                    "coin_tier": "gold",
+                },
                 {"position": [1, 0], "type": "clover", "multiplier": 20},
                 {"position": [2, 0], "type": "pot"},
                 {"position": [3, 0], "type": "jackpot", "tier": "grand"},
@@ -812,11 +931,11 @@ class ThemeMathTest(unittest.TestCase):
         self.assertEqual(self.math.get_retrigger_spins(3), 4)
         self.assertEqual(self.math.get_retrigger_spins(4), 4)
 
-    def test_trigger_positions_seed_free_game_golden_squares(self):
+    def test_base_free_trigger_does_not_seed_golden_squares(self):
         board = [
             [0, 3, 4, 5, 6],
             [0, 4, 5, 6, 7],
-            [13, 5, 6, 7, 8],
+            [0, 5, 6, 7, 8],
             [6, 7, 8, 9, 10],
             [7, 8, 9, 10, 11],
             [8, 9, 10, 11, 12],
@@ -828,11 +947,19 @@ class ThemeMathTest(unittest.TestCase):
             "row": 5,
             "col": 6,
         }
-        result = self.math.evaluate_cascades(board, state)
+        result = self.math.evaluate_cascades(
+            board,
+            state,
+            super_scatter_positions={(2, 0)},
+        )
         self.assertEqual(result["free_mode"], "super_free")
+        self.assertEqual(result["scatter_count"], 2)
+        self.assertEqual(result["super_scatter_count"], 1)
+        self.assertEqual(result["super_scatter_positions"], [(2, 0)])
+        self.assertEqual(result["final_item_list"][2][0], self.math.FREE_SPIN_ID)
         self.assertEqual(
             result["next_free_golden_squares"],
-            [(0, 0), (1, 0), (2, 0)],
+            [],
         )
 
     def test_golden_clover_and_jackpot_resolution(self):
@@ -920,7 +1047,14 @@ class ThemeMathTest(unittest.TestCase):
         )
         self.assertEqual(
             result["feature_cells"],
-            [{"position": (0, 0), "type": "coin", "value": 5.0}],
+            [
+                {
+                    "position": (0, 0),
+                    "type": "coin",
+                    "value": 5.0,
+                    "coin_tier": "silver",
+                }
+            ],
         )
         self.assertEqual(result["golden_squares"], [])
 
