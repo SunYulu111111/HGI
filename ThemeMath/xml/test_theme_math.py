@@ -57,15 +57,15 @@ class ThemeMathTest(unittest.TestCase):
         self.math.win_weights[index] = 1
 
     def test_configuration_matches_fruit_machine_symbols(self):
-        self.assertEqual(self.math.base_bet, 100_000)
+        self.assertEqual(self.math.base_bet, 10_000)
         self.assertEqual(self.math.item_count, 10)
         self.assertEqual(set(self.math.item_prizes), set(range(2, 10)))
         self.assertEqual(
             len(self.math.reel_config),
             len(self.math.multi_config),
         )
-        self.assertEqual(self.math.high_symbol_weights, [40, 30, 20])
-        self.assertEqual(self.math.mid_symbol_weights, [20, 15, 10])
+        self.assertEqual(self.math.high_symbol_multipliers, [40, 30, 20])
+        self.assertEqual(self.math.low_symbol_multipliers, [20, 15, 10])
         self.assertEqual(self.math.symbol_multi_weights, [100, 100, 100])
         self.assertEqual(
             self.math.respin_count_weights,
@@ -106,7 +106,7 @@ class ThemeMathTest(unittest.TestCase):
         self.assertFalse(result["is_bonus"])
         self.assertEqual(result["total_bet"], 100_000)
         self.assertEqual(result["total_win"], 300_000)
-        self.assertEqual(result["win_items"][0]["item_prize"], 100_000)
+        self.assertEqual(result["win_items"][0]["item_prize"], 10_000)
         self.assertEqual(result["win_items"][0]["multi_config"], 3)
         self.assertEqual(result["win_items"][0]["x"], 3)
         self.assertEqual(result["win_items"][0]["multiplier"], 3)
@@ -134,7 +134,7 @@ class ThemeMathTest(unittest.TestCase):
                 self.assertEqual(outcome["symbol_multi_index"], expected_index)
                 self.assertEqual(result["total_win"], expected_win)
 
-    def test_high_and_mid_symbols_share_one_multi_index_per_spin(self):
+    def test_high_and_low_symbols_share_one_multi_index_per_spin(self):
         self.force_trigger_index(9)
         self.math.symbol_multi_weights = [0, 0, 1]
         self.math.respin_count_weights = [0] * 7 + [1]
@@ -299,17 +299,17 @@ class ThemeMathTest(unittest.TestCase):
                 weight * value
                 for weight, value in zip(
                     self.math.symbol_multi_weights,
-                    self.math.high_symbol_weights,
+                    self.math.high_symbol_multipliers,
                 )
             ),
             sum(self.math.symbol_multi_weights),
         )
-        mid_expected_x = Fraction(
+        low_expected_x = Fraction(
             sum(
                 weight * value
                 for weight, value in zip(
                     self.math.symbol_multi_weights,
-                    self.math.mid_symbol_weights,
+                    self.math.low_symbol_multipliers,
                 )
             ),
             sum(self.math.symbol_multi_weights),
@@ -326,7 +326,7 @@ class ThemeMathTest(unittest.TestCase):
                 elif symbol_id in (3, 4, 5):
                     expected_x = high_expected_x
                 elif symbol_id in (6, 7, 8):
-                    expected_x = mid_expected_x
+                    expected_x = low_expected_x
                 else:
                     expected_x = Fraction(5)
                 weighted_win += (
@@ -374,8 +374,8 @@ class ThemeMathTest(unittest.TestCase):
             {10: 100_000},
             {2: 0},
             {2: -100_000},
-            {2: 10_000},
-            {2: 150_000},
+            {2: 1_000},
+            {2: 15_000},
         )
         for bets in invalid_bets:
             with self.subTest(bets=bets), self.assertRaises(ValueError):
@@ -455,7 +455,11 @@ class ThemeMathTest(unittest.TestCase):
         self.math.double_weight_tiers[1] = [0] * 11
         self.math.double_weight_tiers[1][2] = 1
 
-        result = self.math.apply_double_up(100_000, double_times=3)
+        result = self.math.apply_double_up(
+            100_000,
+            double_times=3,
+            total_bet=100_000,
+        )
 
         self.assertEqual(result["selected_times"], 2)
         self.assertEqual(result["success_times"], 2)
@@ -508,10 +512,10 @@ class SimulationBetMultiTest(unittest.TestCase):
         self.assertEqual(
             bets,
             {
-                2: 100_000,
-                3: 200_000,
-                5: 300_000,
-                8: 400_000,
+                2: 10_000,
+                3: 20_000,
+                5: 30_000,
+                8: 40_000,
             },
         )
 
@@ -521,8 +525,8 @@ class SimulationBetMultiTest(unittest.TestCase):
         result = simulate(3, bet_multi=bet_multi, seed=7)
 
         self.assertEqual(result["bet_multi"], bet_multi)
-        self.assertEqual(result["bets"], {2: 100_000, 3: 200_000})
-        self.assertEqual(result["total_bet"], 900_000)
+        self.assertEqual(result["bets"], {2: 10_000, 3: 20_000})
+        self.assertEqual(result["total_bet"], 90_000)
 
     def test_invalid_bet_multi_is_rejected(self):
         invalid_values = (
@@ -549,11 +553,11 @@ class SimulationBetMultiTest(unittest.TestCase):
         self.assertEqual([row["SPIN"] for row in rows], [2, 4, 5])
         self.assertEqual(rows[-1]["BET_MULTI"], bet_multi)
         self.assertEqual(rows[-1]["DOUBLE_TIMES"], 0)
-        self.assertEqual(rows[-1]["总押注"], 1_500_000)
+        self.assertEqual(rows[-1]["总押注"], 150_000)
         self.assertEqual(rows[-1]["rtp"], rows[-1]["rtp_check"])
         self.assertIn("status", rows[-1])
-        self.assertEqual(rows[-1]["symbol_2_bet"], 500_000)
-        self.assertEqual(rows[-1]["symbol_3_bet"], 1_000_000)
+        self.assertEqual(rows[-1]["symbol_2_bet"], 50_000)
+        self.assertEqual(rows[-1]["symbol_3_bet"], 100_000)
 
     def test_simulation_all_runs_parameter_combinations(self):
         bet_multi = [0, 0, 1, 1, 0, 0, 0, 0, 0, 0]

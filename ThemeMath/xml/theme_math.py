@@ -61,13 +61,13 @@ class ThemeMath:
         self.item_prizes = self._load_item_prizes(main)
         self.reel_config = self._parse_int_list(game_info.get("ReelConfig"), "ReelConfig")
         self.multi_config = self._parse_int_list(game_info.get("MultiConfig"), "MultiConfig")
-        self.high_symbol_weights = self._parse_int_list(
-            game_info.get("HighSymbolWeight"),
-            "HighSymbolWeight",
+        self.high_symbol_multipliers = self._parse_int_list(
+            game_info.get("HighSymbolMulti"),
+            "HighSymbolMulti",
         )
-        self.mid_symbol_weights = self._parse_int_list(
-            game_info.get("MidSymbolWeight"),
-            "MidSymbolWeight",
+        self.low_symbol_multipliers = self._parse_int_list(
+            game_info.get("LowSymbolMulti"),
+            "LowSymbolMulti",
         )
         self.symbol_multi_weights = self._parse_int_list(
             game_info.get("SymbolMultiWeight"),
@@ -518,7 +518,7 @@ class ThemeMath:
         self,
         winning_indexes: Sequence[int],
     ) -> int | None:
-        """同一次 spin 的所有 High/Mid symbol 共用一个倍率下标。"""
+        """同一次 spin 的所有 High/Low symbol 共用一个倍率下标。"""
 
         needs_dynamic_multiplier = any(
             self.multi_config[index] == 1
@@ -574,14 +574,14 @@ class ThemeMath:
                 if symbol_multi_index is None
                 else symbol_multi_index
             )
-            return self.high_symbol_weights[selected_index], selected_index
+            return self.high_symbol_multipliers[selected_index], selected_index
         if symbol_id in (6, 7, 8):
             selected_index = (
                 self._weighted_index(self.symbol_multi_weights)
                 if symbol_multi_index is None
                 else symbol_multi_index
             )
-            return self.mid_symbol_weights[selected_index], selected_index
+            return self.low_symbol_multipliers[selected_index], selected_index
         if symbol_id == 9:
             return 5, None
         raise ValueError(
@@ -688,22 +688,22 @@ class ThemeMath:
             raise ValueError("MultiConfig 的倍数必须全部大于 0")
         symbol_multi_lengths = {
             len(self.symbol_multi_weights),
-            len(self.high_symbol_weights),
-            len(self.mid_symbol_weights),
+            len(self.high_symbol_multipliers),
+            len(self.low_symbol_multipliers),
         }
         if len(symbol_multi_lengths) != 1 or not self.symbol_multi_weights:
             raise ValueError(
-                "SymbolMultiWeight、HighSymbolWeight 和 MidSymbolWeight "
+                "SymbolMultiWeight、HighSymbolMulti 和 LowSymbolMulti "
                 "必须非空且长度一致"
             )
         if any(weight < 0 for weight in self.symbol_multi_weights):
             raise ValueError("SymbolMultiWeight 不能包含负权重")
         if sum(self.symbol_multi_weights) <= 0:
             raise ValueError("SymbolMultiWeight 的权重总和必须大于 0")
-        if any(value <= 0 for value in self.high_symbol_weights):
-            raise ValueError("HighSymbolWeight 的 X 必须全部大于 0")
-        if any(value <= 0 for value in self.mid_symbol_weights):
-            raise ValueError("MidSymbolWeight 的 X 必须全部大于 0")
+        if any(value <= 0 for value in self.high_symbol_multipliers):
+            raise ValueError("HighSymbolMulti 的 X 必须全部大于 0")
+        if any(value <= 0 for value in self.low_symbol_multipliers):
+            raise ValueError("LowSymbolMulti 的 X 必须全部大于 0")
         unsupported_dynamic_symbols = {
             symbol_id
             for symbol_id, multiplier in zip(self.reel_config, self.multi_config)

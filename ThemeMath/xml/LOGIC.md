@@ -28,14 +28,14 @@ symbol_bet > 0
 symbol_bet % BaseBet == 0
 ```
 
-当前 `BaseBet=100000`，因此合法下注包括 `100000`、`200000`、`300000` 等。
+当前 `BaseBet=10000`，因此合法下注包括 `10000`、`20000`、`30000` 等。
 不同 symbol 可以使用不同下注金额，总下注为所有 symbol 注额之和。
 
 ## 3. 普通 Spin
 
 `ReelConfig`、`MultiConfig`、`WinWeightConfig` 和
 `BonusWinWeightConfig` 长度必须相同，且相同下标表示同一个轮盘位置。
-`SymbolMultiWeight`、`HighSymbolWeight` 和 `MidSymbolWeight` 使用相同下标。
+`SymbolMultiWeight`、`HighSymbolMulti` 和 `LowSymbolMulti` 使用相同下标。
 
 一次普通 spin 的流程：
 
@@ -58,16 +58,16 @@ symbol_bet % BaseBet == 0
 3. 如果该值为 1：
    - symbol 3/4/5：
      按 SymbolMultiWeight 抽取下标，
-     X = HighSymbolWeight[下标]
+     X = HighSymbolMulti[下标]
    - symbol 6/7/8：
      按 SymbolMultiWeight 抽取下标，
-     X = MidSymbolWeight[下标]
+     X = LowSymbolMulti[下标]
    - symbol 9：X = 5
 ```
 
 同一次 spin 只按 `SymbolMultiWeight` 抽取一次下标。该 spin 中所有需要动态 X
-的 High symbol（3/4/5）和 Mid symbol（6/7/8）共用这个下标，再分别从
-`HighSymbolWeight`、`MidSymbolWeight` 读取 X。`MultiConfig != 1` 的位置
+的 High symbol（3/4/5）和 Low symbol（6/7/8）共用这个下标，再分别从
+`HighSymbolMulti`、`LowSymbolMulti` 读取 X。`MultiConfig != 1` 的位置
 仍直接使用其固定 X，不受共享下标影响。
 
 symbol 2 的轮盘位置必须直接在 `MultiConfig` 配置非 1 的 X。
@@ -84,28 +84,28 @@ win = symbol_bet / BaseBet * ITEM_PRIZE_symbol_id * X
 固定 X 示例：
 
 ```text
-symbol 3下注 = 100000
-BaseBet = 100000
-ITEM_PRIZE_3 = 100000
+symbol 3下注 = 10000
+BaseBet = 10000
+ITEM_PRIZE_3 = 10000
 index 14的MultiConfig = 3
 X = 3
 
-win = 100000 / 100000 * 100000 * 3
-    = 300000
+win = 10000 / 10000 * 10000 * 3
+    = 30000
 ```
 
 动态 X 示例：
 
 ```text
-symbol 3下注 = 200000
-ITEM_PRIZE_3 = 100000
+symbol 3下注 = 20000
+ITEM_PRIZE_3 = 10000
 该位置MultiConfig = 1
 SymbolMultiWeight抽中的下标 = 0
-HighSymbolWeight[0] = 40
+HighSymbolMulti[0] = 40
 X = 40
 
-win = 200000 / 100000 * 100000 * 40
-    = 8000000
+win = 20000 / 10000 * 10000 * 40
+    = 800000
 ```
 
 ## 5. Bonus
@@ -219,7 +219,7 @@ symbol/index。
 - High symbol 动态 X 的期望值为 30。
 - Mid symbol 动态 X 的期望值为 15。
 - symbol `2-9` 各自的“位置权重 × 期望 X”总和均为 `1050`。
-- `ITEM_PRIZE_2-9` 与 `BaseBet` 均为 `100000`。
+- `ITEM_PRIZE_2-9` 与 `BaseBet` 均为 `10000`。
 
 因此任意单个 symbol 下注一个 BaseBet、不倍乘时：
 
@@ -365,7 +365,7 @@ python simulation.py \
 
 - 四组轮盘配置长度一致。
 - symbol id、倍数和权重合法。
-- `SymbolMultiWeight`、`HighSymbolWeight`、`MidSymbolWeight` 非空且长度一致。
+- `SymbolMultiWeight`、`HighSymbolMulti`、`LowSymbolMulti` 非空且长度一致。
 - 动态 X 权重非负，X 全部大于 0。
 - `ITEM_PRIZE_2-9` 全部大于 0。
 - `MultiConfig=1` 的 symbol 必须存在动态 X 或固定 X=5 的规则。
