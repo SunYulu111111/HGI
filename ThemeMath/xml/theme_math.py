@@ -65,9 +65,14 @@ class ThemeMath:
             game_info.get("HighSymbolMulti"),
             "HighSymbolMulti",
         )
+        low_symbol_key = (
+            "LowSymbolMulti"
+            if "LowSymbolMulti" in game_info
+            else "MidSymbolMulti"
+        )
         self.low_symbol_multipliers = self._parse_int_list(
-            game_info.get("LowSymbolMulti"),
-            "LowSymbolMulti",
+            game_info.get(low_symbol_key),
+            low_symbol_key,
         )
         self.symbol_multi_weights = self._parse_int_list(
             game_info.get("SymbolMultiWeight"),

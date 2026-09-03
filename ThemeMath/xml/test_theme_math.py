@@ -74,27 +74,60 @@ class ThemeMathTest(unittest.TestCase):
         self.assertEqual(self.math.control_group_cut_multiples[12], 20)
         self.assertEqual(self.math.double_max_times, 10)
         self.assertEqual(self.math.double_multiple, 2)
-        self.assertEqual(
-            self.math.double_weights,
-            [1000, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1],
-        )
+        expected_double_weights = {
+            1: [500000, 250000, 125000, 62500, 31250, 15625, 7812, 3906, 1953, 977, 977],
+            5: [505000, 249975, 123738, 61250, 30319, 15008, 7429, 3677, 1820, 901, 883],
+            10: [510000, 249900, 122451, 60001, 29400, 14406, 7059, 3459, 1695, 831, 798],
+            25: [520000, 249600, 119808, 57508, 27604, 13250, 6360, 3053, 1465, 703, 649],
+            50: [530000, 249100, 117077, 55026, 25863, 12155, 5713, 2685, 1262, 593, 526],
+            100: [540000, 248400, 114264, 52562, 24178, 11122, 5116, 2353, 1083, 498, 424],
+        }
+        fallback_weights = [550000, 247500, 111375, 50119, 22553, 10149, 4567, 2055, 925, 416, 341]
+        self.assertEqual(self.math.double_weights, fallback_weights)
         self.assertEqual(
             list(self.math.double_weight_tiers),
             [1, 5, 10, 25, 50, 100],
         )
+        self.assertEqual(self.math.double_weight_tiers, expected_double_weights)
         for section in ("0", "4", "8", "12", "17"):
             self.assertTrue(self.math.game_server_config.has_section(section))
             self.assertEqual(
                 self.math.game_server_config[section]["DoubleWeight"],
-                "1000,512,256,128,64,32,16,8,4,2,1",
+                ",".join(map(str, fallback_weights)),
             )
             for threshold in (1, 5, 10, 25, 50, 100):
                 self.assertEqual(
                     self.math.game_server_config[section][
                         f"DoubleWeight_{threshold}"
                     ],
-                    "1000,512,256,128,64,32,16,8,4,2,1",
+                    ",".join(map(str, expected_double_weights[threshold])),
                 )
+
+    def test_each_double_attempt_matches_tier_success_probability(self):
+        tier_probabilities = {
+            1: 0.50,
+            5: 0.495,
+            10: 0.49,
+            25: 0.48,
+            50: 0.47,
+            100: 0.46,
+        }
+        weight_configs = [
+            (f"DoubleWeight_{threshold}", probability, self.math.double_weight_tiers[threshold])
+            for threshold, probability in tier_probabilities.items()
+        ]
+        weight_configs.append(("DoubleWeight", 0.45, self.math.double_weights))
+
+        for key, expected_probability, weights in weight_configs:
+            for completed_times in range(self.math.double_max_times):
+                reached_weight = sum(weights[completed_times:])
+                success_weight = sum(weights[completed_times + 1 :])
+                with self.subTest(key=key, completed_times=completed_times):
+                    self.assertAlmostEqual(
+                        success_weight / reached_weight,
+                        expected_probability,
+                        delta=0.001,
+                    )
 
     def test_normal_spin_uses_configured_multiplier_as_x(self):
         self.force_trigger_index(14)  # symbol 3, multiplier 3
@@ -290,10 +323,19 @@ class ThemeMathTest(unittest.TestCase):
         self.assertEqual(result["total_win"], 0)
 
     def test_each_symbol_has_point_seven_rtp_without_bonus(self):
-        total_weight = sum(self.math.win_weights)
-        self.assertEqual(total_weight, 1_500)
-        self.assertEqual(self.math.win_weights[9], 0)
-        self.assertEqual(self.math.win_weights[21], 0)
+        total_weight = sum(
+            weight
+            for symbol_id, weight in zip(
+                self.math.reel_config,
+                self.math.win_weights,
+            )
+            if symbol_id != 0
+        )
+        self.assertEqual(total_weight, 156_000)
+        self.assertEqual(
+            self.math.win_weights[9] + self.math.win_weights[21],
+            12_825,
+        )
         high_expected_x = Fraction(
             sum(
                 weight * value
@@ -340,6 +382,44 @@ class ThemeMathTest(unittest.TestCase):
                     / (total_weight * self.math.base_bet),
                     Fraction(7, 10),
                 )
+
+    def test_bonus_probability_raises_total_rtp_to_point_985(self):
+        # 由当前 BonusWinWeightConfig、RespinCountWeight 和不放回抽样精确计算。
+        bonus_expected_win = 356_133.41278926336
+        base_weight = sum(
+            weight
+            for symbol_id, weight in zip(
+                self.math.reel_config,
+                self.math.win_weights,
+            )
+            if symbol_id != 0
+        )
+        bonus_weight = sum(
+            weight
+            for symbol_id, weight in zip(
+                self.math.reel_config,
+                self.math.win_weights,
+            )
+            if symbol_id == 0
+        )
+        base_weighted_win = (
+            8
+            * Fraction(7, 10)
+            * base_weight
+            * self.math.base_bet
+        )
+        total_bet = 8 * self.math.base_bet
+        total_rtp = (
+            float(base_weighted_win)
+            + bonus_weight * bonus_expected_win
+        ) / ((base_weight + bonus_weight) * total_bet)
+
+        self.assertAlmostEqual(total_rtp, 0.985, places=6)
+        self.assertAlmostEqual(
+            bonus_weight / (base_weight + bonus_weight),
+            0.0759662372,
+            places=9,
+        )
 
     def test_bonus_repeated_symbol_indexes_pay_independently(self):
         self.force_trigger_index(9)

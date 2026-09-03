@@ -35,7 +35,8 @@ symbol_bet % BaseBet == 0
 
 `ReelConfig`、`MultiConfig`、`WinWeightConfig` 和
 `BonusWinWeightConfig` 长度必须相同，且相同下标表示同一个轮盘位置。
-`SymbolMultiWeight`、`HighSymbolMulti` 和 `LowSymbolMulti` 使用相同下标。
+`SymbolMultiWeight`、`HighSymbolMulti` 和 `MidSymbolMulti`
+（代码同时兼容 `LowSymbolMulti`）使用相同下标。
 
 一次普通 spin 的流程：
 
@@ -61,13 +62,13 @@ symbol_bet % BaseBet == 0
      X = HighSymbolMulti[下标]
    - symbol 6/7/8：
      按 SymbolMultiWeight 抽取下标，
-     X = LowSymbolMulti[下标]
+     X = MidSymbolMulti[下标]
    - symbol 9：X = 5
 ```
 
 同一次 spin 只按 `SymbolMultiWeight` 抽取一次下标。该 spin 中所有需要动态 X
-的 High symbol（3/4/5）和 Low symbol（6/7/8）共用这个下标，再分别从
-`HighSymbolMulti`、`LowSymbolMulti` 读取 X。`MultiConfig != 1` 的位置
+的 High symbol（3/4/5）和 Mid symbol（6/7/8）共用这个下标，再分别从
+`HighSymbolMulti`、`MidSymbolMulti` 读取 X。`MultiConfig != 1` 的位置
 仍直接使用其固定 X，不受共享下标影响。
 
 symbol 2 的轮盘位置必须直接在 `MultiConfig` 配置非 1 的 X。
@@ -123,8 +124,8 @@ Bonus 不包含保底逻辑。额外 index 只由 `BonusWinWeightConfig` 决定�
 玩家下注的 symbol 过滤或补选，因此额外 symbol 可能完全不包含玩家下注的
 symbol，此时 Bonus 派彩可以为 0。
 
-当前 `WinWeightConfig` 中 symbol 0 对应的 index `9`、`21` 权重均为 0，
-因此基础配置不会通过普通 spin 触发 Bonus。保留 Bonus 逻辑供后续控制配置使用。
+当前 `WinWeightConfig` 中 symbol 0 对应的 index `9`、`21` 权重分别为
+`6412`、`6413`，总 Bonus 权重为 `12825`，基础触发概率约为 `7.5966%`。
 
 ## 6. 翻倍玩法
 
@@ -148,18 +149,20 @@ win_multiple = base_win / total_bet
 
 根据赢钱倍数选择大于等于它的最小 `DoubleWeight_X`：
 
-| 初始赢钱倍数 | 使用配置 |
-|---|---|
-| `<= 1` | `DoubleWeight_1` |
-| `> 1` 且 `<= 5` | `DoubleWeight_5` |
-| `> 5` 且 `<= 10` | `DoubleWeight_10` |
-| `> 10` 且 `<= 25` | `DoubleWeight_25` |
-| `> 25` 且 `<= 50` | `DoubleWeight_50` |
-| `> 50` 且 `<= 100` | `DoubleWeight_100` |
-| `> 100` | `DoubleWeight` |
+| 初始赢钱倍数 | 使用配置 | 每次翻倍条件成功率 |
+|---|---|---|
+| `<= 1` | `DoubleWeight_1` | 50% |
+| `> 1` 且 `<= 5` | `DoubleWeight_5` | 49.5% |
+| `> 5` 且 `<= 10` | `DoubleWeight_10` | 49% |
+| `> 10` 且 `<= 25` | `DoubleWeight_25` | 48% |
+| `> 25` 且 `<= 50` | `DoubleWeight_50` | 47% |
+| `> 50` 且 `<= 100` | `DoubleWeight_100` | 46% |
+| `> 100` | `DoubleWeight` | 45% |
 
 每个权重数组的下标 `0-10` 表示本局允许成功倍乘的次数。中奖后只抽取一次，
-不会在每次翻倍时重新做随机判断。
+不会在每次翻倍时重新做随机判断。数组使用截断几何分布生成，因此在尚未失败且
+未达到10次上限时，每次继续翻倍的条件成功率符合上表；最后一档吸收成功10次后
+的剩余概率。
 
 假设抽中的允许次数为 2：
 
@@ -213,22 +216,27 @@ symbol/index。
 
 ## 7. RTP
 
-当前 `WinWeightConfig` 总权重为 `1500`，symbol 0 的两个位置权重为 0。
+当前非 Bonus 权重为 `156000`，Bonus 权重为 `12825`，总权重为 `168825`。
 在当前等权 `SymbolMultiWeight` 下：
 
 - High symbol 动态 X 的期望值为 30。
 - Mid symbol 动态 X 的期望值为 15。
-- symbol `2-9` 各自的“位置权重 × 期望 X”总和均为 `1050`。
+- 非 Bonus 权重由原配置等比放大104倍，因此不含 Bonus 时各 symbol 的基础
+  RTP 仍为0.7。
 - `ITEM_PRIZE_2-9` 与 `BaseBet` 均为 `10000`。
 
-因此任意单个 symbol 下注一个 BaseBet、不倍乘时：
+在 symbol 2-9 各下注1个 BaseBet、`Double_Times=0`、GROUP 0 不触发砍分时：
 
 ```text
-RTP = 1050 / 1500 = 0.7
+Bonus期望赢分 = 356133.412789
+总RTP =
+    (非Bonus加权赢分 + Bonus权重 * Bonus期望赢分)
+    / (总权重 * 总下注)
+    = 0.985000075
 ```
 
-全部 symbol 各下注一个 BaseBet 时，总 RTP 同样为 0.7。翻倍后的实际 RTP
-还会受到 `DoubleWeight_X` 和玩家尝试次数影响。
+目标值为0.985，当前理论误差小于 `0.0000001`。其他下注组合、控制组或开启
+翻倍后的实际 RTP 会不同。
 
 ## 8. 代码接口
 
@@ -365,7 +373,8 @@ python simulation.py \
 
 - 四组轮盘配置长度一致。
 - symbol id、倍数和权重合法。
-- `SymbolMultiWeight`、`HighSymbolMulti`、`LowSymbolMulti` 非空且长度一致。
+- `SymbolMultiWeight`、`HighSymbolMulti`、`MidSymbolMulti/LowSymbolMulti`
+  非空且长度一致。
 - 动态 X 权重非负，X 全部大于 0。
 - `ITEM_PRIZE_2-9` 全部大于 0。
 - `MultiConfig=1` 的 symbol 必须存在动态 X 或固定 X=5 的规则。
@@ -382,7 +391,11 @@ python simulation.py \
 目录和文件名已按 MJWL 格式整理，并将 `mjwl_` 前缀替换为 `xml_`。缺失的通用
 配置文件直接复制自 MJWL，用于保持部署目录结构兼容。
 
-当前水果机数学流程不读取复制来的 Ways、活动和通用控制配置；
-`xml_rand_ex_0.conf` 与 `xml_free_rand_ex_0.conf` 已改为当前
-`ReelConfig` 的占位轴。后续接入其他模块前，需要将其中的 MJWL 内容替换为 XML
-的正式配置。
+当前水果机数学流程不读取复制来的 Ways、活动和通用控制配置。
+`game_activity.conf` 已清除 MJWL 活动身份，`slot_game_activity.conf` 与
+`game_act_coin.conf` 已改为25档安全关闭值，`slot_game_activity2.conf` 为带
+来源说明的未启用占位；正式启用活动前仍需从游三工具平台下载正式配置。
+
+`game_config.py` 已改为读取 `special/xml_game_config.conf`，并为自定义玩法缺省
+的标准字段导出安全默认值。`xml_rand_ex_0.conf` 与
+`xml_free_rand_ex_0.conf` 使用当前 `ReelConfig` 作为占位轴。
