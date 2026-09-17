@@ -39,14 +39,14 @@ class XmlSlotsSimulation(SlotsSimulation):
         return value
 
 
-SPIN_TIMES = 1_000_000
-REPORT_INTERVAL = 5_000
+SPIN_TIMES = 100000000
+REPORT_INTERVAL = 50000
 THRESHOLDS = (5, 10, 20, 50, 100, 1000)
 Bet_Multi = [0, 0, 1, 1, 1, 1, 1, 1, 1, 1]
-Double_Times = 2
+Double_Times = 1
 BET_MULTIS = [Bet_Multi]
 DOUBLE_TIMES = [Double_Times]
-GROUP_INDEXES = [0]
+GROUP_INDEXES = [4]
 SEEDS = [None]
 RESULT_CSV = Path(__file__).resolve().with_name("simulate_result.csv")
 SYMBOL_IDS = tuple(range(2, 10))
@@ -106,6 +106,7 @@ RESULT_CSV_FIELDS = [
     "base_rtp",
     "double_rtp",
     "总赢钱",
+    "最大赢钱倍数",
     "Base赢钱",
     "倍乘增减",
     "Hit",
@@ -188,6 +189,7 @@ status_model = {
     },
     "bet": 0,
     "wins": 0,
+    "max_win_multiple": 0.0,
     "hit": 0,
     "base_win": 0,
     "double_delta_win": 0,
@@ -221,6 +223,7 @@ statics_columns = [
             "rtp",
             "rtp_check",
             "总赢钱",
+            "最大赢钱倍数",
             "Hit",
             "Hit率",
             ">5x",
@@ -289,6 +292,9 @@ def record_spin(
     total_bet = result["total_bet"]
     base_win = result["base_win"]
     total_win = result["total_win"]
+    status["max_win_multiple"] = max(
+        status["max_win_multiple"], total_win / total_bet
+    )
     status_handler.update_spin_start(status, total_bet)
     status_handler.update_feature_win(status, "base", "fruit", base_win)
     status_handler.update_spin_result(status, total_win, total_bet)
@@ -359,6 +365,7 @@ def build_simulation_row(
             "base_rtp": base_win / total_bet if total_bet else 0,
             "double_rtp": status["double_delta_win"] / total_bet if total_bet else 0,
             "总赢钱": total_win,
+            "最大赢钱倍数": status["max_win_multiple"],
             "Base赢钱": base_win,
             "倍乘增减": status["double_delta_win"],
             "Bonus次数": status["bonus_count"],
@@ -578,6 +585,7 @@ def print_summary(result: dict | list[dict]) -> None:
     print(f"Base赢钱: {result['Base赢钱']}")
     print(f"倍乘增减: {result['倍乘增减']}")
     print(f"总赢钱: {result['总赢钱']}")
+    print(f"最大赢钱倍数: {result['最大赢钱倍数']:.3f}")
     print(f"Base RTP: {result['base_rtp']:.6f}")
     print(f"倍乘 RTP: {result['double_rtp']:.6f}")
     print(f"总 RTP: {result['rtp']:.6f}")

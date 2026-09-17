@@ -5,6 +5,11 @@
     "game_id": 362,
     "program_name": "yngg"
   },
+  "math_targets": {
+    "total_rtp": 0.985,
+    "free_trigger_rate": 0.005,
+    "base_bonus_trigger_interval": 75
+  },
   "layout": {
     "reels": 6,
     "rows": 5,
@@ -137,24 +142,24 @@
   },
   "special_symbol_generation": {
     "scatter_count_weights": [
+      10000,
       1000,
-      100,
-      50,
-      5
+      500,
+      57
     ],
     "free_scatter_count_weights": [
+      10000,
       1000,
-      100,
-      50,
-      5
+      500,
+      57
     ],
     "base_no_win_bonus_count_weights": [
-      80,
-      20
+      98,
+      2
     ],
     "base_win_bonus_count_weights": [
-      90,
-      10
+      92,
+      8
     ],
     "base_bonus_max_scatter_count": 2,
     "base_bonus_blocks_future_drop_specials": true,
@@ -223,43 +228,43 @@
     ],
     "symbol_type_weights": [
       1000,
-      100,
-      10,
-      1
+      80,
+      6,
+      2
     ],
     "coin_value_weights": [
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1,
-      1
+      1560,
+      1240,
+      1030,
+      860,
+      720,
+      545,
+      415,
+      320,
+      228,
+      165,
+      110,
+      62,
+      31,
+      10,
+      3
     ],
     "coin_tier_thresholds": [
       5,
       25
     ],
     "clover_multiplier_weights": [
-      1,
-      1,
-      1,
-      1,
-      1,
+      40,
+      28,
+      16,
+      10,
+      5,
       1
     ],
     "jackpot_type_weights": [
-      1,
-      1,
-      1,
+      80,
+      25,
+      8,
       1
     ],
     "maximum_pot_count": 5,

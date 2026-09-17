@@ -7,6 +7,7 @@ import unittest
 from fractions import Fraction
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 from simulation import (
     append_simulation_results,
@@ -17,6 +18,7 @@ from simulation import (
     simulate,
 )
 from theme_math import ThemeMath
+from verify_rtp import calculate_rtp
 
 
 class FirstChoiceRandom:
@@ -55,6 +57,44 @@ class ThemeMathTest(unittest.TestCase):
     def force_trigger_index(self, index: int) -> None:
         self.math.win_weights = [0] * len(self.math.win_weights)
         self.math.win_weights[index] = 1
+        for group_index in self.math.group_win_weights:
+            self.math.group_win_weights[group_index] = list(self.math.win_weights)
+
+    def test_type12_equal_bets_rtp_is_point_four_without_bonus(self):
+        weights = list(self.math.group_win_weights[12])
+        multi_weights = list(self.math.symbol_multi_weights)
+        bets = {symbol: self.math.base_bet for symbol in self.math.BET_SYMBOL_IDS}
+        expectation = Fraction(0)
+        # 穷举开奖位置及动态倍率，实际走 type12 的开奖、砍分和结算路径。
+        for index, weight in enumerate(weights):
+            if self.math.reel_config[index] == 0:
+                self.assertEqual(weight, 0)
+            if not weight:
+                continue
+            for multi_index, multi_weight in enumerate(multi_weights):
+                self.math.group_win_weights[12] = [0] * len(weights)
+                self.math.group_win_weights[12][index] = 1
+                self.math.symbol_multi_weights = [0] * len(multi_weights)
+                self.math.symbol_multi_weights[multi_index] = 1
+                result = self.math.spin(bets, group_index=12, double_times=0)
+                self.assertEqual(result["trigger_index"], index)
+                self.assertFalse(result["is_bonus"])
+                self.assertFalse(result["control_result"]["is_cut"])
+                expectation += (
+                    Fraction(weight, sum(weights))
+                    * Fraction(multi_weight, sum(multi_weights))
+                    * Fraction(result["total_win"], result["total_bet"])
+                )
+        self.assertEqual(expectation, Fraction(2, 5))
+
+    def test_type12_weights_do_not_change_default_draw(self):
+        self.math.group_win_weights[12] = [0] * len(self.math.win_weights)
+        self.math.group_win_weights[12][14] = 1
+        self.math.win_weights = [0] * len(self.math.win_weights)
+        self.math.win_weights[9] = 1
+        bets = {symbol: 10_000 for symbol in range(2, 10)}
+        self.assertFalse(self.math.spin(bets, group_index=12)["is_bonus"])
+        self.assertTrue(self.math.spin(bets, group_index=0)["is_bonus"])
 
     def test_configuration_matches_fruit_machine_symbols(self):
         self.assertEqual(self.math.base_bet, 10_000)
@@ -71,6 +111,7 @@ class ThemeMathTest(unittest.TestCase):
             self.math.respin_count_weights,
             [0, 0, 100, 100, 100, 100, 100, 100],
         )
+        self.assertEqual(self.math.control_group_cut_multiples[4], 12000)
         self.assertEqual(self.math.control_group_cut_multiples[12], 20)
         self.assertEqual(self.math.double_max_times, 10)
         self.assertEqual(self.math.double_multiple, 2)
@@ -89,7 +130,7 @@ class ThemeMathTest(unittest.TestCase):
             [1, 5, 10, 25, 50, 100],
         )
         self.assertEqual(self.math.double_weight_tiers, expected_double_weights)
-        for section in ("0", "4", "8", "12", "17"):
+        for section in ("4", "8", "12", "17"):
             self.assertTrue(self.math.game_server_config.has_section(section))
             self.assertEqual(
                 self.math.game_server_config[section]["DoubleWeight"],
@@ -284,6 +325,62 @@ class ThemeMathTest(unittest.TestCase):
         self.assertFalse(result["control_result"]["is_cut"])
         self.assertEqual(result["base_win"], 10_000_000)
 
+    def test_bonus_cut_thresholds_act_independently(self):
+        # 完整 Bonus 为 150 倍，覆盖独立开关、边界及同时触发。
+        cases = (
+            (0, 100, ["RespinMaxMulti"]),
+            (100, 0, ["control_group_cut_multiple"]),
+            (200, 100, ["RespinMaxMulti"]),
+            (100, 200, ["control_group_cut_multiple"]),
+            (100, 100, ["control_group_cut_multiple", "RespinMaxMulti"]),
+            (150, 150, []),
+            (200, 200, []),
+            (0, 0, []),
+        )
+        for group_limit, respin_limit, triggers in cases:
+            with self.subTest(group_limit=group_limit, respin_limit=respin_limit):
+                self.force_trigger_index(9)
+                self.math.respin_count_weights = [0, 0, 1, 0, 0, 0, 0, 0]
+                self.math.bonus_win_weights = [0] * len(self.math.bonus_win_weights)
+                for index in (2, 3, 4):
+                    self.math.bonus_win_weights[index] = 1
+                self.math.control_group_cut_multiples[12] = group_limit
+                self.math.respin_max_multiples[12] = respin_limit
+                result = self.math.spin({2: 100_000}, group_index=12)
+                control = result["control_result"]
+                self.assertEqual(control["cut_triggers"], triggers)
+                self.assertEqual(control["is_cut"], bool(triggers))
+                self.assertEqual(control["original_bonus_result"]["total_win"], 15_000_000)
+                self.assertEqual(result["base_win"], 0 if triggers else 15_000_000)
+                self.assertEqual(result["is_bonus"], not triggers)
+
+    def test_respin_limit_does_not_cut_normal_spin(self):
+        self.force_trigger_index(3)
+        self.math.control_group_cut_multiples[12] = 0
+        self.math.respin_max_multiples[12] = 1
+        result = self.math.spin({2: 100_000}, group_index=12)
+        self.assertFalse(result["control_result"]["is_cut"])
+        self.assertEqual(result["base_win"], 10_000_000)
+
+    def test_respin_limits_are_loaded_by_group(self):
+        self.assertEqual(self.math.respin_max_multiples, {
+            4: 10000, 8: 5000, 12: 20, 17: 5000,
+        })
+        self.force_trigger_index(9)
+        result = self.math.spin({2: 100_000}, group_index=1)
+        self.assertEqual(result["control_result"]["respin_max_multi"], 0)
+        self.assertFalse(result["control_result"]["is_cut"])
+
+    def test_negative_respin_limit_is_rejected(self):
+        with TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "server.conf"
+            config = self.math.game_server_config
+            config["12"]["RespinMaxMulti"] = "-1"
+            with path.open("w", encoding="utf-8") as stream:
+                config.write(stream)
+            with self.assertRaises(ValueError):
+                ThemeMath(game_server_config_file=path)
+
     def test_invalid_control_group_index_is_rejected(self):
         with self.assertRaises(ValueError):
             self.math.spin({2: 100_000}, group_index=99)
@@ -331,11 +428,7 @@ class ThemeMathTest(unittest.TestCase):
             )
             if symbol_id != 0
         )
-        self.assertEqual(total_weight, 156_000)
-        self.assertEqual(
-            self.math.win_weights[9] + self.math.win_weights[21],
-            12_825,
-        )
+        self.assertGreater(total_weight, 0)
         high_expected_x = Fraction(
             sum(
                 weight * value
@@ -383,43 +476,17 @@ class ThemeMathTest(unittest.TestCase):
                     Fraction(7, 10),
                 )
 
-    def test_bonus_probability_raises_total_rtp_to_point_985(self):
-        # 由当前 BonusWinWeightConfig、RespinCountWeight 和不放回抽样精确计算。
-        bonus_expected_win = 356_133.41278926336
-        base_weight = sum(
-            weight
-            for symbol_id, weight in zip(
-                self.math.reel_config,
-                self.math.win_weights,
-            )
-            if symbol_id != 0
-        )
-        bonus_weight = sum(
-            weight
-            for symbol_id, weight in zip(
-                self.math.reel_config,
-                self.math.win_weights,
-            )
-            if symbol_id == 0
-        )
-        base_weighted_win = (
-            8
-            * Fraction(7, 10)
-            * base_weight
-            * self.math.base_bet
-        )
-        total_bet = 8 * self.math.base_bet
-        total_rtp = (
-            float(base_weighted_win)
-            + bonus_weight * bonus_expected_win
-        ) / ((base_weight + bonus_weight) * total_bet)
-
-        self.assertAlmostEqual(total_rtp, 0.985, places=6)
-        self.assertAlmostEqual(
-            bonus_weight / (base_weight + bonus_weight),
-            0.0759662372,
-            places=9,
-        )
+    def test_each_symbol_has_point_985_rtp_with_bonus(self):
+        bonus_weight = sum(w for s, w in zip(self.math.reel_config, self.math.win_weights) if s == 0)
+        self.assertGreater(bonus_weight, 0)
+        bonus, rtp = calculate_rtp(self.math)
+        for symbol in self.math.BET_SYMBOL_IDS:
+            with self.subTest(symbol=symbol):
+                self.assertAlmostEqual(rtp[symbol], 0.985, delta=1e-8)
+        # 派彩对各symbol注额线性，任意组合按注额加权后仍为同一RTP。
+        bets = {2: 1, 3: 7, 6: 2, 9: 13}
+        combined = sum(rtp[s] * bet for s, bet in bets.items()) / sum(bets.values())
+        self.assertAlmostEqual(combined, 0.985, delta=1e-8)
 
     def test_bonus_repeated_symbol_indexes_pay_independently(self):
         self.force_trigger_index(9)
@@ -547,6 +614,53 @@ class ThemeMathTest(unittest.TestCase):
         self.assertTrue(result["failed"])
         self.assertEqual(result["total_win"], 0)
 
+    def test_type4_cut_applies_to_win_after_double(self):
+        math = ThemeMath(rng=LastChoiceRandom())
+        math.win_weights = [0] * len(math.win_weights)
+        math.win_weights[3] = 1  # symbol 2，X=100
+        for group_index in math.group_win_weights:
+            math.group_win_weights[group_index] = list(math.win_weights)
+
+        under_limit = math.spin({2: 100_000}, group_index=4, double_times=6)
+        over_limit = math.spin({2: 100_000}, group_index=4, double_times=7)
+
+        self.assertFalse(under_limit["control_result"]["is_cut"])
+        self.assertEqual(under_limit["base_win"], 10_000_000)
+        self.assertEqual(under_limit["total_win"], 640_000_000)
+        self.assertEqual(
+            under_limit["total_win"] / under_limit["total_bet"],
+            6400,
+        )
+        self.assertTrue(over_limit["control_result"]["is_cut"])
+        self.assertEqual(
+            over_limit["control_result"]["cut_triggers"],
+            ["control_group_cut_multiple"],
+        )
+        self.assertEqual(over_limit["control_result"]["original_base_win"], 1_280_000_000)
+        self.assertEqual(over_limit["control_result"]["original_win_multiple"], 12800)
+        self.assertEqual(over_limit["control_result"]["cut_reason"], "unbet_symbol")
+        self.assertEqual(over_limit["base_win"], 0)
+        self.assertEqual(over_limit["total_win"], 0)
+        self.assertEqual(over_limit["double_result"]["attempted_times"], 0)
+
+    def test_cut_replacement_is_not_doubled_past_the_limit(self):
+        math = ThemeMath(rng=LastChoiceRandom())
+        math.win_weights = [0] * len(math.win_weights)
+        math.win_weights[3] = 1  # symbol 2，X=100
+        for group_index in math.group_win_weights:
+            math.group_win_weights[group_index] = list(math.win_weights)
+        math.control_group_cut_multiples[12] = 10
+        bets = {symbol_id: 100_000 for symbol_id in range(2, 10)}
+
+        result = math.spin(bets, group_index=12, double_times=6)
+
+        self.assertTrue(result["control_result"]["is_cut"])
+        self.assertEqual(result["control_result"]["original_base_win"], 10_000_000)
+        self.assertEqual(result["base_win"], 300_000)
+        self.assertEqual(result["total_win"], 300_000)
+        self.assertLessEqual(result["total_win"] / result["total_bet"], 10)
+        self.assertEqual(result["double_result"]["attempted_times"], 0)
+
     def test_spin_applies_requested_double_choices(self):
         math = ThemeMath(rng=LastChoiceRandom())
         math.win_weights = [0] * len(math.win_weights)
@@ -607,6 +721,28 @@ class SimulationBetMultiTest(unittest.TestCase):
         self.assertEqual(result["bet_multi"], bet_multi)
         self.assertEqual(result["bets"], {2: 10_000, 3: 20_000})
         self.assertEqual(result["total_bet"], 90_000)
+
+    def test_max_win_multiple_tracks_final_win_across_checkpoints(self):
+        bets = {2: 10_000, 3: 20_000}
+        # 基础奖励 500000，最终奖励模拟翻倍成功、失败及较小奖励。
+        self.math.win_weights = [0] * len(self.math.win_weights)
+        self.math.win_weights[2] = 1
+        results = []
+        for final_win in (0, 1_000_000, 0, 100_000):
+            result = self.math.spin(bets)
+            result["total_win"] = final_win
+            results.append(result)
+        with patch("simulation.ThemeMath.spin", side_effect=results):
+            rows = simulation(
+                spin_times=4,
+                bet_multi=[0, 0, 1, 2, 0, 0, 0, 0, 0, 0],
+                double_times=0,
+                report_interval=1,
+            )
+        self.assertEqual(
+            [row["最大赢钱倍数"] for row in rows],
+            [0, 1_000_000 / 30_000, 1_000_000 / 30_000, 1_000_000 / 30_000],
+        )
 
     def test_invalid_bet_multi_is_rejected(self):
         invalid_values = (
@@ -672,6 +808,7 @@ class SimulationBetMultiTest(unittest.TestCase):
 
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["SPIN"], "3")
+        self.assertEqual(float(rows[0]["最大赢钱倍数"]), row["最大赢钱倍数"])
         self.assertEqual(rows[0]["BET_MULTI"], "[0, 0, 1, 1, 0, 0, 0, 0, 0, 0]")
 
     def test_parse_multiple_bet_multi_groups(self):

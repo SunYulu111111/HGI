@@ -46,11 +46,11 @@
 
 原始轴带不直接包含 Scatter 和 Bonus。初始盘面完成 Cluster 判断并得到全部实际消除位置后，再生成特殊图标。
 
-1. 读取 `ScatterCountProbability`。数组下标 0–3 对应 0–3 个 Scatter，当前权重为 1000/100/50/5。
+1. 读取 `ScatterCountProbability`。数组下标 0–3 对应 0–3 个 Scatter，当前权重为 10000/1000/500/57。
 2. 按抽取数量，从不属于实际消除位置的普通图标中随机选择不同位置放置 Scatter。
 3. Scatter 数量为 0–2 时继续判断 Bonus；Scatter 数量为 3 时跳过 Bonus。
-4. 初始盘面无奖时读取 `BaseNoWinBonusCountProbability`，下标 0/1 对应 0/1 个 Bonus，当前权重为 80/20。
-5. 初始盘面有奖时读取 `BaseWinBonusCountProbability`，下标 0/1 对应 0/1 个 Bonus，当前权重为 90/10。
+4. 初始盘面无奖时读取 `BaseNoWinBonusCountProbability`，下标 0/1 对应 0/1 个 Bonus，当前权重为 98/2。
+5. 初始盘面有奖时读取 `BaseWinBonusCountProbability`，下标 0/1 对应 0/1 个 Bonus，当前权重为 92/8。
 6. Bonus 在 Scatter 之后放置。候选不足时按 Scatter、Bonus 的抽取顺序使用全部可用位置，超出数量丢弃。
 
 以上顺序保证 Base 不会同时触发免费游戏和金色玩法：3 个 Scatter 时不生成 Bonus；Bonus 出现时 Scatter 类图标最多为 2 个，且后续掉落不再生成特殊图标。
@@ -90,7 +90,7 @@ Base 最终 Scatter 类图标最多为 3 个，只允许以下免费触发结果
 
 Free 不生成也不转化 Super Scatter，单次 Spin 最多出现 3 个普通 Scatter。
 
-1. 读取 `FreeScatterCountProbability`，下标 0–3 对应 0–3 个 Scatter，当前权重为 1000/100/50/5。
+1. 读取 `FreeScatterCountProbability`，下标 0–3 对应 0–3 个 Scatter，当前权重为 10000/1000/500/57。
 2. Scatter 放置后独立判断 Bonus。
 3. Spin 开始时已有金色区域，读取 `FreeGoldenBonusCountProbability`，下标 0/1 对应 0/1 个 Bonus，当前权重为 60/40。
 4. Spin 开始时没有金色区域，读取 `FreeNoGoldenBonusCountProbability`，下标 0/1 对应 0/1 个 Bonus，当前权重为 30/70。
@@ -134,13 +134,13 @@ Base 触发免费游戏时不带入 Scatter 位置或 Base 消除位置产生的
 每个金色位置先抽取结果类型，再抽取对应档位：
 
 - `BONUS_SYMBOL_TYPE` 依次为 coin、clover、pot、jackpot。
-- `BONUS_SYMBOL_TYPE_PROBABILITY` 为对应类型权重，当前为 1000/100/10/1。
+- `BONUS_SYMBOL_TYPE_PROBABILITY` 为对应类型权重，当前为 1000/80/6/2。
 - coin 使用 `BONUS_COIN_MULTIPLE` 和 `BONUS_COIN_MULTIPLE_PROBABILITY`，两个数组按下标对应。
 - clover 使用 `BONUS_CLOVER_MULTIPLE` 和 `BONUS_CLOVER_MULTIPLE_PROBABILITY`，两个数组按下标对应。
 - jackpot 使用 `BONUS_JP_MULTIPLE` 和 `BONUS_JP_TYPE_PROBABILITY`，按 MINI、MINOR、MAJOR、GRAND 顺序对应。
 - pot 不再抽取具体档位。
 
-金币倍数为 0.2/0.5/1/2/3/4/5/10/15/20/25/50/100/250/500，当前各档权重均为 1。四叶草倍数为 2/3/4/5/10/20，当前各档权重均为 1。
+金币倍数为 0.2/0.5/1/2/3/4/5/10/15/20/25/50/100/250/500，当前金币权重为 1560/1240/1030/860/720/545/415/320/228/165/110/62/31/10/3。四叶草倍数为 2/3/4/5/10/20，当前权重为 40/28/16/10/5/1。
 
 金币显示类型由 `coin_multi_1` 和 `coin_multi_2` 分档：
 
@@ -148,7 +148,7 @@ Base 触发免费游戏时不带入 Scatter 位置或 Base 消除位置产生的
 - 倍数大于等于 5 且小于 `coin_multi_2=25`：银币。
 - 倍数大于等于 25：金币。
 
-JP 倍数应配置为 MINI 10x、MINOR 25x、MAJOR 100x、GRAND 1000x，四档当前权重均为 1。
+JP 倍数应配置为 MINI 10x、MINOR 25x、MAJOR 100x、GRAND 5000x，四档当前权重为 80/25/8/1。
 
 `BONUS_1` 至 `BONUS_10` 依次表示彩虹 Bonus、铜币、银币、金币、四叶草、聚宝盆、MINI、MINOR、MAJOR、GRAND 的服务端结果类型。
 

@@ -17,7 +17,7 @@
 
 `ThemeMath.cal_item_list()` 读取以上参数，完成 Cluster 查找、Wild 参与判断和赔付计算。
 
-`special/yngg_game_server.conf` 提供特殊图标生成及 Scatter 转化参数。Wild ID 1、主盘 Bonus ID 2、Scatter 与 Super Scatter 共用 ID 0；Super Scatter 通过 `super_scatter_positions` 位置状态区分，不使用专门 ID：
+`special/yngg_game_server.conf` 的 `[Game Info]` 保存通用玩法参数，`[0]` 保存 TYPE 0 的特殊图标生成及 Scatter 转化参数。Wild ID 1、主盘 Bonus ID 2、Scatter 与 Super Scatter 共用 ID 0；Super Scatter 通过 `super_scatter_positions` 位置状态区分，不使用专门 ID：
 
 - 使用 `SuperScatterProbability=200` 设置每个 Spin 的转化概率；概率单位为万分比，200/10000 等于 1/50。
 - 使用 `coin_multi_1=5`、`coin_multi_2=25` 将金币倍数划分为铜币、银币和金币。
@@ -27,12 +27,12 @@ Base 初始特殊图标生成后执行一次转化判断；Base 后续掉落生�
 
 转化不会修改盘面 Symbol ID。消除掉落时同步更新 `super_scatter_positions` 中的位置，最终通过 `spin_info.super_scatter_positions` 返回给调用方。
 
-同一配置文件还提供初始特殊图标及掉落替换权重：
+同一配置文件的 `[0]` 段还提供初始特殊图标及掉落替换权重：
 
-- `ScatterCountProbability=1000,100,50,5`：下标 0–3 分别表示生成 0–3 个 Scatter。
-- `FreeScatterCountProbability=1000,100,50,5`：Free 下标 0–3 分别表示生成 0–3 个 Scatter。
-- `BaseNoWinBonusCountProbability=80,20`：Base 中 Scatter 数量为 0–2 且无奖时生成 0/1 个 Bonus 的权重。
-- `BaseWinBonusCountProbability=90,10`：Base 中 Scatter 数量为 0–2 且有奖时生成 0/1 个 Bonus 的权重。
+- `ScatterCountProbability=10000,1000,500,57`：下标 0–3 分别表示生成 0–3 个 Scatter。
+- `FreeScatterCountProbability=10000,1000,500,57`：Free 下标 0–3 分别表示生成 0–3 个 Scatter。
+- `BaseNoWinBonusCountProbability=98,2`：Base 中 Scatter 数量为 0–2 且无奖时生成 0/1 个 Bonus 的权重。
+- `BaseWinBonusCountProbability=92,8`：Base 中 Scatter 数量为 0–2 且有奖时生成 0/1 个 Bonus 的权重。
 - `FreeGoldenBonusCountProbability=60,40`：Free 已有金框时生成 0/1 个 Bonus 的权重。
 - `FreeNoGoldenBonusCountProbability=30,70`：Free 没有金框时生成 0/1 个 Bonus 的权重。
 - `DropSpecialSymbolProbability=998,1,1`：每个掉落图标对应“不替换/Scatter/Bonus”的权重。
@@ -70,11 +70,13 @@ Base 初始 Scatter 数量达到 3 个时跳过 Bonus 抽取。Base 和 Free 每
 
 `ThemeMath.ng_spin()` 使用普通轴，`ThemeMath.fg_spin()` 使用免费轴。
 
+正常轴、特殊轴均限制为每条最多 200 个物件、逗号分隔字符串不超过 500 字符。生成脚本按原始图标占比分配保留数量，在同类图标的出现位置中均匀删减，保留相对顺序和每种已有图标；不满足字符串限制时继续减少长度。当前各轴为 200 个物件，最长 479 字符。缩短轴带会改变停轴和相邻图标分布，需重新仿真确认 RTP 与触发率。
+
 ## 3. 消除与补牌
 
 `ng_spin()` 和 `fg_spin()` 的主要参数：
 
-- 使用 `index` 选择对应的 `rand_ex_<index>.conf`；缺失时回退到 index 0。
+- 使用 `index` 选择 TYPE；当前仅支持 `index=0`，与 `[0]`、普通轴和免费轴一一对应。其他 TYPE 直接报错，不回退到 TYPE 0。
 - 使用 `general_index` 选择配置中的 `GENERAL_<index>`。
 - 使用 `max_cascades` 限制单次 Spin 的最大连续消除次数。
 - 使用 `return_detail` 决定是否返回每轮消除明细。
@@ -87,6 +89,8 @@ Base 初始 Scatter 数量达到 3 个时跳过 Bonus 抽取。Base 和 Free 每
 - 直到盘面不再中奖或达到 `max_cascades`。
 
 ## 4. 免费游戏状态
+
+`[Game Info]` 中的 `FreeSpinCounts=10,10` 按普通免费、超级免费顺序读取，两项必须为正整数。`FreeSpinRetrigger=0,0,2,4` 按 Scatter 总数 0–3 索引，四项必须为非负整数；3 个及以上使用最后一项。两组字段在创建 `ThemeMath` 时加载，修改配置后需重新创建实例。
 
 `fg_spin()` 的免费玩法参数：
 
@@ -116,9 +120,9 @@ Base 初始 Scatter 数量达到 3 个时跳过 Bonus 抽取。Base 和 Free 每
 类型与 `BONUS_SYMBOL_TYPE` 按相同下标对应：
 
 - `coin` 使用权重 1000。
-- `clover` 使用权重 100。
-- `pot` 使用权重 10。
-- `jackpot` 使用权重 1。
+- `clover` 使用权重 80。
+- `pot` 使用权重 6。
+- `jackpot` 使用权重 2。
 
 权重为相对权重，不要求合计为 10000。
 
@@ -129,7 +133,7 @@ Base 初始 Scatter 数量达到 3 个时跳过 Bonus 抽取。Base 和 Free 每
 - `BONUS_COIN_MULTIPLE` 提供金币倍数档位。
 - `BONUS_COIN_MULTIPLE_PROBABILITY` 提供每个档位的抽取权重。
 
-先按权重抽取下标，再从同一下标读取金币倍数。当前各档位权重均为 1，后续只需调整权重数组。
+先按权重抽取下标，再从同一下标读取金币倍数。当前金币权重为 `1560,1240,1030,860,720,545,415,320,228,165,110,62,31,10,3`。
 
 ## 7. 四叶草档位
 
@@ -138,7 +142,7 @@ Base 初始 Scatter 数量达到 3 个时跳过 Bonus 抽取。Base 和 Free 每
 - `BONUS_CLOVER_MULTIPLE` 提供四叶草倍数档位。
 - `BONUS_CLOVER_MULTIPLE_PROBABILITY` 提供每个档位的抽取权重。
 
-先按权重抽取下标，再从同一下标读取四叶草倍数。当前各档位权重均为 1。
+先按权重抽取下标，再从同一下标读取四叶草倍数。当前权重为 `40,28,16,10,5,1`。
 
 ## 8. JP 档位
 
@@ -147,7 +151,7 @@ JP 使用两个按下标对应的数组：
 - `BONUS_JP_MULTIPLE` 按 MINI、MINOR、MAJOR、GRAND 顺序提供固定倍数。
 - `BONUS_JP_TYPE_PROBABILITY` 提供四个 JP 档位的抽取权重。
 
-先按权重抽取 JP 下标，再从同一下标读取 JP 倍数。当前四档权重均为 1。
+先按权重抽取 JP 下标，再从同一下标读取 JP 倍数。当前四档权重为 `80,25,8,1`。
 
 ## 9. 聚宝盆重翻
 
@@ -179,3 +183,7 @@ python -B ThemeMath\yngg\build_from_demo.py --demo-dir <参考数据目录>
 ```
 
 生成内容包括游戏配置、Bonus 配置、普通轴、免费轴以及 FIX/ZERO 固定结果。
+
+生成脚本同时维护控制组配置、TYPE 0 参数段和回放金币门槛。当前仅发布 `CONTROL_GROUP_0`，控制值 `1` 编码为 TYPE 0、第 1 套；其余缺少独立数值资源的占位控制组已移除。两组砍分数组均按 GROUP 0–19 配置，未启用组仅预留 README 规定的阈值；GROUP 2、3、5、6、10、11、19 无明确规范值，保留 `0`。
+
+当前未启用玩家控制项和道具卡；GROUP 4、8、12、17 等场景需完成独立 TYPE 数值、服务器参数及 RTP 验证后才能启用，不能用 TYPE 0 的副本冒充。Python 仿真尚不执行 GROUP 选择和服务器砍分。`replay_min_win_money` 按金币单位设置为 `3000000000`，回放开关仍由全局配置控制。

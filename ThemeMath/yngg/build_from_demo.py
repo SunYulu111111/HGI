@@ -8,6 +8,7 @@ Golden-area generation uses the explicit weights in yngg_bonus.conf.
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import csv
 import json
 import shutil
@@ -59,12 +60,73 @@ def load_strip(demo_dir: Path, name: str) -> list[list[int]]:
     return reels
 
 
+def fit_server_reel(reel: list[int]) -> list[int]:
+    """Keep symbol proportions and cyclic order within both server limits."""
+
+    if not reel or any(not 0 <= symbol < ITEM_COUNT for symbol in reel):
+        raise ValueError("reel must contain valid symbol IDs")
+    if len(reel) <= 200 and len(",".join(map(str, reel))) <= 500:
+        return list(reel)
+    counts = Counter(reel)
+    for size in range(min(200, len(reel)), len(counts) - 1, -1):
+        quotas = {symbol: 1 for symbol in counts}
+        for _ in range(size - len(counts)):
+            symbol = max(
+                counts,
+                key=lambda item: (size * counts[item] / len(reel) - quotas[item], -item),
+            )
+            quotas[symbol] += 1
+        seen = Counter()
+        result = []
+        for symbol in reel:
+            before = seen[symbol] * quotas[symbol] // counts[symbol]
+            seen[symbol] += 1
+            if seen[symbol] * quotas[symbol] // counts[symbol] > before:
+                result.append(symbol)
+        if len(",".join(map(str, result))) <= 500:
+            return result
+    raise ValueError("cannot fit reel within server limits")
+
+
+def write_control_groups() -> None:
+    """Publish only the available TYPE; retain thresholds for reserved groups."""
+
+    thresholds = [5000, 100, 0, 0, 12000, 0, 0, 50, 1000, 1000,
+                  0, 0, 20, 12000, 12000, 12000, 12000, 1000, 1000, 0]
+    values = ",".join(map(str, thresholds))
+    lines = [
+        "[MAIN]", "version = 102",
+        "#按GROUP 0-19排列；未启用组仅预留阈值，不参与抽取",
+        f"control_group_cut_multiple = {values}",
+        f"control_group_free_cut_multiple = {values}", "",
+        "#当前仅有TYPE 0；其他场景需完成独立数值及RTP验证后再增加控制组",
+        "[CONTROL_GROUP_0]",
+        "lable_user_control_group_rate = 10000",
+        "#control_type * 100 + control_num：TYPE 0，第1套",
+        "lable_user_control_group_value = 1", "",
+    ]
+    (THEME_DIR / "special_config" / "slot_control_group.conf").write_text(
+        "\n".join(lines), encoding="utf-8"
+    )
+
+
+def fix_replay_threshold() -> None:
+    path = THEME_DIR / "special_config" / "game_server.conf"
+    lines = path.read_text(encoding="utf-8").splitlines()
+    lines = ["replay_min_win_money = 3000000000"
+             if line.split("=", 1)[0].strip() == "replay_min_win_money" else line
+             for line in lines]
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def copy_model_layout() -> None:
     for directory in ("general_config", "special_config"):
         destination = THEME_DIR / directory
         if destination.exists():
             shutil.rmtree(destination)
         shutil.copytree(MODEL_DIR / directory, destination)
+    write_control_groups()
+    fix_replay_threshold()
     (THEME_DIR / "special").mkdir(exist_ok=True)
     (THEME_DIR / "special" / "yngg_control.conf").write_text(
         "\n".join(
@@ -204,20 +266,20 @@ def write_bonus_config() -> None:
         "BONUS_MAJOR_MULTI=100",
         "BONUS_GRAND_MULTI=5000",
         "BONUS_JP_MULTIPLE=10,25,100,5000",
-        "# JP档位权重，与BONUS_JP_MULTIPLE按下标对应；当前均为1，后续可独立调整。",
-        "BONUS_JP_TYPE_PROBABILITY=1,1,1,1",
+        "# JP档位权重，与BONUS_JP_MULTIPLE按下标对应。",
+        "BONUS_JP_TYPE_PROBABILITY=80,25,8,1",
         "",
-        "# 金色框位置类型及对应权重；当前金币/四叶草/聚宝盆/JP为1000/100/10/1。",
+        "# 金色框位置类型及对应权重：金币/四叶草/聚宝盆/JP。",
         "BONUS_SYMBOL_TYPE=coin,clover,pot,jackpot",
-        "BONUS_SYMBOL_TYPE_PROBABILITY=1000,100,10,1",
+        "BONUS_SYMBOL_TYPE_PROBABILITY=1000,80,6,2",
         "",
-        "# 金币档位及对应权重，两个数组按下标对应；当前均为1，后续可调整各档位权重。",
+        "# 金币档位及对应权重，两个数组按下标对应。",
         "BONUS_COIN_MULTIPLE=0.2,0.5,1,2,3,4,5,10,15,20,25,50,100,250,500",
-        "BONUS_COIN_MULTIPLE_PROBABILITY=1,1,1,1,1,1,1,1,1,1,1,1,1,1,1",
+        "BONUS_COIN_MULTIPLE_PROBABILITY=1560,1240,1030,860,720,545,415,320,228,165,110,62,31,10,3",
         "",
-        "# 四叶草倍数档位及对应权重，两个数组按下标对应；当前均为1，后续可调整各档位权重。",
+        "# 四叶草倍数档位及对应权重，两个数组按下标对应。",
         "BONUS_CLOVER_MULTIPLE=2,3,4,5,10,20",
-        "BONUS_CLOVER_MULTIPLE_PROBABILITY=1,1,1,1,1,1",
+        "BONUS_CLOVER_MULTIPLE_PROBABILITY=40,28,16,10,5,1",
         "",
     ]
     (THEME_DIR / "special" / "yngg_bonus.conf").write_text(
@@ -236,13 +298,13 @@ def write_reel_config(
     if target.exists():
         shutil.rmtree(target)
     target.mkdir()
-    reels = load_strip(demo_dir, strip_name)
+    reels = [fit_server_reel(reel) for reel in load_strip(demo_dir, strip_name)]
     (target / f"yngg_{file_prefix}rand_main.conf").write_text(
         "\n".join(
             [
                 "[MAIN]",
                 "#配置文件版本，变更后重新读取配置",
-                "VERSION=101",
+                "VERSION=102",
                 "#盘面列数",
                 "COL_COUNT=6",
                 "#盘面行数",
@@ -259,10 +321,11 @@ def write_reel_config(
     lines = [
         "[MAIN]",
         "#配置文件版本",
-        "VERSION=101",
+        "VERSION=102",
         "",
         "[GENERAL_1]",
         f"#参考轴来源：numeric/reels/strips/{strip_name}.csv",
+        "#按图标占比分配保留数量并均匀删减；每轴最多200个物件且字符串不超过500字符",
         "#BASE_RATE依次为正常盘、特殊盘、固定盘、零概率盘；当前仅使用正常盘",
         "#NORMAL_ROLL_1-6为各列基础轴，SP_ROLL_1-6暂与基础轴一致",
         "#FIX包含10个完全无奖盘；ZERO包含10个必定生成金色区域并保留Bonus ID 2的盘面",
@@ -313,6 +376,11 @@ def write_metadata(demo_dir: Path) -> None:
             "game_id": 362,
             "program_name": "yngg",
         },
+        "math_targets": {
+            "total_rtp": 0.985,
+            "free_trigger_rate": 0.005,
+            "base_bonus_trigger_interval": 75,
+        },
         "layout": {
             "reels": 6,
             "rows": 5,
@@ -340,10 +408,10 @@ def write_metadata(demo_dir: Path) -> None:
             "free_drop_scatter_rolls_when_no_super": True,
         },
         "special_symbol_generation": {
-            "scatter_count_weights": [1000, 100, 50, 5],
-            "free_scatter_count_weights": [1000, 100, 50, 5],
-            "base_no_win_bonus_count_weights": [80, 20],
-            "base_win_bonus_count_weights": [90, 10],
+            "scatter_count_weights": [10000, 1000, 500, 57],
+            "free_scatter_count_weights": [10000, 1000, 500, 57],
+            "base_no_win_bonus_count_weights": [98, 2],
+            "base_win_bonus_count_weights": [92, 8],
             "base_bonus_max_scatter_count": 2,
             "base_bonus_blocks_future_drop_specials": True,
             "base_drop_max_special_symbols_per_cascade": 1,
@@ -367,11 +435,11 @@ def write_metadata(demo_dir: Path) -> None:
         },
         "bonus_generation": {
             "symbol_types": ["coin", "clover", "pot", "jackpot"],
-            "symbol_type_weights": [1000, 100, 10, 1],
-            "coin_value_weights": [1] * 15,
+            "symbol_type_weights": [1000, 80, 6, 2],
+            "coin_value_weights": [1560, 1240, 1030, 860, 720, 545, 415, 320, 228, 165, 110, 62, 31, 10, 3],
             "coin_tier_thresholds": [5, 25],
-            "clover_multiplier_weights": [1] * 6,
-            "jackpot_type_weights": [1] * 4,
+            "clover_multiplier_weights": [40, 28, 16, 10, 5, 1],
+            "jackpot_type_weights": [80, 25, 8, 1],
             "maximum_pot_count": 5,
             "pot_overflow": "redraw_without_pot",
         },
@@ -420,7 +488,7 @@ def write_metadata(demo_dir: Path) -> None:
                 "NewBigWinGrade = 5,10,20,50,100,500",
                 "BetPerReel = 1,1,1,1,1,1,1,1,1",
                 "#支持的下注档位",
-                "BetScopes = 100000,200000,500000,1000000,2000000,5000000,10000000,20000000",
+                "BetScopes = 10,20,50,100,200,500,1000,2000,2500",
                 "",
                 "#底分",
                 "BaseScore = 10000",
@@ -434,26 +502,8 @@ def write_metadata(demo_dir: Path) -> None:
                 "",
                 "[Game Info]",
                 "#配置文件版本",
-                "Version=101",
+                "Version=102",
                 "#Super Scatter沿用Scatter ID 0，通过位置状态区分，不配置专门ID",
-                "#Base初始及掉落Scatter使用；已有Super时不再转化，Free不生成Super，200/10000=1/50",
-                "SuperScatterProbability=200",
-                "#Scatter出现数量权重，下标0-3分别表示出现0-3个",
-                "ScatterCountProbability=1000,100,50,5",
-                "#Free Scatter出现数量权重，下标0-3分别表示出现0-3个",
-                "FreeScatterCountProbability=1000,100,50,5",
-                "#Base中Scatter数量小于等于2且无奖时，Bonus数量0/1的权重",
-                "BaseNoWinBonusCountProbability=80,20",
-                "#Base中Scatter数量小于等于2且有奖时，Bonus数量0/1的权重",
-                "BaseWinBonusCountProbability=90,10",
-                "#Free已有金框时，Bonus数量0/1的权重",
-                "FreeGoldenBonusCountProbability=60,40",
-                "#Free没有金框时，Bonus数量0/1的权重",
-                "FreeNoGoldenBonusCountProbability=30,70",
-                "#掉落图标替换结果权重：不替换/Scatter/Bonus；Base每轮掉落至多放置1个",
-                "DropSpecialSymbolProbability=998,1,1",
-                "#Free掉落图标替换结果权重：不替换/Scatter/Bonus；每轮掉落至多放置1个",
-                "FreeDropSpecialSymbolProbability=998,1,1",
                 "#普通免费、超级免费初始次数",
                 "FreeSpinCounts=10,10",
                 "#下标为Scatter数量；2个追加2次，3个追加4次",
@@ -484,6 +534,27 @@ def write_metadata(demo_dir: Path) -> None:
                 "BONUS_9 = 9",
                 "#Grand",
                 "BONUS_10 = 10",
+                "",
+                "[0]",
+                "#TYPE 0的主游戏与免费游戏特殊图标生成参数",
+                "#Base初始及掉落Scatter使用；已有Super时不再转化，Free不生成Super，200/10000=1/50",
+                "SuperScatterProbability=200",
+                "#Scatter出现数量权重，下标0-3分别表示出现0-3个",
+                "ScatterCountProbability=10000,1000,500,57",
+                "#Free Scatter出现数量权重，下标0-3分别表示出现0-3个",
+                "FreeScatterCountProbability=10000,1000,500,57",
+                "#Base中Scatter数量小于等于2且无奖时，Bonus数量0/1的权重",
+                "BaseNoWinBonusCountProbability=98,2",
+                "#Base中Scatter数量小于等于2且有奖时，Bonus数量0/1的权重；配合中奖率使金色玩法约1/75",
+                "BaseWinBonusCountProbability=92,8",
+                "#Free已有金框时，Bonus数量0/1的权重",
+                "FreeGoldenBonusCountProbability=60,40",
+                "#Free没有金框时，Bonus数量0/1的权重",
+                "FreeNoGoldenBonusCountProbability=30,70",
+                "#掉落图标替换结果权重：不替换/Scatter/Bonus；Base每轮掉落至多放置1个",
+                "DropSpecialSymbolProbability=998,1,1",
+                "#Free掉落图标替换结果权重：不替换/Scatter/Bonus；每轮掉落至多放置1个",
+                "FreeDropSpecialSymbolProbability=998,1,1",
                 "",
             ]
         ),

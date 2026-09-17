@@ -125,7 +125,7 @@ Bonus 不包含保底逻辑。额外 index 只由 `BonusWinWeightConfig` 决定�
 symbol，此时 Bonus 派彩可以为 0。
 
 当前 `WinWeightConfig` 中 symbol 0 对应的 index `9`、`21` 权重分别为
-`6412`、`6413`，总 Bonus 权重为 `12825`，基础触发概率约为 `7.5966%`。
+相等的正权重，基础触发概率约为 `3.8902366566%`。
 
 ## 6. 翻倍玩法
 
@@ -173,7 +173,7 @@ win_multiple = base_win / total_bet
 
 ### 6.3 控制段
 
-`xml_game_server.conf` 保留 `[0]`、`[4]`、`[8]`、`[12]`、`[17]`
+`xml_game_server.conf` 保留 `[4]`、`[8]`、`[12]`、`[17]`
 控制段。每个控制段均包含完整的：
 
 - `DoubleMaxTimes`
@@ -181,25 +181,36 @@ win_multiple = base_win / total_bet
 - `DoubleWeight_1/5/10/25/50/100`
 - `DoubleWeight`
 
-当前数学逻辑读取 `[Game Info]`；控制段用于后续接入控制 index 时覆盖基础配置。
+翻倍参数当前读取 `[Game Info]`，尚未使用控制段覆盖。
+控制段的 `RespinMaxMulti` 已按 `group_index` 读取，用于 Bonus 砍分。
 
-### 6.4 Control Group 砍分
+### 6.4 Control Group 与 RespinMaxMulti 共同砍分
 
 基础派彩完成后、倍乘开始前，根据玩家 `group_index` 读取
 `special_config/slot_control_group.conf` 中
 `control_group_cut_multiple[group_index]`：
 
-- 阈值为 0 时不砍分。
+- 该阈值为 0 时关闭控制组限制，不影响独立的 Bonus 限制。
 - `base_win / total_bet` 严格大于阈值时触发砍分。
 - 砍分会完全替换原基础开奖结果，然后再进入倍乘流程。
+- 倍乘结束后，再用最终 `total_win / total_bet` 检查同一控制组阈值。
+  严格超过时同样替换开奖结果，且不再对替换结果翻倍。type4 的
+  12000 倍限制因此同时约束翻倍前和翻倍后的得分。
 
 如果原始 Spin 触发 Bonus，会先完成以下步骤：
 
 1. 按 `RespinCountWeight` 获取完整额外 symbol 数量。
 2. 生成并结算本次 Bonus 的全部额外 index。
 3. 使用完整 Bonus 总赢分计算 `base_win / total_bet`。
-4. 未超过 `RespinMaxMulti` 阈值时保留整个 Bonus；超过阈值时丢弃整个 Bonus，并按下述普通砍分
-   规则重新生成一个受控 Spin 结果。
+4. 同时检查控制组阈值和 `xml_game_server.conf` 中 `[group_index]` 段的
+   `RespinMaxMulti`。任意一个大于 0 的阈值被严格超过，就丢弃整个 Bonus，
+   按下述砍分规则生成一个受控结果；否则保留整个 Bonus。等于阈值不砍分。
+
+`RespinMaxMulti` 仅约束 Bonus，且只在倍乘前检查；普通开奖只受控制组
+阈值约束。控制段或该字段缺失时按 0 处理，表示关闭 Bonus 专属限制。
+控制组阈值会再检查一次翻倍后的最终赢分。两次检查都只在被触发时替换
+开奖结果；若倍乘前已经砍分，倍乘后又超过阈值，则保留第一次强制结果
+并取消本次倍乘。
 
 砍分结果选择：
 
@@ -210,35 +221,65 @@ win_multiple = base_win / total_bet
    symbol 中随机选择一个，并强制使用该 symbol 的 `MultiConfig=3` 位置。
 3. 多个未下注 symbol 或多个并列最低下注 symbol 均随机选择，不使用固定优先级。
 
-结果中的 `control_result` 会记录 group、阈值、原始基础赢分、原始赢分倍数、
+结果中的 `control_result` 会记录 group、阈值、原始赢分、原始赢分倍数、
 原始 trigger、完整 `original_bonus_result`、是否重新 Spin、砍分原因及强制后的
 symbol/index。
+若因翻倍后才超过控制组阈值，`original_base_win` 记录翻倍后的最终赢分。
+若倍乘前已经砍分，则仍记录第一次砍分前的基础赢分。
+其中 `respin_max_multi` 记录本组 Bonus 阈值；`cut_triggers` 记录触发的
+`control_group_cut_multiple` 和/或 `RespinMaxMulti`，未触发时为空列表。
 
 ## 7. RTP
 
-当前非 Bonus 权重为 `156000`，Bonus 权重为 `12825`，总权重为 `168825`。
-在当前等权 `SymbolMultiWeight` 下：
+普通开奖的非 Bonus 位置保持原有相对权重，不含 Bonus 时每个 symbol 的
+条件 RTP 均为 0.7。Bonus 触发概率约为 `0.03890236656575`。
 
-- High symbol 动态 X 的期望值为 30。
-- Mid symbol 动态 X 的期望值为 15。
-- 非 Bonus 权重由原配置等比放大104倍，因此不含 Bonus 时各 symbol 的基础
-  RTP 仍为0.7。
-- `ITEM_PRIZE_2-9` 与 `BaseBet` 均为 `10000`。
+`BonusWinWeightConfig` 按位置分为三个等权组：
 
-在 symbol 2-9 各下注1个 BaseBet、`Double_Times=0`、GROUP 0 不触发砍分时：
+| 位置所属图标 | 每个位置的权重 |
+|---|---:|
+| symbol 2 | 19845121 |
+| symbol 3–8 | 100000000 |
+| symbol 9 | 154178108 |
+| Bonus（symbol 0） | 0 |
+
+仍按现有规则不放回抽取 3–8 个位置。使用状态概率递推计算每组期望入选数量，
+再结合动态倍率期望（High=30，Mid=15），每个可下注图标的 Bonus 期望回报
+约为自身下注的 `8.026032454` 倍。因此不翻倍且不触发砍分时：
 
 ```text
-Bonus期望赢分 = 356133.412789
-总RTP =
-    (非Bonus加权赢分 + Bonus权重 * Bonus期望赢分)
-    / (总权重 * 总下注)
-    = 0.985000075
+RTP_symbol = (1 - Bonus概率) × 0.7 + Bonus概率 × Bonus期望回报
+           ≈ 0.985
 ```
 
-目标值为0.985，当前理论误差小于 `0.0000001`。其他下注组合、控制组或开启
-翻倍后的实际 RTP 会不同。
+symbol 2–9 的理论 RTP 距离 0.985 的最大误差小于 `3×10^-9`，误差来自
+Bonus 权重整数化。派彩对各 symbol 下注金额呈线性，所以任意非空下注组合
+及不同注额比例也保持此精度。控制组砍分和翻倍可能改变最终 RTP。
+
+`verify_rtp.py` 按当前配置执行不放回抽样的概率递推，输出每个 symbol 的
+Bonus 期望与最终理论 RTP；结果不依赖蒙特卡洛抽样。该计算器按相同 Bonus
+权重合并位置，适用于当前三组权重配置。
 
 ## 8. 代码接口
+
+### type12 的独立开奖配置
+
+`group_index=12` 时使用 `xml_game_server.conf` 的 `[12].WinWeightConfig`。
+其他组未配置独立开奖权重时，继续使用 `[Game Info].WinWeightConfig`。
+type12 的 Bonus 位置权重为 0，因此不会触发 Bonus。
+
+type12 权重由两种分布混合得到：原非 Bonus 分布占 1/13（等额全押 RTP=0.7），
+七个固定 3 倍位置等概率分布占 12/13（等额全押 RTP=3/8）：
+
+```text
+RTP = (1/13) × 0.7 + (12/13) × (3/8) = 0.4
+```
+
+该目标仅针对 symbol 2–9 八种图标等额全押且不翻倍。此时单次最高赢分为
+总下注的 100/8=12.5 倍，不超过 type12 的 20 倍砍分阈值，所以砍分不改变
+上述 RTP。部分下注或不等额下注的 RTP 不保证为 0.4，仍按原规则执行砍分。
+模拟时设置 `GROUP_INDEXES=[12]`、`Double_Times=0`，并将 `Bet_Multi[2:10]`
+设为相同的正整数即可。
 
 普通 spin：
 
@@ -356,6 +397,8 @@ python simulation.py \
 每个最终结果会打印并追加到 `simulate_result.csv`，主要包括：
 
 - 基础和最终 RTP。
+- 最大赢钱倍数：累计各局的 `total_win / total_bet` 最大值，使用砍分及翻倍后的
+  最终赢钱；全部未赢钱时为 0。阶段报表和最终 CSV 均记录此值。
 - 倍乘带来的 RTP 增减。
 - Hit 率、Bonus 率。
 - Bonus 额外 symbol 总数、平均数量及 1-8 个的分布。

@@ -42,7 +42,6 @@ class ThemeMath(CountGame):
     JACKPOT_TIERS = ("mini", "minor", "major", "grand")
     MAX_GOLDEN_ROUNDS = 100
     PROBABILITY_DENOMINATOR = 10_000
-    RETRIGGER_SPINS = {2: 2, 3: 4}
     FREE_MODE_NAMES = {"free", "super_free"}
 
     def __init__(self, base_bet: int = 100_000, **kwargs):
@@ -70,6 +69,15 @@ class ThemeMath(CountGame):
         if not self.game_server_config.has_section("Game Info"):
             raise ValueError(f"{self.game_server_config_file} missing [Game Info]")
         game_info = self.game_server_config["Game Info"]
+        if not self.game_server_config.has_section("0"):
+            raise ValueError(f"{self.game_server_config_file} missing TYPE [0]")
+        type_info = self.game_server_config["0"]
+        self.FreeSpinCounts = tuple(self._parse_int_list(game_info.get("FreeSpinCounts", "")))
+        self.FreeSpinRetrigger = tuple(self._parse_int_list(game_info.get("FreeSpinRetrigger", "")))
+        if len(self.FreeSpinCounts) != 2 or any(value <= 0 for value in self.FreeSpinCounts):
+            raise ValueError("FreeSpinCounts must contain two positive integers")
+        if len(self.FreeSpinRetrigger) != 4 or any(value < 0 for value in self.FreeSpinRetrigger):
+            raise ValueError("FreeSpinRetrigger must contain four nonnegative integers")
         self.FREE_SPIN_ID = int(game_info.get("ScatterId", self.FREE_SPIN_ID))
         self.WILD_ID = int(game_info.get("WILD_ID", self.WILD_ID))
         self.FEATURE_ID = int(game_info.get("FEATURE_ID", self.FEATURE_ID))
@@ -88,7 +96,7 @@ class ThemeMath(CountGame):
             game_info.get("SuperScatterSourceId", self.FREE_SPIN_ID)
         )
         self.SUPER_SCATTER_PROBABILITY = int(
-            game_info.get("SuperScatterProbability", "0")
+            type_info["SuperScatterProbability"]
         )
         self.COIN_MULTI_1 = float(game_info.get("coin_multi_1", "5"))
         self.COIN_MULTI_2 = float(game_info.get("coin_multi_2", "25"))
@@ -132,7 +140,7 @@ class ThemeMath(CountGame):
             ),
         )
         for attribute, key, expected_length in probability_fields:
-            weights = tuple(self._parse_int_list(game_info.get(key, "")))
+            weights = tuple(self._parse_int_list(type_info.get(key, "")))
             self._validate_weighted_options(
                 key,
                 tuple(range(expected_length)),
@@ -392,6 +400,17 @@ class ThemeMath(CountGame):
         if special_type == 2:
             return self.FEATURE_ID
         return None
+
+    def _load_reel_config(
+        self, index, general_index, reel_config_dir=None, reel_file_template=None,
+    ):
+        # Only TYPE 0 has a matching server section and both reel resources.
+        # Reject missing types before the shared loader can fall back to TYPE 0.
+        if index != 0:
+            raise ValueError(f"unsupported yngg TYPE {index}; only TYPE 0 is configured")
+        return super()._load_reel_config(
+            index, general_index, reel_config_dir, reel_file_template
+        )
 
     def ng_spin(
         self,
@@ -1321,15 +1340,15 @@ class ThemeMath(CountGame):
 
         total_scatter_count = scatter_count + super_scatter_count
         if total_scatter_count >= 3 and super_scatter_count >= 1:
-            return {"name": "super_free", "spins": 10}
+            return {"name": "super_free", "spins": self.FreeSpinCounts[1]}
         if total_scatter_count >= 3:
-            return {"name": "free", "spins": 10}
+            return {"name": "free", "spins": self.FreeSpinCounts[0]}
         return None
 
     def get_retrigger_spins(self, scatter_count: int) -> int:
-        if scatter_count >= 3:
-            return self.RETRIGGER_SPINS[3]
-        return self.RETRIGGER_SPINS.get(scatter_count, 0)
+        if scatter_count < 0:
+            raise ValueError("scatter_count must be nonnegative")
+        return self.FreeSpinRetrigger[min(scatter_count, 3)]
 
     def jackpot_win(self, tier: str) -> int:
         """Evaluate a fixed jackpot tier; every board feature uses symbol ID 2."""

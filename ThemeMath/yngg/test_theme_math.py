@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import unittest
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
+import build_from_demo
 from theme_math import ThemeMath
 
 
@@ -48,10 +51,13 @@ class ThemeMathTest(unittest.TestCase):
             self.math.BONUS_SYMBOL_TYPES,
             ("coin", "clover", "pot", "jackpot"),
         )
-        self.assertEqual(self.math.BONUS_SYMBOL_TYPE_WEIGHTS, (1000, 100, 10, 1))
-        self.assertEqual(self.math.COIN_VALUE_WEIGHTS, (1,) * 15)
-        self.assertEqual(self.math.CLOVER_MULTIPLIER_WEIGHTS, (1,) * 6)
-        self.assertEqual(self.math.JACKPOT_TYPE_WEIGHTS, (1,) * 4)
+        self.assertEqual(self.math.BONUS_SYMBOL_TYPE_WEIGHTS, (1000, 80, 6, 2))
+        self.assertEqual(
+            self.math.COIN_VALUE_WEIGHTS,
+            (1560, 1240, 1030, 860, 720, 545, 415, 320, 228, 165, 110, 62, 31, 10, 3),
+        )
+        self.assertEqual(self.math.CLOVER_MULTIPLIER_WEIGHTS, (40, 28, 16, 10, 5, 1))
+        self.assertEqual(self.math.JACKPOT_TYPE_WEIGHTS, (80, 25, 8, 1))
         self.assertEqual(
             self.math.JACKPOT_MULTIPLIERS,
             {"mini": 10, "minor": 25, "major": 100, "grand": 5000},
@@ -278,16 +284,16 @@ class ThemeMathTest(unittest.TestCase):
             self.assertEqual(getattr(self.math, key), value)
 
     def test_special_symbol_probability_config(self):
-        self.assertEqual(self.math.SCATTER_COUNT_WEIGHTS, (1000, 100, 50, 5))
+        self.assertEqual(self.math.SCATTER_COUNT_WEIGHTS, (10000, 1000, 500, 57))
         self.assertEqual(
             self.math.FREE_SCATTER_COUNT_WEIGHTS,
-            (1000, 100, 50, 5),
+            (10000, 1000, 500, 57),
         )
         self.assertEqual(
             self.math.BASE_NO_WIN_BONUS_COUNT_WEIGHTS,
-            (80, 20),
+            (98, 2),
         )
-        self.assertEqual(self.math.BASE_WIN_BONUS_COUNT_WEIGHTS, (90, 10))
+        self.assertEqual(self.math.BASE_WIN_BONUS_COUNT_WEIGHTS, (92, 8))
         self.assertEqual(
             self.math.FREE_GOLDEN_BONUS_COUNT_WEIGHTS,
             (60, 40),
@@ -931,6 +937,39 @@ class ThemeMathTest(unittest.TestCase):
         self.assertEqual(self.math.get_retrigger_spins(3), 4)
         self.assertEqual(self.math.get_retrigger_spins(4), 4)
 
+    def test_free_counts_are_loaded_from_custom_config(self):
+        source = self.math.project_dir / self.math.DEFAULT_GAME_SERVER_CONFIG_FILE
+        text = source.read_text().replace("FreeSpinCounts=10,10", "FreeSpinCounts=7,13")
+        text = text.replace("FreeSpinRetrigger=0,0,2,4", "FreeSpinRetrigger=0,0,3,6")
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "custom.conf"
+            path.write_text(text)
+            game = ThemeMath(game_server_config_file=str(path))
+        self.assertEqual(game.get_triggered_free_spin_mode(3)["spins"], 7)
+        self.assertEqual(game.get_triggered_free_spin_mode(2, 1)["spins"], 13)
+        self.assertIsNone(game.get_triggered_free_spin_mode(2))
+        self.assertEqual([game.get_retrigger_spins(n) for n in range(5)], [0, 0, 3, 6, 6])
+
+    def test_invalid_free_counts_fail_during_loading(self):
+        for field, value in [("FreeSpinCounts", "10"), ("FreeSpinCounts", "0,10"),
+                             ("FreeSpinRetrigger", "0,2,4"),
+                             ("FreeSpinRetrigger", "0,0,-2,4")]:
+            with self.subTest(Field=field, Value=value):
+                self.math.game_server_config["Game Info"][field] = value
+                with self.assertRaisesRegex(ValueError, field):
+                    self.math._load_super_scatter_config()
+                self.math.game_server_config["Game Info"][field] = (
+                    "10,10" if field == "FreeSpinCounts" else "0,0,2,4"
+                )
+
+    def test_missing_types_do_not_fall_back_to_zero(self):
+        for method in (self.math.ng_spin, self.math.fg_spin):
+            with self.assertRaisesRegex(ValueError, "TYPE 4"):
+                method(index=4)
+        self.math.game_server_config.remove_section("0")
+        with self.assertRaisesRegex(ValueError, r"TYPE \[0\]"):
+            self.math._load_super_scatter_config()
+
     def test_base_free_trigger_does_not_seed_golden_squares(self):
         board = [
             [0, 3, 4, 5, 6],
@@ -1078,6 +1117,76 @@ class ThemeMathTest(unittest.TestCase):
         self.assertEqual(self.math.jackpot_win("minor"), self.math.base_bet * 25)
         self.assertEqual(self.math.jackpot_win("major"), self.math.base_bet * 100)
         self.assertEqual(self.math.jackpot_win("grand"), self.math.base_bet * 5000)
+
+
+class ServerConfigTest(unittest.TestCase):
+    def check_server_config(self, root):
+        read = ThemeMath._read_config_file
+        server = read(root / "special/yngg_game_server.conf")
+        self.assertTrue(server.has_section("0"))
+        self.assertIn("ScatterCountProbability", server["0"])
+        self.assertNotIn("ScatterCountProbability", server["Game Info"])
+        self.assertEqual(server["System Base Info"]["BetScopes"],
+                         "10,20,50,100,200,500,1000,2000,2500")
+        groups = read(root / "special_config/slot_control_group.conf")
+        self.assertEqual(groups.sections(), ["MAIN", "CONTROL_GROUP_0"])
+        expected = [5000, 100, 0, 0, 12000, 0, 0, 50, 1000, 1000,
+                    0, 0, 20, 12000, 12000, 12000, 12000, 1000, 1000, 0]
+        for key in ("control_group_cut_multiple", "control_group_free_cut_multiple"):
+            self.assertEqual(ThemeMath._parse_int_list(groups["MAIN"][key]), expected)
+        for section in groups.sections()[1:]:
+            values = ThemeMath._parse_int_list(groups[section]["lable_user_control_group_value"])
+            rates = ThemeMath._parse_int_list(groups[section]["lable_user_control_group_rate"])
+            self.assertEqual(len(values), len(rates))
+            for value in values:
+                type_index, number = divmod(value, 100)
+                self.assertGreater(number, 0)
+                self.assertIn(str(type_index), server)
+                for directory, prefix in [("reel_config", "yngg"),
+                                          ("free_reel_config", "yngg_free")]:
+                    path = root / directory / f"{prefix}_rand_ex_{type_index}.conf"
+                    reel = read(path)
+                    spec = read(root / directory / f"{prefix}_rand_main.conf")["MAIN"]
+                    self.assertGreaterEqual(int(spec["VERSION"]), 102)
+                    self.assertEqual(int(spec["COL_COUNT"]), 6)
+                    self.assertEqual(int(spec["ITEM_COM_COUNT"]),
+                                     len([s for s in reel if s.startswith("GENERAL_")]))
+                    for kind in ("NORMAL_ROLL", "SP_ROLL"):
+                        for column in range(1, 7):
+                            value = reel["GENERAL_1"][f"{kind}_{column}"]
+                            symbols = ThemeMath._parse_int_list(value)
+                            self.assertLessEqual(len(value), 500)
+                            self.assertLessEqual(len(symbols), 200)
+                            self.assertGreaterEqual(len(symbols), 5)
+                            self.assertTrue(all(0 <= s < int(spec["ITEM_COUNT"]) for s in symbols))
+        global_config = read(root / "special_config/game_server.conf")["Game_Info"]
+        self.assertEqual(int(global_config["replay_min_win_money"]), 3_000_000_000)
+
+    def test_published_configs_meet_server_constraints(self):
+        self.check_server_config(Path(__file__).resolve().parent)
+
+    def test_reel_compaction_preserves_symbols_and_both_limits(self):
+        reel = [12] * 220 + [1, 3]
+        result = build_from_demo.fit_server_reel(reel)
+        self.assertEqual(set(result), {1, 3, 12})
+        self.assertLessEqual(len(result), 200)
+        self.assertLessEqual(len(",".join(map(str, result))), 500)
+        self.assertEqual(result, build_from_demo.fit_server_reel(reel))
+        self.assertEqual(result, build_from_demo.fit_server_reel(result))
+        self.assertEqual(build_from_demo.fit_server_reel([3, 4, 5, 6, 7]), [3, 4, 5, 6, 7])
+
+    def test_regeneration_keeps_server_fixes(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "numeric").mkdir()
+            (root / "numeric/game-math.json").write_text("{}")
+            with patch.object(build_from_demo, "THEME_DIR", root), patch.object(
+                build_from_demo, "load_strip", return_value=[[12] * 220 + [1, 3]] * 6
+            ):
+                build_from_demo.main(["--demo-dir", str(root)])
+            self.check_server_config(root)
+            game = ThemeMath(project_dir=root)
+            self.assertEqual(game.get_triggered_free_spin_mode(3)["spins"], 10)
 
 
 if __name__ == "__main__":

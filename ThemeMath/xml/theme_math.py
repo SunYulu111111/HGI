@@ -3,7 +3,8 @@
 玩家可分别对 symbol 2-9 下注。每局先按 WinWeightConfig 抽取一个轮盘
 index；若该位置是 symbol 0，则按 BonusWinWeightConfig 加权、不放回地
 抽取配置数量的不同 index。基础赢分可能按玩家 control group 进行砍分；
-赢钱后可选择翻倍，成功则赢钱乘 2 并可继续，失败归零。
+赢钱后可选择翻倍，成功则赢钱乘 2 并可继续，失败归零。翻倍后的最终赢分
+若仍超过控制组阈值，会再次砍分且不再翻倍。
 """
 
 from __future__ import annotations
@@ -47,6 +48,14 @@ class ThemeMath:
         server_config = self._read_config(self.game_server_config_file)
         control_group_config = self._read_config(self.control_group_config_file)
         self.game_server_config = server_config
+        self.respin_max_multiples = {
+            int(section): self._parse_nonnegative_int(
+                server_config[section]["RespinMaxMulti"],
+                f"[{section}] RespinMaxMulti",
+            )
+            for section in server_config.sections()
+            if section.isdigit() and "RespinMaxMulti" in server_config[section]
+        }
         if not game_config.has_section("MAIN"):
             raise ValueError(f"{self.game_config_file} 缺少 [MAIN]")
         if not server_config.has_section("Game Info"):
@@ -82,6 +91,14 @@ class ThemeMath:
             game_info.get("WinWeightConfig"),
             "WinWeightConfig",
         )
+        self.group_win_weights = {
+            int(section): self._parse_int_list(
+                server_config[section]["WinWeightConfig"],
+                f"[{section}] WinWeightConfig",
+            )
+            for section in server_config.sections()
+            if section.isdigit() and "WinWeightConfig" in server_config[section]
+        }
         self.bonus_win_weights = self._parse_int_list(
             game_info.get("BonusWinWeightConfig"),
             "BonusWinWeightConfig",
@@ -136,7 +153,9 @@ class ThemeMath:
         """校验各 symbol 注额、抽取轮盘位置并结算。"""
 
         bets = self.validate_bets(symbol_bets)
-        trigger_index = self._weighted_index(self.win_weights)
+        self.get_control_group_cut_multiple(group_index)
+        win_weights = self.group_win_weights.get(group_index, self.win_weights)
+        trigger_index = self._weighted_index(win_weights)
         trigger_symbol_id = self.reel_config[trigger_index]
         is_bonus = trigger_symbol_id == self.BONUS_SYMBOL_ID
 
@@ -150,17 +169,12 @@ class ThemeMath:
             respin_count = 0
             winning_indexes = [trigger_index]
 
-        symbol_multi_index = self._select_symbol_multi_index(winning_indexes)
-        outcomes = [
-            self._settle_index(
-                index,
-                bets,
-                symbol_multi_index=symbol_multi_index,
-            )
-            for index in winning_indexes
-        ]
-        paid_items = [outcome.copy() for outcome in outcomes if outcome["win"] > 0]
-        base_win = sum(outcome["win"] for outcome in outcomes)
+        (
+            symbol_multi_index,
+            outcomes,
+            paid_items,
+            base_win,
+        ) = self._settle_winning_indexes(winning_indexes, bets)
         total_bet = sum(bets.values())
         control_result = self._apply_control_cut(
             group_index=group_index,
@@ -176,28 +190,69 @@ class ThemeMath:
             symbol_multi_index=symbol_multi_index,
         )
         if control_result["is_cut"]:
-            trigger_index = control_result["forced_index"]
-            trigger_symbol_id = control_result["forced_symbol_id"]
-            is_bonus = False
-            respin_count = 0
-            winning_indexes = [trigger_index]
-            symbol_multi_index = self._select_symbol_multi_index(winning_indexes)
-            outcomes = [
-                self._settle_index(
-                    trigger_index,
-                    bets,
-                    symbol_multi_index=symbol_multi_index,
-                )
-            ]
-            paid_items = [
-                outcome.copy() for outcome in outcomes if outcome["win"] > 0
-            ]
-            base_win = sum(outcome["win"] for outcome in outcomes)
+            (
+                trigger_index,
+                trigger_symbol_id,
+                is_bonus,
+                respin_count,
+                winning_indexes,
+                symbol_multi_index,
+                outcomes,
+                paid_items,
+                base_win,
+            ) = self._forced_spin_state(bets, control_result["forced_index"])
         double_result = self.apply_double_up(
             base_win,
             double_times,
             total_bet=total_bet,
         )
+        post_triggers, _, _ = self._get_cut_triggers(
+            group_index,
+            double_result["total_win"],
+            total_bet,
+            is_bonus=False,
+        )
+        if post_triggers:
+            if control_result["is_cut"]:
+                for trigger_name in post_triggers:
+                    if trigger_name not in control_result["cut_triggers"]:
+                        control_result["cut_triggers"].append(trigger_name)
+            else:
+                forced_index, forced_symbol_id, reason = (
+                    self._select_control_cut_index(bets)
+                )
+                control_result.update(
+                    {
+                        "is_cut": True,
+                        "cut_triggers": post_triggers,
+                        "cut_reason": reason,
+                        "regenerated_spin": True,
+                        "forced_index": forced_index,
+                        "forced_symbol_id": forced_symbol_id,
+                        "original_base_win": double_result["total_win"],
+                        "original_win_multiple": (
+                            double_result["total_win"] / total_bet
+                            if total_bet
+                            else 0
+                        ),
+                    }
+                )
+                (
+                    trigger_index,
+                    trigger_symbol_id,
+                    is_bonus,
+                    respin_count,
+                    winning_indexes,
+                    symbol_multi_index,
+                    outcomes,
+                    paid_items,
+                    base_win,
+                ) = self._forced_spin_state(bets, forced_index)
+            double_result = self.apply_double_up(
+                base_win,
+                0,
+                total_bet=total_bet,
+            )
         trigger = {
             "index": trigger_index,
             "position": trigger_index + 1,
@@ -257,7 +312,7 @@ class ThemeMath:
         return dict(sorted(bets.items()))
 
     def get_control_group_cut_multiple(self, group_index: int) -> int:
-        """读取玩家 control group 对应的基础赢分砍分阈值。"""
+        """读取玩家 control group 对应的赢分砍分阈值。"""
 
         if isinstance(group_index, bool) or not isinstance(group_index, int):
             raise TypeError("group_index 必须是整数")
@@ -283,11 +338,18 @@ class ThemeMath:
     ) -> dict:
         """超过 control group 阈值时选择一个受控的新开奖结果。"""
 
-        cut_multiple = self.get_control_group_cut_multiple(group_index)
+        cut_triggers, cut_multiple, respin_max_multi = self._get_cut_triggers(
+            group_index,
+            base_win,
+            total_bet,
+            is_bonus,
+        )
         original_win_multiple = base_win / total_bet if total_bet else 0
         result = {
             "group_index": group_index,
             "cut_multiple": cut_multiple,
+            "respin_max_multi": respin_max_multi,
+            "cut_triggers": cut_triggers,
             "is_cut": False,
             "original_base_win": base_win,
             "original_win_multiple": original_win_multiple,
@@ -313,7 +375,7 @@ class ThemeMath:
             "forced_index": None,
             "forced_symbol_id": None,
         }
-        if cut_multiple <= 0 or base_win <= total_bet * cut_multiple:
+        if not cut_triggers:
             return result
 
         forced_index, forced_symbol_id, reason = self._select_control_cut_index(
@@ -329,6 +391,66 @@ class ThemeMath:
             }
         )
         return result
+
+    def _get_cut_triggers(
+        self,
+        group_index: int,
+        win: int,
+        total_bet: int,
+        is_bonus: bool,
+    ) -> tuple[list[str], int, int]:
+        """返回触发的砍分来源，以及本组控制组和 Bonus 阈值。"""
+
+        cut_multiple = self.get_control_group_cut_multiple(group_index)
+        respin_max_multi = self.respin_max_multiples.get(group_index, 0)
+        cut_triggers: list[str] = []
+        if cut_multiple > 0 and win > total_bet * cut_multiple:
+            cut_triggers.append("control_group_cut_multiple")
+        if is_bonus and respin_max_multi > 0 and win > total_bet * respin_max_multi:
+            cut_triggers.append("RespinMaxMulti")
+        return cut_triggers, cut_multiple, respin_max_multi
+
+    def _settle_winning_indexes(
+        self,
+        winning_indexes: Sequence[int],
+        bets: Mapping[int, int],
+    ) -> tuple[int | None, list[dict], list[dict], int]:
+        symbol_multi_index = self._select_symbol_multi_index(winning_indexes)
+        outcomes = [
+            self._settle_index(
+                index,
+                bets,
+                symbol_multi_index=symbol_multi_index,
+            )
+            for index in winning_indexes
+        ]
+        paid_items = [outcome.copy() for outcome in outcomes if outcome["win"] > 0]
+        base_win = sum(outcome["win"] for outcome in outcomes)
+        return symbol_multi_index, outcomes, paid_items, base_win
+
+    def _forced_spin_state(
+        self,
+        bets: Mapping[int, int],
+        forced_index: int,
+    ) -> tuple[int, int, bool, int, list[int], int | None, list[dict], list[dict], int]:
+        """用砍分强制结果替换当前开奖，并清除 Bonus 状态。"""
+
+        trigger_symbol_id = self.reel_config[forced_index]
+        winning_indexes = [forced_index]
+        symbol_multi_index, outcomes, paid_items, base_win = (
+            self._settle_winning_indexes(winning_indexes, bets)
+        )
+        return (
+            forced_index,
+            trigger_symbol_id,
+            False,
+            0,
+            winning_indexes,
+            symbol_multi_index,
+            outcomes,
+            paid_items,
+            base_win,
+        )
 
     def _select_control_cut_index(
         self,
@@ -671,6 +793,14 @@ class ThemeMath:
         return dict(sorted(tiers.items()))
 
     def _validate_configuration(self) -> None:
+        for group_index, weights in self.group_win_weights.items():
+            if (len(weights) != len(self.reel_config)
+                    or any(weight < 0 for weight in weights)
+                    or sum(weights) <= 0):
+                raise ValueError(
+                    f"[{group_index}] WinWeightConfig 必须与 ReelConfig 等长、"
+                    "权重非负且总和大于 0"
+                )
         lengths = {
             len(self.reel_config),
             len(self.multi_config),

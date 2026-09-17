@@ -4,6 +4,8 @@
 和 reel_config，就可以复用这里的 spin、ways 算奖和消除补牌辅助逻辑。
 """
 
+from __future__ import annotations
+
 import random
 from configparser import ConfigParser
 from dataclasses import dataclass
