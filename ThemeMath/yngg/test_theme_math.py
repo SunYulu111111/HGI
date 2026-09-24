@@ -963,12 +963,46 @@ class ThemeMathTest(unittest.TestCase):
                 )
 
     def test_missing_types_do_not_fall_back_to_zero(self):
+        for index in (0, 4, 8, 12, 17):
+            with self.subTest(Type=index):
+                self.math._load_reel_config(index, 1)
+                self.assertEqual(self.math.ActiveTypeIndex, index)
+                self.math._load_reel_config(
+                    index, 1, "free_reel_config", "yngg_free_rand_ex_{index}.conf"
+                )
+                self.assertEqual(self.math.ActiveTypeIndex, index)
         for method in (self.math.ng_spin, self.math.fg_spin):
-            with self.assertRaisesRegex(ValueError, "TYPE 4"):
-                method(index=4)
+            with self.assertRaisesRegex(ValueError, "TYPE 9"):
+                method(index=9)
         self.math.game_server_config.remove_section("0")
         with self.assertRaisesRegex(ValueError, r"TYPE \[0\]"):
             self.math._load_super_scatter_config()
+
+    def test_type_probabilities_follow_selected_reels(self):
+        original = self.math.game_server_config["4"]["ScatterCountProbability"]
+        self.math.game_server_config["4"]["ScatterCountProbability"] = "1,2,3,4"
+        try:
+            self.math._load_reel_config(4, 1)
+            self.assertEqual(self.math.SCATTER_COUNT_WEIGHTS, (1, 2, 3, 4))
+            self.math._load_reel_config(0, 1)
+            self.assertEqual(self.math.SCATTER_COUNT_WEIGHTS, (10000, 1000, 500, 57))
+        finally:
+            self.math.game_server_config["4"]["ScatterCountProbability"] = original
+
+    def test_missing_type_reel_cannot_fall_back(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "special").mkdir()
+            (root / "reel_config").mkdir()
+            (root / "free_reel_config").mkdir()
+            source = Path(__file__).resolve().parent
+            for name in ("yngg_game_config.conf", "yngg_game_server.conf", "yngg_bonus.conf"):
+                (root / "special" / name).write_bytes((source / "special" / name).read_bytes())
+            for name in ("yngg_rand_main.conf", "yngg_rand_ex_0.conf"):
+                (root / "reel_config" / name).write_bytes((source / "reel_config" / name).read_bytes())
+            game = ThemeMath(project_dir=root)
+            with self.assertRaisesRegex(FileNotFoundError, "TYPE 4"):
+                game.ng_spin(index=4)
 
     def test_base_free_trigger_does_not_seed_golden_squares(self):
         board = [
@@ -1123,15 +1157,18 @@ class ServerConfigTest(unittest.TestCase):
     def check_server_config(self, root):
         read = ThemeMath._read_config_file
         server = read(root / "special/yngg_game_server.conf")
-        self.assertTrue(server.has_section("0"))
-        self.assertIn("ScatterCountProbability", server["0"])
+        for index in (0, 4, 8, 12, 17):
+            self.assertTrue(server.has_section(str(index)))
+            self.assertIn("ScatterCountProbability", server[str(index)])
         self.assertNotIn("ScatterCountProbability", server["Game Info"])
         self.assertEqual(server["System Base Info"]["BetScopes"],
                          "10,20,50,100,200,500,1000,2000,2500")
         groups = read(root / "special_config/slot_control_group.conf")
-        self.assertEqual(groups.sections(), ["MAIN", "CONTROL_GROUP_0"])
-        expected = [5000, 100, 0, 0, 12000, 0, 0, 50, 1000, 1000,
-                    0, 0, 20, 12000, 12000, 12000, 12000, 1000, 1000, 0]
+        self.assertEqual(groups.sections(), ["MAIN", "CONTROL_GROUP_0",
+                                             "CONTROL_GROUP_4", "CONTROL_GROUP_8",
+                                             "CONTROL_GROUP_12", "CONTROL_GROUP_17"])
+        expected = [5000, 0, 0, 0, 12000, 0, 0, 0, 1000,
+                    0, 0, 0, 20, 0, 0, 0, 0, 1000]
         for key in ("control_group_cut_multiple", "control_group_free_cut_multiple"):
             self.assertEqual(ThemeMath._parse_int_list(groups["MAIN"][key]), expected)
         for section in groups.sections()[1:]:
@@ -1147,7 +1184,7 @@ class ServerConfigTest(unittest.TestCase):
                     path = root / directory / f"{prefix}_rand_ex_{type_index}.conf"
                     reel = read(path)
                     spec = read(root / directory / f"{prefix}_rand_main.conf")["MAIN"]
-                    self.assertGreaterEqual(int(spec["VERSION"]), 102)
+                    self.assertEqual(int(spec["VERSION"]), 101)
                     self.assertEqual(int(spec["COL_COUNT"]), 6)
                     self.assertEqual(int(spec["ITEM_COM_COUNT"]),
                                      len([s for s in reel if s.startswith("GENERAL_")]))
@@ -1155,7 +1192,7 @@ class ServerConfigTest(unittest.TestCase):
                         for column in range(1, 7):
                             value = reel["GENERAL_1"][f"{kind}_{column}"]
                             symbols = ThemeMath._parse_int_list(value)
-                            self.assertLessEqual(len(value), 500)
+                            self.assertLess(len(value.encode("utf-8")), 400)
                             self.assertLessEqual(len(symbols), 200)
                             self.assertGreaterEqual(len(symbols), 5)
                             self.assertTrue(all(0 <= s < int(spec["ITEM_COUNT"]) for s in symbols))
@@ -1170,10 +1207,23 @@ class ServerConfigTest(unittest.TestCase):
         result = build_from_demo.fit_server_reel(reel)
         self.assertEqual(set(result), {1, 3, 12})
         self.assertLessEqual(len(result), 200)
-        self.assertLessEqual(len(",".join(map(str, result))), 500)
+        self.assertLess(len(",".join(map(str, result)).encode("utf-8")), 400)
         self.assertEqual(result, build_from_demo.fit_server_reel(reel))
         self.assertEqual(result, build_from_demo.fit_server_reel(result))
         self.assertEqual(build_from_demo.fit_server_reel([3, 4, 5, 6, 7]), [3, 4, 5, 6, 7])
+
+    def test_existing_type_reel_is_shortened_without_other_changes(self):
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "yngg_rand_ex_4.conf"
+            roll = ",".join(map(str, [12] * 220 + [1, 3]))
+            path.write_text(f"[GENERAL_1]\nNORMAL_ROLL_1={roll}\n# retained tuning\n",
+                            encoding="utf-8")
+            build_from_demo.fit_existing_reel_file(path)
+            result = path.read_text(encoding="utf-8")
+            self.assertIn("# retained tuning", result)
+            value = result.split("NORMAL_ROLL_1=", 1)[1].splitlines()[0]
+            self.assertLess(len(value.encode("utf-8")), 400)
+            self.assertEqual(set(ThemeMath._parse_int_list(value)), {1, 3, 12})
 
     def test_regeneration_keeps_server_fixes(self):
         with TemporaryDirectory() as directory:
@@ -1184,6 +1234,26 @@ class ServerConfigTest(unittest.TestCase):
                 build_from_demo, "load_strip", return_value=[[12] * 220 + [1, 3]] * 6
             ):
                 build_from_demo.main(["--demo-dir", str(root)])
+                server_path = root / "special/yngg_game_server.conf"
+                server_text = server_path.read_text(encoding="utf-8")
+                server_path.write_text(server_text.replace(
+                    "[4]\n", "[4]\n# retained TYPE tuning\n", 1
+                ), encoding="utf-8")
+                reel_path = root / "reel_config/yngg_rand_ex_4.conf"
+                reel_path.write_text(reel_path.read_text(encoding="utf-8") +
+                                     "# retained reel tuning\n", encoding="utf-8")
+                prop_path = root / "special/slot_prop_config.conf"
+                prop_path.write_text(prop_path.read_text(encoding="utf-8") +
+                                     "# retained prop config\n", encoding="utf-8")
+                group_path = root / "special_config/slot_control_group.conf"
+                group_path.write_text(group_path.read_text(encoding="utf-8").replace(
+                    "[CONTROL_GROUP_4]\n", "[CONTROL_GROUP_4]\n# retained GROUP tuning\n", 1
+                ), encoding="utf-8")
+                build_from_demo.main(["--demo-dir", str(root)])
+                self.assertIn("# retained TYPE tuning", server_path.read_text(encoding="utf-8"))
+                self.assertIn("# retained reel tuning", reel_path.read_text(encoding="utf-8"))
+                self.assertIn("# retained prop config", prop_path.read_text(encoding="utf-8"))
+                self.assertIn("# retained GROUP tuning", group_path.read_text(encoding="utf-8"))
             self.check_server_config(root)
             game = ThemeMath(project_dir=root)
             self.assertEqual(game.get_triggered_free_spin_mode(3)["spins"], 10)

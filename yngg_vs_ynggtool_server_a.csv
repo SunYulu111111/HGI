@@ -1,0 +1,1018 @@
+﻿FileName,Section,FieldName,YnggValue,ServerValue,CompareResult,YnggLine,ServerLine,Notes,YnggPath,ServerPath
+base_bull.conf,bull_info,show_bull_gameid,"18,70,71","18,70,71",Same,4,7,,general_config/base_bull.conf,base_bull.conf
+base_bull.conf,bull_info,send_bull_yb_min,300,300,Same,6,11,,general_config/base_bull.conf,base_bull.conf
+base_bull.conf,bull_info,send_bull_money_min,50000000,50000000,Same,8,15,,general_config/base_bull.conf,base_bull.conf
+base_bull.conf,bull_info,jb_yb_priority_rate,1000000,1000000,Same,10,19,,general_config/base_bull.conf,base_bull.conf
+base_bull.conf,bull_text_type_0,bull_text_0,无,无,Same,16,31,,general_config/base_bull.conf,base_bull.conf
+base_bull.conf,bull_text_type_0,bull_text_1,在[$RoomName$]完成任务获得^&*$YBNum$ Rp^&*点券奖励,在[$RoomName$]完成任务获得^&*$YBNum$ Rp^&*点券奖励,Same,17,33,,general_config/base_bull.conf,base_bull.conf
+base_bull.conf,bull_text_type_0,bull_text_2,在[$RoomName$]获得Jackpot ^&*$YBNum$ Rp^&*点券,在[$RoomName$]获得Jackpot ^&*$YBNum$ Rp^&*点券,Same,18,35,,general_config/base_bull.conf,base_bull.conf
+base_bull.conf,bull_text_type_0,bull_text_3,在[$RoomName$]获得BigWin ^&*$YBNum$ Rp^&*点券,在[$RoomName$]获得BigWin ^&*$YBNum$ Rp^&*点券,Same,19,37,,general_config/base_bull.conf,base_bull.conf
+base_bull.conf,bull_text_type_0,bull_text_4,在[$RoomName$]!@获得 ^&*$YBNum$^&*金币,在[$RoomName$]!@获得 ^&*$YBNum$^&*金币,Same,20,39,,general_config/base_bull.conf,base_bull.conf
+base_bull.conf,bull_text_type_1,bull_text_0,NULL,NULL,Same,24,47,,general_config/base_bull.conf,base_bull.conf
+base_bull.conf,bull_text_type_1,bull_text_1,Complete tasks and get ^&*Rp $YBNum$^&* coupon in[$RoomName$],Complete tasks and get ^&*Rp $YBNum$^&* coupon in[$RoomName$],Same,25,49,,general_config/base_bull.conf,base_bull.conf
+base_bull.conf,bull_text_type_1,bull_text_2,Win Jackpot and get ^&*Rp $YBNum$^&* coupon in [$RoomName$],Win Jackpot and get ^&*Rp $YBNum$^&* coupon in [$RoomName$],Same,26,51,,general_config/base_bull.conf,base_bull.conf
+base_bull.conf,bull_text_type_1,bull_text_3,Have BigWin and get ^&*Rp $YBNum$^&* coupon in [$RoomName$],Have BigWin and get ^&*Rp $YBNum$^&* coupon in [$RoomName$],Same,27,53,,general_config/base_bull.conf,base_bull.conf
+base_bull.conf,bull_text_type_1,bull_text_4,Get ^&*$YBNum$^&* coins !@in [$RoomName$],Get ^&*$YBNum$^&* coins !@in [$RoomName$],Same,28,55,,general_config/base_bull.conf,base_bull.conf
+base_bull.conf,bull_text_type_2,bull_text_0,NULL,NULL,Same,32,63,,general_config/base_bull.conf,base_bull.conf
+base_bull.conf,bull_text_type_2,bull_text_1,mendapatkan hadiah kupon ^&*Rp $YBNum$^&* dari misi di [$RoomName$],mendapatkan hadiah kupon ^&*Rp $YBNum$^&* dari misi di [$RoomName$],Same,33,65,,general_config/base_bull.conf,base_bull.conf
+base_bull.conf,bull_text_type_2,bull_text_2,mendapatkan Jackpot kupon ^&*Rp $YBNum$^&* di [$RoomName$],mendapatkan Jackpot kupon ^&*Rp $YBNum$^&* di [$RoomName$],Same,34,67,,general_config/base_bull.conf,base_bull.conf
+base_bull.conf,bull_text_type_2,bull_text_3,mendapatkan BigWin kupon ^&*Rp $YBNum$^&* di [$RoomName$],mendapatkan BigWin kupon ^&*Rp $YBNum$^&* di [$RoomName$],Same,35,69,,general_config/base_bull.conf,base_bull.conf
+base_bull.conf,bull_text_type_2,bull_text_4,Di[$RoomName$]!@Mendapatkan ^&*$YBNum$^&* Koin,Di[$RoomName$]!@Mendapatkan ^&*$YBNum$^&* Koin,Same,36,71,,general_config/base_bull.conf,base_bull.conf
+base_bull.conf,bull_text_type_3,bull_text_0,NULL,NULL,Same,41,81,,general_config/base_bull.conf,base_bull.conf
+base_bull.conf,bull_text_type_3,bull_text_1,Dapat hadiah kupon ^&*Rp$YBNum$^&* dari misi di [$RoomName$],Dapat hadiah kupon ^&*Rp$YBNum$^&* dari misi di [$RoomName$],Same,42,83,,general_config/base_bull.conf,base_bull.conf
+base_bull.conf,bull_text_type_3,bull_text_2,Dapat jackpot kopon ^&*Rp$YBNum$^&* di [$RoomName$],Dapat jackpot kopon ^&*Rp$YBNum$^&* di [$RoomName$],Same,43,85,,general_config/base_bull.conf,base_bull.conf
+base_bull.conf,bull_text_type_3,bull_text_3,Dapat BigWin kupon ^&*Rp$YBNum$^&* di [$RoomName$],Dapat BigWin kupon ^&*Rp$YBNum$^&* di [$RoomName$],Same,44,87,,general_config/base_bull.conf,base_bull.conf
+base_bull.conf,bull_text_type_3,bull_text_4,Di[$RoomName$]!@Mendapatkan ^&*$YBNum$^&* Koin,Di[$RoomName$]!@Mendapatkan ^&*$YBNum$^&* Koin,Same,45,89,,general_config/base_bull.conf,base_bull.conf
+base_bull.conf,,,,,TextOnly,,,字段值相同；注释、空行或换行格式不同,general_config/base_bull.conf,base_bull.conf
+base_comm.conf,Game_Base_Comm,vip_exp_infull,"10000,50000,1000000,5000000,20000000,50000000","10000,50000,1000000,5000000,20000000,50000000",Same,3,3,,general_config/base_comm.conf,base_comm.conf
+base_comm.conf,,,,,TextOnly,,,字段值相同；注释、空行或换行格式不同,general_config/base_comm.conf,base_comm.conf
+base_game_name.conf,base_game_name,game_name_0,乡村小秃头,Roma X,Different,3,4,,special_config/base_game_name.conf,base_game_name.conf
+base_game_name.conf,base_game_name,game_name_1,Si Botak Desa,Roma X,Different,4,6,,special_config/base_game_name.conf,base_game_name.conf
+base_game_name.conf,base_game_name,game_name_2,Si Botak Desa,Roma X,Different,5,8,,special_config/base_game_name.conf,base_game_name.conf
+base_game_name.conf,base_game_name,game_name_3,Si Botak Desa,Roma X,Different,6,10,,special_config/base_game_name.conf,base_game_name.conf
+base_level.conf,0,game_level_exp,0,0,Same,3,3,,general_config/base_level.conf,base_level.conf
+base_level.conf,0,game_award_money,0,0,Same,4,4,,general_config/base_level.conf,base_level.conf
+base_level.conf,1,game_level_exp,72000,72000,Same,6,6,,general_config/base_level.conf,base_level.conf
+base_level.conf,1,game_award_money,500000,500000,Same,7,7,,general_config/base_level.conf,base_level.conf
+base_level.conf,2,game_level_exp,108000,108000,Same,9,9,,general_config/base_level.conf,base_level.conf
+base_level.conf,2,game_award_money,500000,500000,Same,10,10,,general_config/base_level.conf,base_level.conf
+base_level.conf,3,game_level_exp,270000,270000,Same,12,12,,general_config/base_level.conf,base_level.conf
+base_level.conf,3,game_award_money,500000,500000,Same,13,13,,general_config/base_level.conf,base_level.conf
+base_level.conf,4,game_level_exp,702000,702000,Same,15,15,,general_config/base_level.conf,base_level.conf
+base_level.conf,4,game_award_money,500000,500000,Same,16,16,,general_config/base_level.conf,base_level.conf
+base_level.conf,5,game_level_exp,291600,291600,Same,18,18,,general_config/base_level.conf,base_level.conf
+base_level.conf,5,game_award_money,500000,500000,Same,19,19,,general_config/base_level.conf,base_level.conf
+base_level.conf,6,game_level_exp,1458000,1458000,Same,21,21,,general_config/base_level.conf,base_level.conf
+base_level.conf,6,game_award_money,500000,500000,Same,22,22,,general_config/base_level.conf,base_level.conf
+base_level.conf,7,game_level_exp,1944000,1944000,Same,24,24,,general_config/base_level.conf,base_level.conf
+base_level.conf,7,game_award_money,1000000,1000000,Same,25,25,,general_config/base_level.conf,base_level.conf
+base_level.conf,8,game_level_exp,2430000,2430000,Same,27,27,,general_config/base_level.conf,base_level.conf
+base_level.conf,8,game_award_money,1000000,1000000,Same,28,28,,general_config/base_level.conf,base_level.conf
+base_level.conf,9,game_level_exp,3240000,3240000,Same,30,30,,general_config/base_level.conf,base_level.conf
+base_level.conf,9,game_award_money,1000000,1000000,Same,31,31,,general_config/base_level.conf,base_level.conf
+base_level.conf,10,game_level_exp,4860000,4860000,Same,33,33,,general_config/base_level.conf,base_level.conf
+base_level.conf,10,game_award_money,1000000,1000000,Same,34,34,,general_config/base_level.conf,base_level.conf
+base_level.conf,11,game_level_exp,6480000,6480000,Same,36,36,,general_config/base_level.conf,base_level.conf
+base_level.conf,11,game_award_money,1000000,1000000,Same,37,37,,general_config/base_level.conf,base_level.conf
+base_level.conf,12,game_level_exp,9720000,9720000,Same,39,39,,general_config/base_level.conf,base_level.conf
+base_level.conf,12,game_award_money,1000000,1000000,Same,40,40,,general_config/base_level.conf,base_level.conf
+base_level.conf,13,game_level_exp,15120000,15120000,Same,42,42,,general_config/base_level.conf,base_level.conf
+base_level.conf,13,game_award_money,2000000,2000000,Same,43,43,,general_config/base_level.conf,base_level.conf
+base_level.conf,14,game_level_exp,21600000,21600000,Same,45,45,,general_config/base_level.conf,base_level.conf
+base_level.conf,14,game_award_money,2000000,2000000,Same,46,46,,general_config/base_level.conf,base_level.conf
+base_level.conf,15,game_level_exp,30240000,30240000,Same,48,48,,general_config/base_level.conf,base_level.conf
+base_level.conf,15,game_award_money,2000000,2000000,Same,49,49,,general_config/base_level.conf,base_level.conf
+base_level.conf,16,game_level_exp,39960000,39960000,Same,51,51,,general_config/base_level.conf,base_level.conf
+base_level.conf,16,game_award_money,2000000,2000000,Same,52,52,,general_config/base_level.conf,base_level.conf
+base_level.conf,17,game_level_exp,51840000,51840000,Same,54,54,,general_config/base_level.conf,base_level.conf
+base_level.conf,17,game_award_money,2000000,2000000,Same,55,55,,general_config/base_level.conf,base_level.conf
+base_level.conf,18,game_level_exp,64800000,64800000,Same,57,57,,general_config/base_level.conf,base_level.conf
+base_level.conf,18,game_award_money,2000000,2000000,Same,58,58,,general_config/base_level.conf,base_level.conf
+base_level.conf,19,game_level_exp,79920000,79920000,Same,60,60,,general_config/base_level.conf,base_level.conf
+base_level.conf,19,game_award_money,3000000,3000000,Same,61,61,,general_config/base_level.conf,base_level.conf
+base_level.conf,20,game_level_exp,96120000,96120000,Same,63,63,,general_config/base_level.conf,base_level.conf
+base_level.conf,20,game_award_money,3000000,3000000,Same,64,64,,general_config/base_level.conf,base_level.conf
+base_level.conf,21,game_level_exp,114480000,114480000,Same,66,66,,general_config/base_level.conf,base_level.conf
+base_level.conf,21,game_award_money,3000000,3000000,Same,67,67,,general_config/base_level.conf,base_level.conf
+base_level.conf,22,game_level_exp,133920000,133920000,Same,69,69,,general_config/base_level.conf,base_level.conf
+base_level.conf,22,game_award_money,3000000,3000000,Same,70,70,,general_config/base_level.conf,base_level.conf
+base_level.conf,23,game_level_exp,155520000,155520000,Same,72,72,,general_config/base_level.conf,base_level.conf
+base_level.conf,23,game_award_money,3000000,3000000,Same,73,73,,general_config/base_level.conf,base_level.conf
+base_level.conf,24,game_level_exp,178200000,178200000,Same,75,75,,general_config/base_level.conf,base_level.conf
+base_level.conf,24,game_award_money,3000000,3000000,Same,76,76,,general_config/base_level.conf,base_level.conf
+base_level.conf,25,game_level_exp,203040000,203040000,Same,78,78,,general_config/base_level.conf,base_level.conf
+base_level.conf,25,game_award_money,3000000,3000000,Same,79,79,,general_config/base_level.conf,base_level.conf
+base_level.conf,26,game_level_exp,228960000,228960000,Same,81,81,,general_config/base_level.conf,base_level.conf
+base_level.conf,26,game_award_money,3000000,3000000,Same,82,82,,general_config/base_level.conf,base_level.conf
+base_level.conf,27,game_level_exp,257040000,257040000,Same,84,84,,general_config/base_level.conf,base_level.conf
+base_level.conf,27,game_award_money,3000000,3000000,Same,85,85,,general_config/base_level.conf,base_level.conf
+base_level.conf,28,game_level_exp,286200000,286200000,Same,87,87,,general_config/base_level.conf,base_level.conf
+base_level.conf,28,game_award_money,3000000,3000000,Same,88,88,,general_config/base_level.conf,base_level.conf
+base_level.conf,29,game_level_exp,317520000,317520000,Same,90,90,,general_config/base_level.conf,base_level.conf
+base_level.conf,29,game_award_money,3000000,3000000,Same,91,91,,general_config/base_level.conf,base_level.conf
+base_level.conf,30,game_level_exp,349920000,,OnlyYngg,93,,,general_config/base_level.conf,base_level.conf
+base_level.conf,30,game_award_money,4000000,,OnlyYngg,94,,,general_config/base_level.conf,base_level.conf
+base_level.conf,31,game_level_exp,384480000,,OnlyYngg,96,,,general_config/base_level.conf,base_level.conf
+base_level.conf,31,game_award_money,4000000,,OnlyYngg,97,,,general_config/base_level.conf,base_level.conf
+base_level.conf,32,game_level_exp,420120000,,OnlyYngg,99,,,general_config/base_level.conf,base_level.conf
+base_level.conf,32,game_award_money,4000000,,OnlyYngg,100,,,general_config/base_level.conf,base_level.conf
+base_level.conf,33,game_level_exp,457920000,,OnlyYngg,102,,,general_config/base_level.conf,base_level.conf
+base_level.conf,33,game_award_money,4000000,,OnlyYngg,103,,,general_config/base_level.conf,base_level.conf
+base_level.conf,34,game_level_exp,496800000,,OnlyYngg,105,,,general_config/base_level.conf,base_level.conf
+base_level.conf,34,game_award_money,4000000,,OnlyYngg,106,,,general_config/base_level.conf,base_level.conf
+base_text.conf,msg_text_type_0,msg_text_0,您的账号在其他地方登录!@请重新登录。,您的账号在其他地方登录!@请重新登录。,Same,4,7,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_1,"现在版本与之前游戏版本不匹配,请用之前游戏客户端进入游戏。","现在版本与之前游戏版本不匹配,请用之前游戏客户端进入游戏。",Same,5,9,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_2,游戏版本不匹配!@请升级到最新客户端。,游戏版本不匹配!@请升级到最新客户端。,Same,6,11,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_3,游戏房间已关闭!@请稍后再试。,游戏房间已关闭!@请稍后再试。,Same,7,13,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_4,游戏房间正在维护!@请稍后再试。,游戏房间正在维护!@请稍后再试。,Same,8,15,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_5,"游戏房间满员,请稍后再试。","游戏房间满员,请稍后再试。",Same,9,17,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_6,"您的本次登录已失效,!@请重新登录。","您的本次登录已失效,!@请重新登录。",Same,10,19,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_7,您的账号已禁用。,您的账号已禁用。,Same,11,21,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_8,"用户数据获取失败,请稍后进入游戏。","用户数据获取失败,请稍后进入游戏。",Same,12,23,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_9,游戏中遇见错误[%d],游戏中遇见错误[%d],Same,13,25,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_10,游戏房间已关闭!@请稍后再试。,游戏房间已关闭!@请稍后再试。,Same,14,27,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_11,游戏房间正在维护!@请稍后再试。,游戏房间正在维护!@请稍后再试。,Same,15,29,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_12,您的账号金币不足!,您的账号金币不足!,Same,16,31,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_13,"您的金币数量过多,请前往更高级房间游戏。","您的金币数量过多,请前往更高级房间游戏。",Same,17,33,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_14,"坐下异常,请重新再试。","坐下异常,请重新再试。",Same,18,35,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_15,长时间没有操作游戏!@请重新进入。,长时间没有操作游戏!@请重新进入。,Same,19,37,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_16,游戏已经很长时间没有结束，将被迫解散！,游戏已经很长时间没有结束，将被迫解散！,Same,20,39,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_17,"获取用户游戏信息失败,请稍后进入","获取用户游戏信息失败,请稍后进入",Same,21,41,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_18,"服务器将在%d分钟后维护,!@请尽快完成游戏。","服务器将在%d分钟后维护,!@请尽快完成游戏。",Same,22,43,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_19,"服务器将在%d秒后维护,!@请尽快完成游戏。","服务器将在%d秒后维护,!@请尽快完成游戏。",Same,23,45,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_20,游戏房间正在维护!@请稍后再试。,游戏房间正在维护!@请稍后再试。,Same,24,47,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_21,该位置已被使用!,该位置已被使用!,Same,25,49,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_22,您的好友已离开游戏。,您的好友已离开游戏。,Same,26,51,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_23,您的好友正在观战中。,您的好友正在观战中。,Same,27,53,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_24,出牌错误,出牌错误,Same,28,55,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_25,ALLIN后不能放弃,ALLIN后不能放弃,Same,29,57,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_26,站起功能关闭,站起功能关闭,Same,30,59,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_27,长时间未下注,长时间未下注,Same,31,61,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_28,等级超过%d才可下注,等级超过%d才可下注,Same,32,63,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_29,金币超过%lld才可下注,金币超过%lld才可下注,Same,33,65,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_30,您下注的筹码已经到达上限,您下注的筹码已经到达上限,Same,34,67,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_31,等级达到%d级才能开始游戏,等级达到%d级才能开始游戏,Same,35,69,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_32,操作不符合游戏规则，请重新登录！,操作不符合游戏规则，请重新登录！,Same,36,71,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_33,您今天已经玩SLOT %d小时，请注意休息！,您今天已经玩SLOT %d小时，请注意休息！,Same,37,73,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_34,您今天已经玩SLOT %d小时，请明日再来！,您今天已经玩SLOT %d小时，请明日再来！,Same,38,75,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_35,系统检查到不正常游戏行为，请正常进行游戏,系统检查到不正常游戏行为，请正常进行游戏,Same,39,77,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_36,VIP等级不足！,VIP等级不足！,Same,40,79,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_37,不在活动时间,不在活动时间,Same,41,81,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_38,本期活动已开奖,,OnlyYngg,42,,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_0,msg_text_39,比赛结束了,,OnlyYngg,43,,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_0,Your account is logged in elsewhere！ Please log in again.,Your account is logged in elsewhere！ Please log in again.,Same,47,89,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_1,Mismarched vension！Please download again.,Mismarched vension！Please download again.,Same,48,91,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_2,Mismarched vension！Please update to the latest.,Mismarched vension！Please update to the latest.,Same,49,93,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_3,Room closed！Please try again later.,Room closed！Please try again later.,Same,50,95,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_4,Room maintenance！ Please try again later.,Room maintenance！ Please try again later.,Same,51,97,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_5,"Full players, please try again later.","Full players, please try again later.",Same,52,99,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_6,Invalid login！Please log in again.,Invalid login！Please log in again.,Same,53,101,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_7,Account disabled！,Account disabled！,Same,54,103,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_8,"Failed to acquire user’s data, please try again later.","Failed to acquire user’s data, please try again later.",Same,55,105,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_9,Error: [%d],Error: [%d],Same,56,107,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_10,Room closed！Please try again later.,Room closed！Please try again later.,Same,57,109,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_11,Room maintenance！ Please try again later.,Room maintenance！ Please try again later.,Same,58,111,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_12,Your gold coins are not enough！,Your gold coins are not enough！,Same,59,113,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_13,"Congratulations, you can go to a higher room, please go to the superior room to continue the game.","Congratulations, you can go to a higher room, please go to the superior room to continue the game.",Same,60,115,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_14,Please try to check your network condition or re-enter the game.,Please try to check your network condition or re-enter the game.,Same,61,117,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_15,"There is no operation for a long time,Please log in again.","There is no operation for a long time,Please log in again.",Same,62,119,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_16,The game has not ended for a long time and will be forced to disband!,The game has not ended for a long time and will be forced to disband!,Same,63,121,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_17,"Failed to acquire user’s data, please try again later.","Failed to acquire user’s data, please try again later.",Same,64,123,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_18,"The server will be maintained after %d minutes,Please complete the game as soon as possible！","The server will be maintained after %d minutes,Please complete the game as soon as possible！",Same,65,125,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_19,"The server will be maintained after %d seconds,Please complete the game as soon as possible！","The server will be maintained after %d seconds,Please complete the game as soon as possible！",Same,66,127,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_20,Room maintenance！ Please try again later.,Room maintenance！ Please try again later.,Same,67,129,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_21,This location is already in use！,This location is already in use！,Same,68,131,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_22,Your friend left the game！,Your friend left the game！,Same,69,133,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_23,Your friends are watching！,Your friends are watching！,Same,70,135,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_24,send card error,send card error,Same,71,137,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_25,Can't give up after ALL IN,Can't give up after ALL IN,Same,72,139,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_26,Stand up function off,Stand up function off,Same,73,141,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_27,"You have not placed a bet for multiple rounds and have been kicked out of the room, please re-enter","You have not placed a bet for multiple rounds and have been kicked out of the room, please re-enter",Same,74,143,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_28,Reach level %d to bet ~,Reach level %d to bet ~,Same,75,145,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_29,Reach %lld gold coins to bet ~,Reach %lld gold coins to bet ~,Same,76,147,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_30,"Batas taruhan ronde ini sudah max, silakan tunggu undian~","Batas taruhan ronde ini sudah max, silakan tunggu undian~",Same,77,149,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_31,Reach level %d to play the game.,Reach level %d to play the game.,Same,78,151,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_32,"The operation does not comply with the rules of the game, please log in again!","The operation does not comply with the rules of the game, please log in again!",Same,79,153,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_33,"You have played SLOT for %d hour today, please take a break!","You have played SLOT for %d hour today, please take a break!",Same,80,155,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_34,"You have played SLOT for %d hours today, please come back tomorrow!","You have played SLOT for %d hours today, please come back tomorrow!",Same,81,157,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_35,"The system detects abnormal game behavior, please play the game normally","The system detects abnormal game behavior, please play the game normally",Same,82,159,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_36,Insufficient VIP level!,Insufficient VIP level!,Same,83,161,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_37,Not at the event time.,Not at the event time.,Same,84,163,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_38,The draw for this period has already begun.,,OnlyYngg,85,,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_1,msg_text_39,The match has ended.,,OnlyYngg,86,,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_0,"Akun anda sudah login diperangkat lainnya, harap login ulang.","Akun anda sudah login diperangkat lainnya, harap login ulang.",Same,91,173,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_1,"Versi saat ini tidak cocok dengan versi yang lama, harap gunakan versi lama untuk masuk ke dalam permainan.","Versi saat ini tidak cocok dengan versi yang lama, harap gunakan versi lama untuk masuk ke dalam permainan.",Same,92,175,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_2,"Versi permainan tidak cocok, harap upgrade ke versi terbaru.","Versi permainan tidak cocok, harap upgrade ke versi terbaru.",Same,93,177,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_3,"Ruang permainan sudah ditutup, harap coba ulang beberapa saat lagi.","Ruang permainan sudah ditutup, harap coba ulang beberapa saat lagi.",Same,94,179,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_4,"Ruang permainan sedang maintenance, harap coba ulang beberapa saat lagi.","Ruang permainan sedang maintenance, harap coba ulang beberapa saat lagi.",Same,95,181,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_5,"Ruang ini sudah penuh, harap pilih ruang lainnya.","Ruang ini sudah penuh, harap pilih ruang lainnya.",Same,96,183,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_6,"Login anda sudah tidak efektif, harap login ulang.","Login anda sudah tidak efektif, harap login ulang.",Same,97,185,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_7,Akun Anda telah dinonaktifkan.,Posisi tersebut sudah digunakan.,Different,98,187,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_8,"Gagal mendapatkan data pemain, harap coba login ulang.","Gagal mendapatkan data pemain, harap coba login ulang.",Same,99,189,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_9,Error :[%d],Error :[%d],Same,100,191,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_10,"Ruang permainan sudah ditutup, harap coba ulang beberapa saat lagi.","Ruang permainan sudah ditutup, harap coba ulang beberapa saat lagi.",Same,101,193,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_11,"Ruang permainan sedang maintenance, harap coba ulang beberapa saat lagi.","Ruang permainan sedang maintenance, harap coba ulang beberapa saat lagi.",Same,102,195,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_12,Koin akun anda tidak cukup,Koin akun anda tidak cukup,Same,103,197,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_13,"Jumlah koin anda terlalu banyak, harap pergi ke ruang selanjutnya untuk bermain.","Jumlah koin anda terlalu banyak, harap pergi ke ruang selanjutnya untuk bermain.",Same,104,199,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_14,"Terdapat kesalahan saat memasuki ruang, harap coba ulang beberapa saat lagi.","Terdapat kesalahan saat memasuki ruang, harap coba ulang beberapa saat lagi.",Same,105,201,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_15,"Dalam waktu panjang tidak ada aktivitas, harap login ulang kedalam permainan.","Dalam waktu panjang tidak ada aktivitas, harap login ulang kedalam permainan.",Same,106,203,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_16,"Permainan belum berakhir dalam jangka waktu yang lama, terpaksa dibubarkan!","Permainan belum berakhir dalam jangka waktu yang lama, terpaksa dibubarkan!",Same,107,205,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_17,"Gagal mendapatkan informasi pemain, harap coba masuk kembali.","Gagal mendapatkan informasi pemain, harap coba masuk kembali.",Same,108,207,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_18,"Server akan dimaintenance dalam waktu %d menit,harap segera menyelesaikan permainan！","Server akan dimaintenance dalam waktu %d menit,harap segera menyelesaikan permainan！",Same,109,209,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_19,"Server akan dimaintenance dalam waktu %d detik,harap segera menyelesaikan permainan！","Server akan dimaintenance dalam waktu %d detik,harap segera menyelesaikan permainan！",Same,110,211,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_20,"Ruang permainan sedang maintenance, harap coba ulang beberapa saat lagi.","Ruang permainan sedang maintenance, harap coba ulang beberapa saat lagi.",Same,111,213,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_21,Posisi tersebut sudah digunakan！,Posisi tersebut sudah digunakan！,Same,112,215,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_22,Temanmu meninggalkan permainan！,Temanmu meninggalkan permainan！,Same,113,217,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_23,Temanmu sedang menonton！,Temanmu sedang menonton！,Same,114,219,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_24,Kartu yang salah,Kartu yang salah,Same,115,221,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_25,Tidak dpt menyerah stlh ALL IN,Tidak dpt menyerah stlh ALL IN,Same,116,223,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_26,Fitur berdiri sudah ditutup,Fitur berdiri sudah ditutup,Same,117,225,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_27,"Anda belum memasang taruhan untuk beberapa ronde dan telah dikeluarkan dari ruangan, silakan masuk kembali","Anda belum memasang taruhan untuk beberapa ronde dan telah dikeluarkan dari ruangan, silakan masuk kembali",Same,118,227,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_28,Capai level %d untuk bertaruh~,Capai level %d untuk bertaruh~,Same,119,229,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_29,Capai %lld koin emas untuk bertaruh~,Capai %lld koin emas untuk bertaruh~,Same,120,231,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_30,"Batas taruhan ronde ini sudah max, silakan tunggu undian~","Batas taruhan ronde ini sudah max, silakan tunggu undian~",Same,121,233,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_31,Capai level %d untuk memulai permainan.,Capai level %d untuk memulai permainan.,Same,122,235,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_32,"Operasi tidak sesuai dengan aturan permainan, silakan login ulang!","Operasi tidak sesuai dengan aturan permainan, silakan login ulang!",Same,123,237,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_33,"Anda telah memainkan SLOT selama %d jam hari ini, silakan istirahat dahulu!","Anda telah memainkan SLOT selama %d jam hari ini, silakan istirahat dahulu!",Same,124,239,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_34,"Anda telah memainkan SLOT selama %d jam hari ini, silakan kembali besok!","Anda telah memainkan SLOT selama %d jam hari ini, silakan kembali besok!",Same,125,241,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_35,"Sistem mendeteksi game tidak normal, harap mainkan game secara normal.","Sistem mendeteksi game tidak normal, harap mainkan game secara normal.",Same,126,243,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_36,Level VIP tidak cukup!,Level VIP tidak cukup!,Same,127,245,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_37,Event periode ini sudah selesai.,Event periode ini sudah selesai.,Same,128,247,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_38,Pengundian periode ini sudah dimulai.,,OnlyYngg,129,,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_2,msg_text_39,Turnamen sudah berakhir.,,OnlyYngg,130,,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_0,"Akaun anda sudah dilog masuk pada peranti lain, sila log masuk semula.","Akaun anda sudah dilog masuk pada peranti lain, sila log masuk semula.",Same,137,261,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_1,"Versi semasa tidak sepadan dengan versi lama, sila gunakan versi lama untuk memasuki permainan.","Versi semasa tidak sepadan dengan versi lama, sila gunakan versi lama untuk memasuki permainan.",Same,138,263,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_2,"Versi permainan tidak sepadan, sila upgrade ke versi terkini.","Versi permainan tidak sepadan, sila upgrade ke versi terkini.",Same,139,265,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_3,"Bilik permainan telah ditutup, sila cuba sebentar lagi.","Bilik permainan telah ditutup, sila cuba sebentar lagi.",Same,140,267,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_4,"Bilik permainan sedang dalam penyelenggaraan, sila cuba sebentar lagi.","Bilik permainan sedang dalam penyelenggaraan, sila cuba sebentar lagi.",Same,141,269,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_5,"Bilik ini penuh, sila pilih bilik lain.","Bilik ini penuh, sila pilih bilik lain.",Same,142,271,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_6,"Log masuk anda tidak berkesan, sila masuk semula.","Log masuk anda tidak berkesan, sila masuk semula.",Same,143,273,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_7,Kedudukan sudah digunakan.,Kedudukan sudah digunakan.,Same,144,275,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_8,"Gagal mendapatkan data permainan, sila cuba log masuk semula.","Gagal mendapatkan data permainan, sila cuba log masuk semula.",Same,145,277,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_9,Error :[%d],Error :[%d],Same,146,279,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_10,"Bilik permainan telah ditutup, sila cuba lagi","Bilik permainan telah ditutup, sila cuba lagi",Same,147,281,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_11,"Bilik permainan sedang penyelanggaran, sila cuba sebentar lagi.","Bilik permainan sedang penyelanggaran, sila cuba sebentar lagi.",Same,148,283,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_12,Wang syiling anda tidak mencukupi,Wang syiling anda tidak mencukupi,Same,149,285,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_13,"Jumlah syiling anda terlalu banyak, sila ke bilik seterusnya untuk bermain.","Jumlah syiling anda terlalu banyak, sila ke bilik seterusnya untuk bermain.",Same,150,287,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_14,"Terdapat kesalahan semasa memasuki ruang, harap cuba sebentar lagi.","Terdapat kesalahan semasa memasuki ruang, harap cuba sebentar lagi.",Same,151,289,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_15,"Tidak ada aktiviti untuk waktu yang lama, sila masuk semula ke permainan.","Tidak ada aktiviti untuk waktu yang lama, sila masuk semula ke permainan.",Same,152,291,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_16,"Permainan ini belum berakhir lama, terpaksa dibubarkan!","Permainan ini belum berakhir lama, terpaksa dibubarkan!",Same,153,293,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_17,"Gagal mendapatkan maklumat pemain, cuba log masuk lagi.","Gagal mendapatkan maklumat pemain, cuba log masuk lagi.",Same,154,295,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_18,"Server akan dalam penyelenggaraan dalam masa %d minit, sila segera selesaikan permainan!","Server akan dalam penyelenggaraan dalam masa %d minit, sila segera selesaikan permainan!",Same,155,297,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_19,"Server akan dalam penyelenggaraan dalam masa %d saat,sila segera selesaikan permainan!","Server akan dalam penyelenggaraan dalam masa %d saat,sila segera selesaikan permainan!",Same,156,299,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_20,"Bilik permainan sedang dalam penyelenggaraan, sila cuba sebentar lagi.","Bilik permainan sedang dalam penyelenggaraan, sila cuba sebentar lagi.",Same,157,301,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_21,Kedudukan sudah digunakan!,Kedudukan sudah digunakan!,Same,158,303,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_22,Rakan anda meninggalkan permainan!,Rakan anda meninggalkan permainan!,Same,159,305,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_23,Rakan anda sedang menonton!,Rakan anda sedang menonton!,Same,160,307,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_24,Kad yang salah,Kad yang salah,Same,161,309,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_25,Tidak boleh putus asa setelah ALL IN,Tidak boleh putus asa setelah ALL IN,Same,162,311,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_26,Fungsi berdiri ditutup,Fungsi berdiri ditutup,Same,163,313,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_27,"Anda belum meletakkan taruhan selama beberapa pusingan dan diusir keluar dari bilik, sila masuk semula.","Anda belum meletakkan taruhan selama beberapa pusingan dan diusir keluar dari bilik, sila masuk semula.",Same,164,315,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_28,Capai tahap %d untuk bertaruh~,Capai tahap %d untuk bertaruh~,Same,165,317,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_29,Capai %d syiling emas untuk bertaruh~,Capai %d syiling emas untuk bertaruh~,Same,166,319,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_30,"Had pertaruhan pusingan ini sudah maximum, tunggu undian~","Had pertaruhan pusingan ini sudah maximum, tunggu undian~",Same,167,321,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_31,Capai tahap %d untuk mulai permainan.,Capai tahap %d untuk mulai permainan.,Same,168,323,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_32,"Operasi tidak sesuai  peraturan permainan, sila masuk semula.","Operasi tidak sesuai  peraturan permainan, sila masuk semula.",Same,169,325,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_33,"Anda bermain SLOT untuk %d jam hari ini, sila rehat dahulu!","Anda bermain SLOT untuk %d jam hari ini, sila rehat dahulu!",Same,170,327,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_34,"Anda bermain SLOT untuk %d jam hari ini, sila kembali esok!","Anda bermain SLOT untuk %d jam hari ini, sila kembali esok!",Same,171,329,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_35,"Sistem mengesan permainan tidak normal, sila bermain dengan normal.","Sistem mengesan permainan tidak normal, sila bermain dengan normal.",Same,172,331,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_36,Peringkat VIP tidak mencukupi!,Peringkat VIP tidak mencukupi!,Same,173,333,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_37,Not at the event time.,Not at the event time.,Same,174,335,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_38,The draw for this period has already begun.,,OnlyYngg,175,,,general_config/base_text.conf,base_text.conf
+base_text.conf,msg_text_type_3,msg_text_39,The match has ended.,,OnlyYngg,176,,,general_config/base_text.conf,base_text.conf
+game_achievement.conf,System Base Info,if_start,1,1,Same,3,3,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,game_achievement,all_ach_info,"301,1|302,1|303,1|304,1|305,1|306,1|307,1|308,1|309,1|310,1|311,1|312,1|313,1|314,1|315,1|316,1|317,1|318,1|319,1|320,1|321,1|322,1|323,1|324,1","301,1|302,1|303,1|304,1|305,1|306,1|307,1|308,1|309,1|310,1|311,1|312,1|313,1|314,1|315,1|316,1|317,1|318,1|319,1|320,1|321,1|322,1|323,1|324,1",Same,7,7,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,game_achievement,no_supported_player,"1,40,41,42,43,44,45,61,62,21",,OnlyYngg,9,,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,0,ach_name_301,财神手,财神手,Same,13,11,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,0,ach_name_302,一押暴富,一押暴富,Same,14,12,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,0,ach_name_303,旋转大师,旋转大师,Same,15,13,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,0,ach_name_304,愈押愈富,愈押愈富,Same,16,14,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,0,ach_name_305,免费赢家,免费赢家,Same,17,15,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,0,ach_name_306,一押巨富,一押巨富,Same,18,16,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,0,ach_name_307,豪赌侠客,豪赌侠客,Same,19,17,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,0,ach_name_308,消除达人,消除达人,Same,20,18,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,0,ach_name_309,家财万贯,家财万贯,Same,21,19,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,0,ach_name_310,一押豪中,一押豪中,Same,22,20,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,0,ach_name_311,豪赌大神,豪赌大神,Same,23,21,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,0,ach_name_312,免费赢家,免费赢家,Same,24,22,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,0,ach_name_313,好运连连,好运连连,Same,25,23,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,0,ach_name_314,大赢家,大赢家,Same,26,24,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,0,ach_name_315,一押巅峰,一押巅峰,Same,27,25,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,0,ach_name_316,MEGA赢家,MEGA赢家,Same,28,26,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,0,ach_name_317,SUPER赢家,SUPER赢家,Same,29,27,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,0,ach_name_318,EPIC赢家,EPIC赢家,Same,30,28,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,0,ach_name_319,ULTRA赢家,ULTRA赢家,Same,31,29,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,0,ach_name_320,豪赌贵族,豪赌贵族,Same,32,30,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,0,ach_name_321,分散收藏家,分散收藏家,Same,33,31,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,0,ach_name_322,彩金大师,彩金大师,Same,34,32,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,0,ach_name_323,连线大神,连线大神,Same,35,33,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,0,ach_name_324,免费风暴,免费风暴,Same,36,34,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,1,ach_name_301,God's Hand,God's Hand,Same,39,37,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,1,ach_name_302,Instant Fortune,Instant Fortune,Same,40,38,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,1,ach_name_303,SPIN Master,SPIN Master,Same,41,39,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,1,ach_name_304,Bet Addict,Bet Addict,Same,42,40,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,1,ach_name_305,Free Spins Master,Free Spins Master,Same,43,41,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,1,ach_name_306,Betting King,Betting King,Same,44,42,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,1,ach_name_307,Daredevil Bet,Daredevil Bet,Same,45,43,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,1,ach_name_308,The Eliminator,The Eliminator,Same,46,44,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,1,ach_name_309,Prince of Wealth,Prince of Wealth,Same,47,45,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,1,ach_name_310,Lucky Betting,Lucky Betting,Same,48,46,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,1,ach_name_311,Bet God,Bet God,Same,49,47,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,1,ach_name_312,Freebies Win,Freebies Win,Same,50,48,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,1,ach_name_313,The Luckiest,The Luckiest,Same,51,49,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,1,ach_name_314,Big Winner,Big Winner,Same,52,50,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,1,ach_name_315,Ultimate Bet,Ultimate Bet,Same,53,51,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,1,ach_name_316,Lucky Winner,Lucky Winner,Same,54,52,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,1,ach_name_317,Super Winner,Super Winner,Same,55,53,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,1,ach_name_318,Master Winner,Master Winner,Same,56,54,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,1,ach_name_319,God Winner,God Winner,Same,57,55,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,1,ach_name_320,Eternal Bet,Eternal Bet,Same,58,56,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,1,ach_name_321,Scatter King,Scatter King,Same,59,57,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,1,ach_name_322,Master Jackpot,Master Jackpot,Same,60,58,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,1,ach_name_323,Line Master,Line Master,Same,61,59,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,1,ach_name_324,King of Freebies,King of Freebies,Same,62,60,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,2,ach_name_301,Tangan Dewa,Tangan Dewa,Same,65,63,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,2,ach_name_302,Kaya Mendadak,Kaya Mendadak,Same,66,64,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,2,ach_name_303,Master SPIN,Master SPIN,Same,67,65,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,2,ach_name_304,Penggila Bet,Penggila Bet,Same,68,66,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,2,ach_name_305,Master Gratisan,Master Gratisan,Same,69,67,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,2,ach_name_306,Raja Bet,Raja Bet,Same,70,68,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,2,ach_name_307,Pemberani Bet,Pemberani Bet,Same,71,69,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,2,ach_name_308,Sang Eliminator,Sang Eliminator,Same,72,70,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,2,ach_name_309,Pangeran Kekayaan,Pangeran Kekayaan,Same,73,71,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,2,ach_name_310,Bet Hoki,Bet Hoki,Same,74,72,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,2,ach_name_311,Dewa Bet,Dewa Bet,Same,75,73,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,2,ach_name_312,Menang Gratisan,Menang Gratisan,Same,76,74,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,2,ach_name_313,Si Paling Hoki,Si Paling Hoki,Same,77,75,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,2,ach_name_314,Pemenang Besar,Pemenang Besar,Same,78,76,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,2,ach_name_315,Bet Tertinggi,Bet Tertinggi,Same,79,77,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,2,ach_name_316,Pemenang Hoki,Pemenang Hoki,Same,80,78,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,2,ach_name_317,Pemenang Super,Pemenang Super,Same,81,79,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,2,ach_name_318,Pemenang Master,Pemenang Master,Same,82,80,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,2,ach_name_319,Pemenang Dewa,Pemenang Dewa,Same,83,81,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,2,ach_name_320,Bet Abadi,Bet Abadi,Same,84,82,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,2,ach_name_321,Raja Scatter,Raja Scatter,Same,85,83,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,2,ach_name_322,Master Jackpot,Master Jackpot,Same,86,84,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,2,ach_name_323,Ahli Garis,Ahli Garis,Same,87,85,,general_config/game_achievement.conf,game_achievement.conf
+game_achievement.conf,2,ach_name_324,Extra FREE SPINS,Extra FREE SPINS,Same,88,86,,general_config/game_achievement.conf,game_achievement.conf
+game_act_coin.conf,10008,drop_coin_num,1,1,Same,3,3,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10008,max_num,99999,99999,Same,5,5,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10008,min_game_time,1,1,Same,7,7,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10008,daily_act_game_ver,8,8,Same,9,9,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10008,activity_coin_rule,0,0,Same,12,12,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10008,activity_coin_task_notice,0,0,Same,14,14,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10008,activity_coin_drop_min_bet,10000000,10000000,Same,16,16,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10008,drop_bet_rate,"1000,1000,1000,1000,1000,1000,1000,1000,1000","1000,1000,1000,1000,1000,1000,1000,1000,1000",Same,18,18,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10008,drop_bet_progress,"400,800,2000,4000,8000,20000,40000,80000,113000","400,800,2000,4000,8000,20000,40000,80000,113000",Same,20,20,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10010,drop_coin_num,1,1,Same,24,24,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10010,max_num,99999,99999,Same,26,26,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10010,min_game_time,1,1,Same,28,28,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10010,daily_act_game_ver,8,8,Same,30,30,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10010,activity_coin_rule,0,0,Same,33,33,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10010,activity_coin_task_notice,0,0,Same,35,35,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10010,activity_coin_drop_min_bet,10000000,10000000,Same,37,37,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10010,drop_bet_rate,"1000,1000,1000,1000,1000,1000,1000,1000,10000","1000,1000,1000,1000,1000,1000,1000,1000,10000",Same,39,39,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10010,drop_bet_progress,"400,800,2000,4000,8000,20000,40000,80000,113000","400,800,2000,4000,8000,20000,40000,80000,113000",Same,41,41,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10011,drop_coin_num,1,1,Same,45,45,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10011,max_num,99999,99999,Same,47,47,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10011,min_game_time,1,1,Same,49,49,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10011,daily_act_game_ver,8,8,Same,51,51,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10011,activity_coin_rule,0,0,Same,54,54,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10011,activity_coin_task_notice,0,0,Same,56,56,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10011,activity_coin_drop_min_bet,10000000,10000000,Same,58,58,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10011,drop_bet_rate,"10000,10000,10000,10000,10000,10000,10000,10000,10000","10000,10000,10000,10000,10000,10000,10000,10000,10000",Same,60,60,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10011,drop_bet_progress,"400,800,2000,4000,8000,20000,40000,80000,113000","400,800,2000,4000,8000,20000,40000,80000,113000",Same,62,62,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10012,drop_coin_num,1,1,Same,65,65,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10012,max_num,99999,99999,Same,67,67,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10012,min_game_time,1,1,Same,69,69,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10012,daily_act_game_ver,8,8,Same,71,71,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10012,activity_coin_rule,1,1,Same,74,74,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10012,activity_coin_task_notice,0,0,Same,76,76,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10012,activity_coin_drop_min_bet,10000000,10000000,Same,78,78,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10012,drop_bet_rate,"1000,1000,1000,1000,1000,1000,1000,1000,1000","1000,1000,1000,1000,1000,1000,1000,1000,1000",Same,80,80,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10012,drop_bet_progress,"400,800,2000,4000,8000,20000,40000,80000,113000","400,800,2000,4000,8000,20000,40000,80000,113000",Same,82,82,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10013,drop_coin_num,1,1,Same,86,86,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10013,max_num,99999,99999,Same,88,88,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10013,min_game_time,1,1,Same,90,90,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10013,daily_act_game_ver,8,8,Same,92,92,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10013,activity_coin_rule,0,0,Same,95,95,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10013,activity_coin_task_notice,0,0,Same,97,97,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10013,activity_coin_drop_min_bet,10000000,10000000,Same,99,99,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10013,drop_bet_rate,"1000,1000,1000,1000,1000,1000,1000,1000,1000","1000,1000,1000,1000,1000,1000,1000,1000,1000",Same,101,101,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10013,drop_bet_progress,"400,800,2000,4000,8000,20000,40000,80000,113000","400,800,2000,4000,8000,20000,40000,80000,113000",Same,103,103,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10017,daily_act_game_ver,8,8,Same,108,108,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10017,activity_coin_rule,1,1,Same,111,111,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,10017,activity_force_send_radius_spin_num,1,1,Same,113,113,,general_config/game_act_coin.conf,game_act_coin.conf
+game_act_coin.conf,,,,,TextOnly,,,字段值相同；注释、空行或换行格式不同,general_config/game_act_coin.conf,game_act_coin.conf
+game_activity.conf,System Base Info,if_start,0,1,Different,3,3,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,System Base Info,start_time,2026/06/08 06:30:00,2023/10/20 17:00:00,Different,5,5,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,System Base Info,end_time,2026/07/20 16:59:59,2023/10/23 01:29:59,Different,7,7,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,System Base Info,max_num,50000,1000,Different,9,9,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,System Base Info,send_rate,8000,10000,Different,11,11,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,System Base Info,min_game_time,1,1,Same,13,13,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,System Base Info,max_limit_time0,40,40,Same,15,15,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,System Base Info,max_limit_time,100,100,Same,17,17,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,System Base Info,must_radius_get_num,100,500,Different,19,19,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,System Base Info,section_activity_num,"10,50,100,250,500","30,80,120,250,500",Different,22,22,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,System Base Info,section_send_rate_1,"20,8,72","3,1,96",Different,26,26,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,System Base Info,section_send_num_1,"3,2,0","2,1,0",Different,28,28,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,System Base Info,section_send_rate_2,"16,12,72","3,1,96",Different,30,30,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,System Base Info,section_send_num_2,"3,2,0","2,1,0",Different,31,31,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,System Base Info,section_send_rate_3,"16,12,72","3,1,96",Different,33,33,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,System Base Info,section_send_num_3,"2,1,0","2,1,0",Same,34,34,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,System Base Info,section_send_rate_4,"12,8,80","2,2,96",Different,36,36,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,System Base Info,section_send_num_4,"2,1,0","2,1,0",Same,37,37,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,System Base Info,section_send_rate_5,"8,8,84","2,1,97",Different,39,39,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,System Base Info,section_send_num_5,"2,1,0","2,1,0",Same,40,40,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,System Base Info,start_agent_id,0,,OnlyYngg,43,,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,game_on_time_show_ico,if_show,0,0,Same,48,45,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,game_on_time_show_ico,show_tips_index,1,1,Same,50,47,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,game_on_time_show_ico,game_start_time,2026/06/08 06:30:00,2023/10/20 17:00:00,Different,52,49,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,game_on_time_show_ico,game_end_time,2026/07/20 16:59:59,2023/10/23 01:29:59,Different,54,51,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,game_ico_show,game_client_show_type,4,4,Same,58,55,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,game_ico_show,game_client_ico,sbhd_icon.png,sbhd_icon.png,Same,60,57,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,game_ico_show,game_client_show_url,sbhd_db.png,sbhd_db.png,Same,62,59,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,game_ico_show,game_client_tips0_0,Setiap ronde game selesai ada peluang mendapat koin event!,Setiap ronde game selesai ada peluang mendapat koin event!,Same,64,61,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,game_ico_show,game_client_tips0_1,Have chances to earn event coins after each round!,Setiap ronde game selesai ada peluang mendapat koin event!,Different,65,62,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,game_ico_show,game_client_tips0_2,Setiap ronde game selesai ada peluang mendapat koin event!,Setiap ronde game selesai ada peluang mendapat koin event!,Same,66,63,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,game_ico_show,game_client_tips1_0,Setiap ronde game selesai ada peluang mendapat koin event!,Setiap ronde game selesai ada peluang mendapat koin event!,Same,68,65,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,game_ico_show,game_client_tips1_1,Have chances to earn event coins after each round!,Setiap ronde game selesai ada peluang mendapat koin event!,Different,69,66,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,game_ico_show,game_client_tips1_2,Setiap ronde game selesai ada peluang mendapat koin event!,Setiap ronde game selesai ada peluang mendapat koin event!,Same,70,67,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,game_ico_show,game_client_tile,Event merdeka Lucky Slots,Event merdeka Lucky Slots,Same,72,69,,general_config/game_activity.conf,game_activity.conf
+game_activity.conf,game_start_act,all_start_act_info,"30,1","1,1|1006,1",Different,76,73,,general_config/game_activity.conf,game_activity.conf
+game_card.conf,DROP_CONF,VERSION,101,101,Same,3,3,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_CONF,IF_START,1,1,Same,5,5,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_CONF,IF_NOTICE,0,0,Same,7,7,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_CONF,RADIUS_NUM,99,999,Different,9,9,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_CONF,MAX_NUM,99,99999,Different,11,11,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_CONF,BASE_PLAY_MONEY,50000000,1000000,Different,14,14,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_CONF,SCORE_ACCUM_RATE,10000,10000,Same,16,16,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_1,DROP_NUM,1,1,Same,20,20,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_1,DROP_SCORE,1000000,100000000,Different,22,22,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_2,DROP_NUM,1,,OnlyYngg,26,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_2,DROP_SCORE,2000000,,OnlyYngg,28,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_3,DROP_NUM,1,,OnlyYngg,32,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_3,DROP_SCORE,3000000,,OnlyYngg,34,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_4,DROP_NUM,1,,OnlyYngg,38,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_4,DROP_SCORE,5000000,,OnlyYngg,40,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_5,DROP_NUM,1,,OnlyYngg,44,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_5,DROP_SCORE,10000000,,OnlyYngg,46,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_6,DROP_NUM,1,,OnlyYngg,50,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_6,DROP_SCORE,20000000,,OnlyYngg,52,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_7,DROP_NUM,1,,OnlyYngg,56,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_7,DROP_SCORE,25000000,,OnlyYngg,58,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_8,DROP_NUM,1,,OnlyYngg,62,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_8,DROP_SCORE,30000000,,OnlyYngg,64,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_9,DROP_NUM,1,,OnlyYngg,68,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_9,DROP_SCORE,40000000,,OnlyYngg,70,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_10,DROP_NUM,1,,OnlyYngg,74,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_10,DROP_SCORE,50000000,,OnlyYngg,76,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_11,DROP_NUM,1,,OnlyYngg,80,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_11,DROP_SCORE,80000000,,OnlyYngg,82,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_12,DROP_NUM,1,,OnlyYngg,86,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_12,DROP_SCORE,120000000,,OnlyYngg,88,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_13,DROP_NUM,1,,OnlyYngg,92,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_13,DROP_SCORE,200000000,,OnlyYngg,94,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_14,DROP_NUM,1,,OnlyYngg,98,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_14,DROP_SCORE,500000000,,OnlyYngg,100,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_15,DROP_NUM,1,,OnlyYngg,104,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_15,DROP_SCORE,1000000000,,OnlyYngg,106,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_16,DROP_NUM,1,,OnlyYngg,110,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_16,DROP_SCORE,2000000000,,OnlyYngg,112,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_17,DROP_NUM,1,,OnlyYngg,116,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_17,DROP_SCORE,3000000000,,OnlyYngg,118,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_18,DROP_NUM,1,,OnlyYngg,122,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_18,DROP_SCORE,5000000000,,OnlyYngg,124,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_19,DROP_NUM,1,,OnlyYngg,128,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_19,DROP_SCORE,10000000000,,OnlyYngg,130,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_20,DROP_NUM,1,,OnlyYngg,134,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_20,DROP_SCORE,20000000000,,OnlyYngg,136,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_21,DROP_NUM,1,,OnlyYngg,140,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_21,DROP_SCORE,30000000000,,OnlyYngg,142,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_22,DROP_NUM,1,,OnlyYngg,146,,,general_config/game_card.conf,game_card.conf
+game_card.conf,DROP_INFO_22,DROP_SCORE,50000000000,,OnlyYngg,148,,,general_config/game_card.conf,game_card.conf
+game_get_level_exp.conf,Game_Get_Exp_Info,exp_val,100,100,Same,3,3,,general_config/game_get_level_exp.conf,game_get_level_exp.conf
+game_get_level_exp.conf,Game_Get_Exp_Info,lv_limit,5,5,Same,5,5,,general_config/game_get_level_exp.conf,game_get_level_exp.conf
+game_get_level_exp.conf,Game_Get_Exp_Info,get_val_rate,100|100|100,100|100|100,Same,7,7,,general_config/game_get_level_exp.conf,game_get_level_exp.conf
+game_get_level_exp.conf,Game_Get_Exp_Info,get_val_lv_limit,3-5,,OnlyYngg,10,,,general_config/game_get_level_exp.conf,game_get_level_exp.conf
+game_get_level_exp.conf,Game_Get_Exp_Info,get_val_vip_min,1,,OnlyYngg,12,,,general_config/game_get_level_exp.conf,game_get_level_exp.conf
+game_get_level_exp.conf,Game_Get_Exp_Info,get_play_money_exp_val,100,,OnlyYngg,14,,,general_config/game_get_level_exp.conf,game_get_level_exp.conf
+game_server.conf,Game_Info,kick_time,180,180,Same,3,3,,special_config/game_server.conf,game_server.conf
+game_server.conf,Game_Info,radius_num,1500,1500,Same,5,5,,special_config/game_server.conf,game_server.conf
+game_server.conf,Game_Info,cut_multiple,0,"0,0,0,0,0,0,0",Different,7,7,,special_config/game_server.conf,game_server.conf
+game_server.conf,Game_Info,free_cut_multiple,0,"0,0,0,0,0,0,0",Different,9,9,,special_config/game_server.conf,game_server.conf
+game_server.conf,Game_Info,limit_login_type,-1,-1,Same,11,11,,special_config/game_server.conf,game_server.conf
+game_server.conf,Game_Info,limit_reg_time,2024/02/01 00:00:01,2024/02/01 00:00:01,Same,13,13,,special_config/game_server.conf,game_server.conf
+game_server.conf,Game_Info,limit_lv,"5,5","7,7",Different,15,15,,special_config/game_server.conf,game_server.conf
+game_server.conf,Game_Info,limit_vip,0,0,Same,17,17,,special_config/game_server.conf,game_server.conf
+game_server.conf,Game_Info,game_gap_time,300,300,Same,19,19,,special_config/game_server.conf,game_server.conf
+game_server.conf,Game_Info,merge_log_num,1,1,Same,21,21,,special_config/game_server.conf,game_server.conf
+game_server.conf,Game_Info,day_play_game_num,"18000,36000,72000","18000,36000,72000",Same,23,23,,special_config/game_server.conf,game_server.conf
+game_server.conf,Game_Info,limit_send_bull_user_type,0,0,Same,25,25,,special_config/game_server.conf,game_server.conf
+game_server.conf,Game_Info,limit_login_lable_user_value,"1,40,41,42,43,44,45",1,Different,27,27,,special_config/game_server.conf,game_server.conf
+game_server.conf,Game_Info,limit_login_lable_user_percent,0,10000,Different,29,29,,special_config/game_server.conf,game_server.conf
+game_server.conf,Game_Info,daily_act_game_ver,8,8,Same,31,31,,special_config/game_server.conf,game_server.conf
+game_server.conf,Game_Info,SpecialBetPercent,50,"0,0,0,0,0,0,0,0,0,0",Different,33,42,,special_config/game_server.conf,game_server.conf
+game_server.conf,Game_Info,SpecialBetUnLockVip,3,"0,0,0,0,0,0,0,0,0,0",Different,35,44,,special_config/game_server.conf,game_server.conf
+game_server.conf,Game_Info,replay_open,0,1,Different,39,34,,special_config/game_server.conf,game_server.conf
+game_server.conf,Game_Info,replay_min_win_money,3000000000,5000000000,Different,41,36,,special_config/game_server.conf,game_server.conf
+game_server.conf,Game_Info,replay_min_win_mul,1,999999,Different,43,38,,special_config/game_server.conf,game_server.conf
+game_server.conf,Game_Info,replay_min_version,65,65,Same,45,40,,special_config/game_server.conf,game_server.conf
+game_server.conf,Game_Info,task_open,1,,OnlyYngg,48,,,special_config/game_server.conf,game_server.conf
+game_server.conf,Game_Info,task_skip_label_value,0,,OnlyYngg,50,,,special_config/game_server.conf,game_server.conf
+slot_activity.conf,Coin Info,version,101,102,Different,4,4,,general_config/slot_activity.conf,slot_activity.conf
+slot_activity.conf,Coin Info,activity_id,10010,10008,Different,6,6,,general_config/slot_activity.conf,slot_activity.conf
+slot_activity.conf,Coin Info,if_start,0,1,Different,8,9,,general_config/slot_activity.conf,slot_activity.conf
+slot_activity.conf,Coin Info,start_time,2025/11/28 02:00:00,2024/02/11 14:50:00,Different,10,13,,general_config/slot_activity.conf,slot_activity.conf
+slot_activity.conf,Coin Info,end_time,2025/12/01 02:00:00,2024/03/15 15:30:00,Different,12,17,,general_config/slot_activity.conf,slot_activity.conf
+slot_activity.conf,Coin Info,drop_coin_num,1,1,Same,14,21,,general_config/slot_activity.conf,slot_activity.conf
+slot_activity.conf,Coin Info,max_num,99999,99999,Same,16,25,,general_config/slot_activity.conf,slot_activity.conf
+slot_activity.conf,Coin Info,min_game_time,1,1,Same,18,29,,general_config/slot_activity.conf,slot_activity.conf
+slot_activity.conf,Coin Info,max_limit_time0,0,0,Same,20,33,,general_config/slot_activity.conf,slot_activity.conf
+slot_activity.conf,Coin Info,max_limit_time,0,0,Same,22,37,,general_config/slot_activity.conf,slot_activity.conf
+slot_activity.conf,Coin Info,daily_act_game_ver,8,8,Same,24,41,,general_config/slot_activity.conf,slot_activity.conf
+slot_activity.conf,Coin Info,activity_coin_rule,0,,OnlyYngg,27,,,general_config/slot_activity.conf,slot_activity.conf
+slot_activity.conf,Coin Info,activity_coin_task_notice,0,,OnlyYngg,29,,,general_config/slot_activity.conf,slot_activity.conf
+slot_activity.conf,Coin Info,activity_coin_drop_min_bet,0,,OnlyYngg,31,,,general_config/slot_activity.conf,slot_activity.conf
+slot_control_group.conf,MAIN,version,101,101,Same,3,3,,special_config/slot_control_group.conf,slot_control_group.conf
+slot_control_group.conf,MAIN,control_group_cut_multiple,"0,0,0,0,12000,0,0,0,5000,0,0,0,20,0,0,0,0,5000","0,0,0,0,12000,0,0,0,5000,0,0,0,20,0,0,0,0,5000",Same,5,5,,special_config/slot_control_group.conf,slot_control_group.conf
+slot_control_group.conf,MAIN,control_group_free_cut_multiple,"0,0,0,0,12000,0,0,0,5000,0,0,0,20,0,0,0,0,5000","0,0,0,0,12000,0,0,0,5000,0,0,0,20,0,0,0,0,5000",Same,7,7,,special_config/slot_control_group.conf,slot_control_group.conf
+slot_control_group.conf,CONTROL_GROUP_0,lable_user_control_group_rate,10000,"5000,5000",Different,12,12,,special_config/slot_control_group.conf,slot_control_group.conf
+slot_control_group.conf,CONTROL_GROUP_0,lable_user_control_group_value,1,"1,501",Different,14,14,,special_config/slot_control_group.conf,slot_control_group.conf
+slot_control_group.conf,CONTROL_GROUP_4,lable_user_control_group_rate,10000,10000,Same,19,19,,special_config/slot_control_group.conf,slot_control_group.conf
+slot_control_group.conf,CONTROL_GROUP_4,lable_user_control_group_value,401,401,Same,21,21,,special_config/slot_control_group.conf,slot_control_group.conf
+slot_control_group.conf,CONTROL_GROUP_8,lable_user_control_group_rate,10000,10000,Same,25,25,,special_config/slot_control_group.conf,slot_control_group.conf
+slot_control_group.conf,CONTROL_GROUP_8,lable_user_control_group_value,801,801,Same,27,27,,special_config/slot_control_group.conf,slot_control_group.conf
+slot_control_group.conf,CONTROL_GROUP_12,lable_user_control_group_rate,10000,"4000,6000",Different,31,31,,special_config/slot_control_group.conf,slot_control_group.conf
+slot_control_group.conf,CONTROL_GROUP_12,lable_user_control_group_value,1201,"101,201",Different,33,33,,special_config/slot_control_group.conf,slot_control_group.conf
+slot_control_group.conf,CONTROL_GROUP_17,lable_user_control_group_rate,10000,10000,Same,37,37,,special_config/slot_control_group.conf,slot_control_group.conf
+slot_control_group.conf,CONTROL_GROUP_17,lable_user_control_group_value,1701,1701,Same,39,39,,special_config/slot_control_group.conf,slot_control_group.conf
+slot_game_activity.conf,System Base Info,DropBetRange,"1,2","1,2",Same,5,5,,general_config/slot_game_activity.conf,slot_game_activity.conf
+slot_game_activity.conf,System Base Info,DropBetRate,"300,400,500,700,800,1500,3000,4000,5000,7500,10000","3000,3000,3000,6000,8000,8000,10000,10000,10000,10000,10000",Different,6,6,,general_config/slot_game_activity.conf,slot_game_activity.conf
+slot_game_activity.conf,Coin Info,drop_bet_rate,"1000,1000,1000,1000,1000,1000,1000,1000,1000,1000,1000",,OnlyYngg,11,,,general_config/slot_game_activity.conf,slot_game_activity.conf
+slot_game_activity.conf,Coin Info,drop_bet_progress,"400,800,2000,4000,8000,20000,40000,80000,113000",,OnlyYngg,13,,,general_config/slot_game_activity.conf,slot_game_activity.conf
+slot_game_activity2.conf,Coin Task1,task_type,,0,OnlyServer,,5,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task1,task_need_num,,50000000,OnlyServer,,6,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task1,task_coin,,1,OnlyServer,,7,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task2,task_type,,0,OnlyServer,,12,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task2,task_need_num,,250000000,OnlyServer,,13,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task2,task_coin,,1,OnlyServer,,14,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task3,task_type,,0,OnlyServer,,19,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task3,task_need_num,,700000000,OnlyServer,,20,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task3,task_coin,,1,OnlyServer,,21,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task4,task_type,,0,OnlyServer,,26,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task4,task_need_num,,1500000000,OnlyServer,,27,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task4,task_coin,,1,OnlyServer,,28,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task5,task_type,,0,OnlyServer,,33,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task5,task_need_num,,2000000000,OnlyServer,,34,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task5,task_coin,,1,OnlyServer,,35,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task6,task_type,,0,OnlyServer,,40,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task6,task_need_num,,2500000000,OnlyServer,,41,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task6,task_coin,,1,OnlyServer,,42,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task7,task_type,,0,OnlyServer,,47,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task7,task_need_num,,3000000000,OnlyServer,,48,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task7,task_coin,,1,OnlyServer,,49,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task8,task_type,,0,OnlyServer,,54,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task8,task_need_num,,3500000000,OnlyServer,,55,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task8,task_coin,,1,OnlyServer,,56,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task9,task_type,,0,OnlyServer,,61,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task9,task_need_num,,4500000000,OnlyServer,,62,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task9,task_coin,,1,OnlyServer,,63,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task10,task_type,,0,OnlyServer,,68,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task10,task_need_num,,5500000000,OnlyServer,,69,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task10,task_coin,,1,OnlyServer,,70,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task11,task_type,,0,OnlyServer,,75,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task11,task_need_num,,5500000000,OnlyServer,,76,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task11,task_coin,,1,OnlyServer,,77,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task12,task_type,,0,OnlyServer,,82,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task12,task_need_num,,6000000000,OnlyServer,,83,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task12,task_coin,,1,OnlyServer,,84,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task13,task_type,,0,OnlyServer,,89,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task13,task_need_num,,6000000000,OnlyServer,,90,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task13,task_coin,,1,OnlyServer,,91,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task14,task_type,,0,OnlyServer,,96,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task14,task_need_num,,6000000000,OnlyServer,,97,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task14,task_coin,,1,OnlyServer,,98,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task15,task_type,,0,OnlyServer,,103,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task15,task_need_num,,6000000000,OnlyServer,,104,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task15,task_coin,,1,OnlyServer,,105,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task16,task_type,,0,OnlyServer,,110,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task16,task_need_num,,7000000000,OnlyServer,,111,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_game_activity2.conf,Coin Task16,task_coin,,1,OnlyServer,,112,,general_config/slot_game_activity2.conf,slot_game_activity2.conf
+slot_prop_config.conf,System Base Info,VERSION,101,102,Different,3,3,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,System Base Info,OPEN_GAME_VER,0,6,Different,5,5,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,System Base Info,DAY_USE_MAX_NUM,0,99999,Different,7,7,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_1,PROP_ID,,1339001,OnlyServer,,11,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_1,PROP_TYPE,,-2,OnlyServer,,13,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_1,GAME_ID,,339,OnlyServer,,15,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_1,PROP_BUFF_1,,2,OnlyServer,,17,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_1,PROP_BUFF_2,,1,OnlyServer,,19,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_1,PROP_BUFF_3,,1000000,OnlyServer,,21,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_1,PROP_BUFF_4,,0,OnlyServer,,23,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_1,PROP_BUFF_5,,0,OnlyServer,,25,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_1,PROP_BUFF_6,,"0,0,0,0",OnlyServer,,27,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_2,PROP_ID,,1339002,OnlyServer,,31,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_2,PROP_TYPE,,-2,OnlyServer,,33,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_2,GAME_ID,,339,OnlyServer,,35,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_2,PROP_BUFF_1,,4,OnlyServer,,37,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_2,PROP_BUFF_2,,2,OnlyServer,,39,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_2,PROP_BUFF_3,,100000000,OnlyServer,,41,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_2,PROP_BUFF_4,,0,OnlyServer,,43,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_2,PROP_BUFF_5,,0,OnlyServer,,45,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_2,PROP_BUFF_6,,"0,0,0,0",OnlyServer,,47,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_3,PROP_ID,,1339003,OnlyServer,,51,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_3,PROP_TYPE,,-2,OnlyServer,,53,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_3,GAME_ID,,339,OnlyServer,,55,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_3,PROP_BUFF_1,,5,OnlyServer,,57,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_3,PROP_BUFF_2,,3,OnlyServer,,59,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_3,PROP_BUFF_3,,250000000,OnlyServer,,61,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_3,PROP_BUFF_4,,0,OnlyServer,,63,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_3,PROP_BUFF_5,,0,OnlyServer,,65,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_3,PROP_BUFF_6,,"0,0,0,0",OnlyServer,,67,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_4,PROP_ID,,1339004,OnlyServer,,71,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_4,PROP_TYPE,,-2,OnlyServer,,73,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_4,GAME_ID,,339,OnlyServer,,75,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_4,PROP_BUFF_1,,7,OnlyServer,,77,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_4,PROP_BUFF_2,,4,OnlyServer,,79,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_4,PROP_BUFF_3,,1000000000,OnlyServer,,81,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_4,PROP_BUFF_4,,0,OnlyServer,,83,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_4,PROP_BUFF_5,,0,OnlyServer,,85,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_4,PROP_BUFF_6,,"0,0,0,0",OnlyServer,,87,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_5,PROP_ID,,3010025,OnlyServer,,91,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_5,PROP_TYPE,,-5,OnlyServer,,93,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_5,GAME_ID,,339,OnlyServer,,95,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_5,PROP_BUFF_1,,4,OnlyServer,,97,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_5,PROP_BUFF_2,,10,OnlyServer,,99,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_5,PROP_BUFF_3,,0,OnlyServer,,101,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_5,PROP_BUFF_4,,0,OnlyServer,,103,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_5,PROP_BUFF_5,,0,OnlyServer,,105,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_5,PROP_BUFF_6,,"0,0,0,0",OnlyServer,,107,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_6,PROP_ID,,3010026,OnlyServer,,111,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_6,PROP_TYPE,,-5,OnlyServer,,113,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_6,GAME_ID,,339,OnlyServer,,115,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_6,PROP_BUFF_1,,5,OnlyServer,,117,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_6,PROP_BUFF_2,,10,OnlyServer,,119,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_6,PROP_BUFF_3,,0,OnlyServer,,121,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_6,PROP_BUFF_4,,0,OnlyServer,,123,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_6,PROP_BUFF_5,,0,OnlyServer,,125,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_6,PROP_BUFF_6,,"0,0,0,0",OnlyServer,,127,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_7,PROP_ID,,3010027,OnlyServer,,131,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_7,PROP_TYPE,,-5,OnlyServer,,133,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_7,GAME_ID,,339,OnlyServer,,135,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_7,PROP_BUFF_1,,6,OnlyServer,,137,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_7,PROP_BUFF_2,,10,OnlyServer,,139,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_7,PROP_BUFF_3,,0,OnlyServer,,141,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_7,PROP_BUFF_4,,0,OnlyServer,,143,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_7,PROP_BUFF_5,,0,OnlyServer,,145,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_7,PROP_BUFF_6,,"0,0,0,0",OnlyServer,,147,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_8,PROP_ID,,3010028,OnlyServer,,151,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_8,PROP_TYPE,,-5,OnlyServer,,153,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_8,GAME_ID,,339,OnlyServer,,155,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_8,PROP_BUFF_1,,7,OnlyServer,,157,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_8,PROP_BUFF_2,,10,OnlyServer,,159,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_8,PROP_BUFF_3,,0,OnlyServer,,161,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_8,PROP_BUFF_4,,0,OnlyServer,,163,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_8,PROP_BUFF_5,,0,OnlyServer,,165,,special/slot_prop_config.conf,slot_prop_config.conf
+slot_prop_config.conf,SLOT_PROP_INFO_8,PROP_BUFF_6,,"0,0,0,0",OnlyServer,,167,,special/slot_prop_config.conf,slot_prop_config.conf
+spe_user_event.conf,SPE_USER_TYPE_1,USERID_0,91652410,10000,Different,4,4,,general_config/spe_user_event.conf,spe_user_event.conf
+spe_user_event.conf,SPE_USER_TYPE_1,USERID_1,83594191,10001,Different,5,5,,general_config/spe_user_event.conf,spe_user_event.conf
+spe_user_event.conf,SPE_USER_TYPE_1,USERID_2,64145248,,OnlyYngg,6,,,general_config/spe_user_event.conf,spe_user_event.conf
+spe_user_event.conf,SPE_USER_TYPE_1,USERID_3,23261529,,OnlyYngg,7,,,general_config/spe_user_event.conf,spe_user_event.conf
+spe_user_event.conf,SPE_USER_TYPE_1,USERID_4,37540,,OnlyYngg,8,,,general_config/spe_user_event.conf,spe_user_event.conf
+spe_user_event.conf,SPE_USER_TYPE_2,USERID_0,91652410,10000,Different,13,10,,general_config/spe_user_event.conf,spe_user_event.conf
+spe_user_event.conf,SPE_USER_TYPE_2,USERID_1,83594191,10001,Different,14,11,,general_config/spe_user_event.conf,spe_user_event.conf
+spe_user_event.conf,SPE_USER_TYPE_2,USERID_2,64145248,,OnlyYngg,15,,,general_config/spe_user_event.conf,spe_user_event.conf
+spe_user_event.conf,SPE_USER_TYPE_2,USERID_3,23261529,,OnlyYngg,16,,,general_config/spe_user_event.conf,spe_user_event.conf
+spe_user_event.conf,SPE_USER_TYPE_2,USERID_4,37540,,OnlyYngg,17,,,general_config/spe_user_event.conf,spe_user_event.conf
+spreader_task.conf,Base_Info,if_start,0,1,Different,3,3,,general_config/spreader_task.conf,spreader_task.conf
+spreader_task.conf,Base_Info,win_game_num,"3,10,30,60,100,200","3,10,30,60,100,200",Same,5,5,,general_config/spreader_task.conf,spreader_task.conf
+spreader_task.conf,Base_Info,award_lottery_num,"100,200,500,800,1000,2500","100,200,500,800,1000,2500",Same,7,7,,general_config/spreader_task.conf,spreader_task.conf
+yb_double.conf,Act_Double_Info,if_start,1,1,Same,3,3,,general_config/yb_double.conf,yb_double.conf
+yb_double.conf,Act_Double_Info,time_difference,7,7,Same,5,5,,general_config/yb_double.conf,yb_double.conf
+yb_double.conf,Act_Double_Info,start_time,2021/05/22 00:00:00,2021/05/22 00:00:00,Same,7,7,,general_config/yb_double.conf,yb_double.conf
+yb_double.conf,Act_Double_Info,end_time,2023/12/22 15:59:59,2023/12/22 15:59:59,Same,9,9,,general_config/yb_double.conf,yb_double.conf
+yb_double.conf,Act_Double_Info,time_hour_1,12-13,12-13,Same,12,12,,general_config/yb_double.conf,yb_double.conf
+yb_double.conf,Act_Double_Info,time_hour_2,0-0,0-0,Same,14,14,,general_config/yb_double.conf,yb_double.conf
+yb_double.conf,Act_Double_Info,day_time_1,20-21,20-21,Same,17,17,,general_config/yb_double.conf,yb_double.conf
+yb_double.conf,Act_Double_Info,day_time_2,13-14,13-14,Same,18,18,,general_config/yb_double.conf,yb_double.conf
+yb_double.conf,Act_Double_Info,day_time_3,"12-13,18-22","12-13,18-22",Same,19,19,,general_config/yb_double.conf,yb_double.conf
+yb_double.conf,Act_Double_Info,day_time_4,12-13,12-13,Same,20,20,,general_config/yb_double.conf,yb_double.conf
+yb_double.conf,Act_Double_Info,day_time_5,12-23,12-23,Same,21,21,,general_config/yb_double.conf,yb_double.conf
+yb_double.conf,Act_Double_Info,day_time_6,"6-7,16-18","6-7,16-18",Same,22,22,,general_config/yb_double.conf,yb_double.conf
+yb_double.conf,Act_Double_Info,day_time_7,"6-7,22-23","6-7,22-23",Same,23,23,,general_config/yb_double.conf,yb_double.conf
+yb_double.conf,Act_Double_Info,ico_tips1_0,Double bonus(MON-FRI 12.00-13.00 GMT),Double bonus(MON-FRI 12.00-13.00 GMT),Same,29,29,,general_config/yb_double.conf,yb_double.conf
+yb_double.conf,Act_Double_Info,ico_tips1_1,Double bonus(MON-FRI 12.00-13.00 GMT),Double bonus(MON-FRI 12.00-13.00 GMT),Same,30,30,,general_config/yb_double.conf,yb_double.conf
+yb_double.conf,Act_Double_Info,ico_tips1_2,Double bonus(Senin s/d Jumat 19.00-20.00 WIB),Double bonus(Senin s/d Jumat 19.00-20.00 WIB),Same,31,31,,general_config/yb_double.conf,yb_double.conf
+yb_double.conf,Act_Double_Info,ico_tips1_3,Double bonus(MON-FRI 12.00-13.00 GMT),Double bonus(MON-FRI 12.00-13.00 GMT),Same,32,32,,general_config/yb_double.conf,yb_double.conf
+yb_double.conf,Act_Double_Info,ico_tips2_0,Double bonus(6.00-7.00 12.00-14.00 GMT),Double bonus(6.00-7.00 12.00-14.00 GMT),Same,34,34,,general_config/yb_double.conf,yb_double.conf
+yb_double.conf,Act_Double_Info,ico_tips2_1,Double bonus(6.00-7.00 12.00-14.00 GMT),Double bonus(6.00-7.00 12.00-14.00 GMT),Same,35,35,,general_config/yb_double.conf,yb_double.conf
+yb_double.conf,Act_Double_Info,ico_tips2_2,Double bonus(13.00-14.00 19.00-21.00 WIB),Double bonus(13.00-14.00 19.00-21.00 WIB),Same,36,36,,general_config/yb_double.conf,yb_double.conf
+yb_double.conf,Act_Double_Info,ico_tips2_3,Double bonus(6.00-7.00 12.00-14.00 GMT),Double bonus(6.00-7.00 12.00-14.00 GMT),Same,37,37,,general_config/yb_double.conf,yb_double.conf
+yb_double.conf,,,,,TextOnly,,,字段值相同；注释、空行或换行格式不同,general_config/yb_double.conf,yb_double.conf
+yngg_bonus.conf,GENERAL,BONUS_MINI_MULTI,10,,OnlyYngg,6,,,special/yngg_bonus.conf,yngg_bonus.conf
+yngg_bonus.conf,GENERAL,BONUS_MINOR_MULTI,25,,OnlyYngg,7,,,special/yngg_bonus.conf,yngg_bonus.conf
+yngg_bonus.conf,GENERAL,BONUS_MAJOR_MULTI,100,,OnlyYngg,8,,,special/yngg_bonus.conf,yngg_bonus.conf
+yngg_bonus.conf,GENERAL,BONUS_GRAND_MULTI,5000,,OnlyYngg,9,,,special/yngg_bonus.conf,yngg_bonus.conf
+yngg_bonus.conf,GENERAL,BONUS_JP_MULTIPLE,"10,25,100,5000","10,25,100,5000",Same,10,4,,special/yngg_bonus.conf,yngg_bonus.conf
+yngg_bonus.conf,GENERAL,BONUS_JP_TYPE_PROBABILITY,"80,25,8,1",,OnlyYngg,12,,,special/yngg_bonus.conf,yngg_bonus.conf
+yngg_bonus.conf,GENERAL,BONUS_SYMBOL_TYPE,"coin,clover,pot,jackpot","coin,clover,pot,jackpot",Same,15,6,,special/yngg_bonus.conf,yngg_bonus.conf
+yngg_bonus.conf,GENERAL,BONUS_SYMBOL_TYPE_PROBABILITY,"1000,80,6,2","1000,100,10,1",Different,16,7,,special/yngg_bonus.conf,yngg_bonus.conf
+yngg_bonus.conf,GENERAL,BONUS_COIN_MULTIPLE,"0.2,0.5,1,2,3,4,5,10,15,20,25,50,100,250,500",,OnlyYngg,19,,,special/yngg_bonus.conf,yngg_bonus.conf
+yngg_bonus.conf,GENERAL,BONUS_COIN_MULTIPLE_PROBABILITY,"1560,1240,1030,860,720,545,415,320,228,165,110,62,31,10,3",,OnlyYngg,20,,,special/yngg_bonus.conf,yngg_bonus.conf
+yngg_bonus.conf,GENERAL,BONUS_CLOVER_MULTIPLE,"2,3,4,5,10,20","2,3,4,5,10,20",Same,23,11,,special/yngg_bonus.conf,yngg_bonus.conf
+yngg_bonus.conf,GENERAL,BONUS_CLOVER_MULTIPLE_PROBABILITY,"40,28,16,10,5,1",,OnlyYngg,24,,,special/yngg_bonus.conf,yngg_bonus.conf
+yngg_bonus.conf,GENERAL,VERSION,,1,OnlyServer,,2,,special/yngg_bonus.conf,yngg_bonus.conf
+yngg_bonus.conf,GENERAL,BONUS_COIN_MULTIPLE_X1000,,"200,500,1000,2000,3000,4000,5000,10000,15000,20000,25000,50000,100000,250000,500000",OnlyServer,,9,,special/yngg_bonus.conf,yngg_bonus.conf
+yngg_control.conf,MAIN,version,101,101,Same,3,3,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_1,lable_user_percent,10000,10000,Same,8,19,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_1,lable_user_special_bet_index,1,,OnlyYngg,10,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_1,lable_user_value,41,41,Same,12,21,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_1,lable_user_bet_money,80000,80000,Same,14,23,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_1,lable_user_control_rate,10000,10000,Same,19,28,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_1,lable_user_control_group,12,12,Same,20,30,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_2,lable_user_percent,10000,0,Different,25,35,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_2,lable_user_special_bet_index,1,,OnlyYngg,27,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_2,lable_user_bet_money,80000,"100000,200000,500000,1000000,2000000,5000000,10000000,20000000,25000000",Different,29,39,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_2,lable_user_control_rate,10000,"10000,10000,10000,10000,10000,10000,10000,10000,10000",Different,34,64,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_2,lable_user_control_group,13,"8,8,8,8,8,8,8,8,8",Different,35,67,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_3,lable_user_percent,10000,0,Different,40,72,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_3,lable_user_special_bet_index,2,,OnlyYngg,42,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_3,lable_user_value,41,,OnlyYngg,44,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_3,lable_user_bet_money,80000,80000,Same,46,74,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_3,lable_user_control_rate,10000,10000,Same,51,79,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_3,lable_user_control_group,12,4,Different,52,82,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_4,lable_user_percent,10000,,OnlyYngg,57,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_4,lable_user_special_bet_index,2,,OnlyYngg,59,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_4,lable_user_bet_money,80000,,OnlyYngg,61,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_4,lable_user_control_rate,10000,,OnlyYngg,66,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_4,lable_user_control_group,14,,OnlyYngg,67,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_5,lable_user_percent,10000,,OnlyYngg,72,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_5,lable_user_value,41,,OnlyYngg,74,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_5,lable_user_bet_money,80000,,OnlyYngg,76,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_5,lable_user_control_rate,10000,,OnlyYngg,80,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_5,lable_user_control_group,12,,OnlyYngg,82,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_6,lable_user_percent,300,,OnlyYngg,87,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_6,lable_user_value,92,,OnlyYngg,89,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_6,lable_user_bet_money,"100000,200000,500000,1000000,2000000,5000000",,OnlyYngg,91,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_6,lable_user_day_balance,"0,0|0,0|0,0|0,0|0,0|0,0",,OnlyYngg,93,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_6,lable_user_user_control_buff,"-95000000,2000000000000|-90000000,2000000000000|-75000000,2000000000000|-50000000,2000000000000|0,2000000000000|0,0",,OnlyYngg,95,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_6,lable_user_user_control_buff_deduct,"-5000000,-10000000,-25000000,-50000000,-100000000,0",,OnlyYngg,97,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_6,lable_user_day_avg_bet_coefficient,"6667,66670|6667,66670|6667,66670|6667,66670|6667,66670|0,0",,OnlyYngg,104,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_6,lable_user_day_rtp,"0,8000|0,8000|0,8000|0,8000|0,8000|0,0",,OnlyYngg,107,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_6,lable_user_day_control_count,"2,2,2,2,2,0",,OnlyYngg,110,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_6,lable_user_day_control_index,"5,5,5,5,5,0",,OnlyYngg,113,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_6,lable_user_control_rate,"10000,10000,10000,10000,10000,10000",,OnlyYngg,117,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_6,lable_user_control_group,"8,8,8,8,8,0",,OnlyYngg,119,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_7,lable_user_percent,300,,OnlyYngg,124,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_7,lable_user_value,"50,30,31,32,15,10,88,90,91,92,93,94,95,96,97,98,99",,OnlyYngg,126,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_7,lable_user_bet_money,"100000,200000,500000,1000000,2000000,5000000,10000000,20000000,25000000",,OnlyYngg,128,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_7,lable_user_day_balance,"0,0|0,0|0,0|0,0|0,0|0,0|0,0|0,0|0,0",,OnlyYngg,130,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_7,lable_user_user_control_buff,"5000000,2000000000000|10000000,2000000000000|25000000,2000000000000|50000000,2000000000000|100000000,2000000000000|250000000,2000000000000|500000000,2000000000000|1000000000,2000000000000|1250000000,2000000000000",,OnlyYngg,132,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_7,lable_user_user_control_buff_deduct,"-5000000,-10000000,-25000000,-50000000,-100000000,-250000000,-500000000,-1000000000,-1250000000",,OnlyYngg,134,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_7,lable_user_day_avg_bet_coefficient,"6667,66670|6667,66670|6667,66670|6667,66670|6667,66670|6667,66670|6667,66670|6667,66670|6667,66670",,OnlyYngg,141,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_7,lable_user_day_rtp,"0,8000|0,8000|0,8000|0,8000|0,8000|0,8000|0,8000|0,8000|0,8000",,OnlyYngg,144,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_7,lable_user_day_control_count,"4,4,4,4,4,4,4,4,4",,OnlyYngg,147,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_7,lable_user_day_control_index,"1,1,1,1,1,1,1,1,1",,OnlyYngg,150,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_7,lable_user_control_rate,"10000,10000,10000,10000,10000,10000,10000,10000,10000",,OnlyYngg,154,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_7,lable_user_control_group,"8,8,8,8,8,8,8,8,8",,OnlyYngg,157,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_8,lable_user_percent,10000,,OnlyYngg,162,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_8,lable_user_bet_money,80000,,OnlyYngg,164,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_8,lable_user_total_infull_exp,"50000,5000000000000",,OnlyYngg,166,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_8,lable_user_control_rate,10000,,OnlyYngg,169,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_8,lable_user_control_group,4,,OnlyYngg,172,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_9,lable_user_percent,1000,,OnlyYngg,177,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_9,lable_user_value,88,,OnlyYngg,179,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_9,lable_user_bet_money,"100000,200000,500000,1000000,2000000,5000000,10000000,20000000,25000000",,OnlyYngg,181,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_9,lable_user_day_balance,"0,0|0,0|0,0|0,0|0,0|0,0|0,0|0,0|0,0",,OnlyYngg,183,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_9,lable_user_user_control_buff,"5000000,2000000000000|10000000,2000000000000|25000000,2000000000000|50000000,2000000000000|100000000,2000000000000|250000000,2000000000000|500000000,2000000000000|1000000000,2000000000000|1250000000,2000000000000",,OnlyYngg,185,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_9,lable_user_user_control_buff_deduct,"-5000000,-10000000,-25000000,-50000000,-100000000,-250000000,-500000000,-1000000000,-1250000000",,OnlyYngg,187,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_9,lable_user_day_avg_bet_coefficient,"6667,66670|6667,66670|6667,66670|6667,66670|6667,66670|6667,66670|6667,66670|6667,66670|6667,66670",,OnlyYngg,194,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_9,lable_user_day_rtp,"0,6500|0,6500|0,6500|0,6500|0,6500|0,6500|0,6500|0,6500|0,6500",,OnlyYngg,197,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_9,lable_user_day_control_count,"1,1,1,1,1,1,1,1,1",,OnlyYngg,200,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_9,lable_user_day_control_index,"2,2,2,2,2,2,2,2,2",,OnlyYngg,203,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_9,lable_user_control_rate,"10000,10000,10000,10000,10000,10000,10000,10000,10000",,OnlyYngg,206,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_9,lable_user_control_group,"8,8,8,8,8,8,8,8,8",,OnlyYngg,209,,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,FREE_PROP_CONTROL,free_prop_lable_user_percent,10000,10000,Same,214,87,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,FREE_PROP_CONTROL,free_prop_id,1357001|1357002|1357003|1357004|1357005,1348001|1348002|1348003|1348004|1348005,Different,216,89,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,FREE_PROP_CONTROL,free_prop_lable_user_value,0|0|0|0|0,0|0|0|0|0,Same,218,91,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,FREE_PROP_CONTROL,free_prop_lable_user_control_group,17|17|17|17|17,17|17|17|17|17,Same,220,94,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,SPIN_PROP_CONTROL,spin_prop_lable_user_percent,10000,10000,Same,225,99,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,SPIN_PROP_CONTROL,spin_prop_id,3010105|3010106|3010107|3010108,3010061|3010062|3010063|3010064,Different,227,101,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,SPIN_PROP_CONTROL,spin_prop_lable_user_value,0|0|0|0,0|0|0|0,Same,229,103,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,SPIN_PROP_CONTROL,spin_prop_lable_user_control_group,0|0|0|0,0|0|0|0,Same,231,106,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,ABTEST_CONTROL,abtest_lable_user_percent,,0,OnlyServer,,8,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,ABTEST_CONTROL,abtest_lable_user_value,,"51,52",OnlyServer,,10,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,ABTEST_CONTROL,abtest_lable_user_rate,,"10000,10000",OnlyServer,,12,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,ABTEST_CONTROL,abtest_lable_user_control_group,,"13,14",OnlyServer,,14,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_2,lable_user_value,,"50,30,31,32,15,10,88,91,92",OnlyServer,,37,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_2,lable_user_day_balance,,"0,0|0,0|0,0|0,0|0,0|0,0|0,0|0,0|0,0",OnlyServer,,41,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_2,lable_user_user_control_buff,,"5000000,2000000000000|10000000,2000000000000|25000000,2000000000000|50000000,2000000000000|100000000,2000000000000|250000000,2000000000000|500000000,2000000000000|1000000000,2000000000000|1250000000,2000000000000",OnlyServer,,43,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_2,lable_user_user_control_buff_deduct,,"-5000000,-10000000,-25000000,-50000000,-100000000,-250000000,-500000000,-1000000000,-1250000000",OnlyServer,,45,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_2,lable_user_day_avg_bet_coefficient,,"6667,66670|6667,66670|6667,66670|6667,66670|6667,66670|6667,66670|6667,66670|6667,66670|6667,66670",OnlyServer,,52,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_2,lable_user_day_rtp,,"0,8000|0,8000|0,8000|0,8000|0,8000|0,8000|0,8000|0,8000|0,8000",OnlyServer,,55,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_2,lable_user_day_control_count,,"4,4,4,4,4,4,4,4,4",OnlyServer,,58,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_2,lable_user_day_control_index,,"1,1,1,1,1,1,1,1,1",OnlyServer,,61,,special/yngg_control.conf,yngg_control.conf
+yngg_control.conf,CONTROL_3,lable_user_total_infull_exp,,"50000,5000000000000",OnlyServer,,76,,special/yngg_control.conf,yngg_control.conf
+yngg_free_rand_ex_0.conf,MAIN,VERSION,101,101,Same,3,2,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,BASE_RATE,"1000,0,0,0","10000,0,0,0",Different,11,5,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,NORMAL_ROLL_1,"9,12,9,5,12,9,1,5,9,5,12,12,9,5,11,9,9,1,11,11,5,1,7,9,5,9,10,8,9,11,6,8,1,9,8,6,9,5,12,10,8,9,6,11,9,9,10,7,7,10,5,10,10,6,8,12,9,5,12,6,10,5,12,9,6,11,11,8,5,6,12,11,7,5,12,11,10,8,5,11,12,7,5,10,12,6,9,11,12,11,8,6,1,12,11,3,10,8,12,10,8,6,9,1,10,10,8,7,12,5,9,11,7,6,11,9,9,6,8,8,5,5,5,8,7,9,5,12,10,5,12,12,9,6,11,6,11,5,6,12,11,7,3,4,10,8,11,12,5,5,8,7,6,9,8,3,10,6,8,12,4,10,8,1,9,5,10,10,8,3,5,9,11,7,11,9,1,10,10,6,11,9,5,10,10,4,12,9,12,10,5,9,6,10,8,11,5,3,10,12","1,3,4,5,6,7,8,9,10,11,12,1,8,9,10,3,4,5,6,7,12,11,8,9,10,1,6,7,8,9",Different,12,7,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,NORMAL_ROLL_2,"9,9,11,9,1,4,11,4,9,1,11,9,7,7,7,9,1,12,7,9,9,4,9,9,3,7,10,5,10,11,4,9,11,6,11,7,10,11,6,12,4,10,11,7,9,10,4,8,6,11,4,11,7,11,11,4,9,12,6,6,6,11,4,9,9,3,10,12,4,7,8,9,4,11,7,4,12,7,12,12,9,11,10,7,11,9,4,11,3,7,8,5,10,1,11,4,9,7,11,1,10,10,7,11,12,7,11,6,6,12,4,10,7,9,10,4,11,8,3,4,11,7,9,11,6,11,4,4,11,7,11,11,4,9,9,9,7,7,4,9,3,12,7,8,9,4,4,6,3,7,7,6,6,9,9,6,11,12,8,8,5,10,11,12,9,11,7,11,4,10,10,1,7,7,11,4,9,10,4,11,8,12,4,11,4,12,9,11,7,9,7,9,9,10,4,9,7,8,9,10","8,9,10,11,12,1,3,4,5,6,7,8,9,10,1,12,11,3,4,5,8,9,10,6,7,1,3,4,5,8",Different,13,8,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,NORMAL_ROLL_3,"9,9,9,5,1,9,10,7,12,1,8,10,10,10,12,1,8,3,10,10,5,5,5,12,8,11,3,11,10,8,8,11,11,3,11,7,8,8,5,8,9,6,6,8,8,8,7,10,8,8,8,12,6,11,1,11,8,10,10,6,12,12,8,3,10,10,6,8,10,10,3,12,12,5,8,6,12,11,7,5,12,10,4,4,11,8,8,11,3,10,6,7,12,8,8,5,12,1,12,8,8,8,1,7,11,12,6,8,10,4,8,12,6,11,8,3,11,8,10,10,3,12,12,8,7,10,10,8,12,8,3,12,5,8,6,12,12,7,5,12,11,10,8,9,6,12,8,9,3,6,12,8,8,8,1,12,8,11,6,8,8,12,8,7,11,12,10,4,3,9,8,8,8,12,1,10,6,12,12,8,7,10,8,12,8,4,10,10,3,8,9,12,5,12,11,10,4,4,10,10","3,4,5,6,7,8,9,10,11,12,1,8,9,3,4,5,6,7,10,11,12,1,8,9,4,5,6,7,8,9",Different,14,9,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,NORMAL_ROLL_4,"1,11,4,4,9,9,10,9,10,4,8,9,10,11,12,4,9,12,11,5,10,5,8,6,8,9,5,5,8,3,3,6,9,11,12,4,6,9,11,10,5,10,12,4,11,5,8,11,11,11,6,12,12,3,12,8,7,6,8,11,11,5,9,9,7,10,5,10,3,7,11,10,6,8,9,10,7,11,12,4,9,11,5,10,3,3,5,10,8,7,11,8,9,5,10,11,7,9,11,12,4,6,9,11,10,5,12,4,7,10,5,10,8,7,11,11,6,11,8,6,6,12,11,8,7,7,8,4,5,5,9,9,10,5,10,7,11,10,6,12,7,8,9,7,11,12,4,9,12,11,5,10,5,8,7,11,8,9,5,5,8,9,9,7,7,7,11,6,9,10,5,10,3,3,4,4,5,8,6,3,3,12,8,7,5,5,9,9,7,10,4,6,8,9,7,3,3,10,10,4","12,11,10,9,8,7,6,5,4,3,1,8,9,10,11,12,1,3,4,5,6,7,8,9,10,11,1,8,9,3",Different,15,10,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,NORMAL_ROLL_5,"1,12,4,4,7,7,5,9,4,4,9,9,5,12,7,5,11,10,8,3,7,9,9,5,5,6,12,3,11,9,11,5,12,12,11,8,6,12,9,4,4,8,12,6,10,8,9,5,11,6,11,9,9,10,6,7,9,10,5,10,6,8,7,12,9,5,12,10,6,10,5,3,9,6,11,11,6,8,11,5,12,4,3,10,8,5,12,5,5,6,9,11,3,8,6,12,3,12,10,6,8,12,4,10,8,6,9,3,8,12,5,4,11,7,6,11,9,6,8,8,5,5,5,10,10,6,8,7,9,5,10,10,10,6,10,5,12,12,9,11,11,6,11,5,6,12,11,7,8,7,11,11,5,5,8,9,5,12,12,8,6,12,3,7,6,8,12,4,10,8,6,5,3,8,7,5,9,6,3,9,9,6,6,9,5,4,6,8,7,5,12,6,5,4,9,6,6,8,3,3","1,8,9,10,11,12,3,4,5,6,7,8,9,10,1,3,4,5,12,11,10,9,8,7,6,5,4,3,1,8",Different,16,11,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,NORMAL_ROLL_6,"1,9,3,4,9,5,10,8,4,4,4,10,10,3,3,12,8,9,10,4,4,4,8,8,9,6,5,10,8,5,8,3,9,6,4,4,7,9,5,4,9,7,6,10,4,9,5,5,4,3,3,10,6,11,5,11,8,8,7,12,12,5,10,6,8,9,10,3,6,10,10,3,12,4,4,9,10,4,11,7,11,8,4,5,12,3,3,11,8,7,6,10,10,4,4,12,8,3,3,9,9,5,9,6,12,9,5,9,9,7,4,10,4,9,9,11,4,12,9,6,6,4,12,6,5,4,4,8,8,5,6,9,5,10,10,3,8,10,4,11,7,11,8,10,9,12,3,3,8,11,6,5,8,5,6,3,9,9,5,4,7,3,9,5,11,3,9,7,10,4,9,4,3,3,6,6,5,4,12,5,3,8,9,5,9,8,3,3,8,9,7,7,11,9,5,3,3,4,4,5","8,1,3,4,5,6,7,8,9,10,11,12,8,9,10,1,3,4,5,6,7,12,11,10,9,8,1,3,4,5",Different,17,12,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,SP_ROLL_1,"9,12,9,5,12,9,1,5,9,5,12,12,9,5,11,9,9,1,11,11,5,1,7,9,5,9,10,8,9,11,6,8,1,9,8,6,9,5,12,10,8,9,6,11,9,9,10,7,7,10,5,10,10,6,8,12,9,5,12,6,10,5,12,9,6,11,11,8,5,6,12,11,7,5,12,11,10,8,5,11,12,7,5,10,12,6,9,11,12,11,8,6,1,12,11,3,10,8,12,10,8,6,9,1,10,10,8,7,12,5,9,11,7,6,11,9,9,6,8,8,5,5,5,8,7,9,5,12,10,5,12,12,9,6,11,6,11,5,6,12,11,7,3,4,10,8,11,12,5,5,8,7,6,9,8,3,10,6,8,12,4,10,8,1,9,5,10,10,8,3,5,9,11,7,11,9,1,10,10,6,11,9,5,10,10,4,12,9,12,10,5,9,6,10,8,11,5,3,10,12","1,3,4,5,6,7,8,9,10,11,12,1,8,9,10,3,4,5,6,7,12,11,8,9,10,1,6,7,8,9",Different,18,14,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,SP_ROLL_2,"9,9,11,9,1,4,11,4,9,1,11,9,7,7,7,9,1,12,7,9,9,4,9,9,3,7,10,5,10,11,4,9,11,6,11,7,10,11,6,12,4,10,11,7,9,10,4,8,6,11,4,11,7,11,11,4,9,12,6,6,6,11,4,9,9,3,10,12,4,7,8,9,4,11,7,4,12,7,12,12,9,11,10,7,11,9,4,11,3,7,8,5,10,1,11,4,9,7,11,1,10,10,7,11,12,7,11,6,6,12,4,10,7,9,10,4,11,8,3,4,11,7,9,11,6,11,4,4,11,7,11,11,4,9,9,9,7,7,4,9,3,12,7,8,9,4,4,6,3,7,7,6,6,9,9,6,11,12,8,8,5,10,11,12,9,11,7,11,4,10,10,1,7,7,11,4,9,10,4,11,8,12,4,11,4,12,9,11,7,9,7,9,9,10,4,9,7,8,9,10","8,9,10,11,12,1,3,4,5,6,7,8,9,10,1,12,11,3,4,5,8,9,10,6,7,1,3,4,5,8",Different,19,15,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,SP_ROLL_3,"9,9,9,5,1,9,10,7,12,1,8,10,10,10,12,1,8,3,10,10,5,5,5,12,8,11,3,11,10,8,8,11,11,3,11,7,8,8,5,8,9,6,6,8,8,8,7,10,8,8,8,12,6,11,1,11,8,10,10,6,12,12,8,3,10,10,6,8,10,10,3,12,12,5,8,6,12,11,7,5,12,10,4,4,11,8,8,11,3,10,6,7,12,8,8,5,12,1,12,8,8,8,1,7,11,12,6,8,10,4,8,12,6,11,8,3,11,8,10,10,3,12,12,8,7,10,10,8,12,8,3,12,5,8,6,12,12,7,5,12,11,10,8,9,6,12,8,9,3,6,12,8,8,8,1,12,8,11,6,8,8,12,8,7,11,12,10,4,3,9,8,8,8,12,1,10,6,12,12,8,7,10,8,12,8,4,10,10,3,8,9,12,5,12,11,10,4,4,10,10","3,4,5,6,7,8,9,10,11,12,1,8,9,3,4,5,6,7,10,11,12,1,8,9,4,5,6,7,8,9",Different,20,16,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,SP_ROLL_4,"1,11,4,4,9,9,10,9,10,4,8,9,10,11,12,4,9,12,11,5,10,5,8,6,8,9,5,5,8,3,3,6,9,11,12,4,6,9,11,10,5,10,12,4,11,5,8,11,11,11,6,12,12,3,12,8,7,6,8,11,11,5,9,9,7,10,5,10,3,7,11,10,6,8,9,10,7,11,12,4,9,11,5,10,3,3,5,10,8,7,11,8,9,5,10,11,7,9,11,12,4,6,9,11,10,5,12,4,7,10,5,10,8,7,11,11,6,11,8,6,6,12,11,8,7,7,8,4,5,5,9,9,10,5,10,7,11,10,6,12,7,8,9,7,11,12,4,9,12,11,5,10,5,8,7,11,8,9,5,5,8,9,9,7,7,7,11,6,9,10,5,10,3,3,4,4,5,8,6,3,3,12,8,7,5,5,9,9,7,10,4,6,8,9,7,3,3,10,10,4","12,11,10,9,8,7,6,5,4,3,1,8,9,10,11,12,1,3,4,5,6,7,8,9,10,11,1,8,9,3",Different,21,17,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,SP_ROLL_5,"1,12,4,4,7,7,5,9,4,4,9,9,5,12,7,5,11,10,8,3,7,9,9,5,5,6,12,3,11,9,11,5,12,12,11,8,6,12,9,4,4,8,12,6,10,8,9,5,11,6,11,9,9,10,6,7,9,10,5,10,6,8,7,12,9,5,12,10,6,10,5,3,9,6,11,11,6,8,11,5,12,4,3,10,8,5,12,5,5,6,9,11,3,8,6,12,3,12,10,6,8,12,4,10,8,6,9,3,8,12,5,4,11,7,6,11,9,6,8,8,5,5,5,10,10,6,8,7,9,5,10,10,10,6,10,5,12,12,9,11,11,6,11,5,6,12,11,7,8,7,11,11,5,5,8,9,5,12,12,8,6,12,3,7,6,8,12,4,10,8,6,5,3,8,7,5,9,6,3,9,9,6,6,9,5,4,6,8,7,5,12,6,5,4,9,6,6,8,3,3","1,8,9,10,11,12,3,4,5,6,7,8,9,10,1,3,4,5,12,11,10,9,8,7,6,5,4,3,1,8",Different,22,18,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,SP_ROLL_6,"1,9,3,4,9,5,10,8,4,4,4,10,10,3,3,12,8,9,10,4,4,4,8,8,9,6,5,10,8,5,8,3,9,6,4,4,7,9,5,4,9,7,6,10,4,9,5,5,4,3,3,10,6,11,5,11,8,8,7,12,12,5,10,6,8,9,10,3,6,10,10,3,12,4,4,9,10,4,11,7,11,8,4,5,12,3,3,11,8,7,6,10,10,4,4,12,8,3,3,9,9,5,9,6,12,9,5,9,9,7,4,10,4,9,9,11,4,12,9,6,6,4,12,6,5,4,4,8,8,5,6,9,5,10,10,3,8,10,4,11,7,11,8,10,9,12,3,3,8,11,6,5,8,5,6,3,9,9,5,4,7,3,9,5,11,3,9,7,10,4,9,4,3,3,6,6,5,4,12,5,3,8,9,5,9,8,3,3,8,9,7,7,11,9,5,3,3,4,4,5","8,1,3,4,5,6,7,8,9,10,11,12,8,9,10,1,3,4,5,6,7,12,11,10,9,8,1,3,4,5",Different,23,19,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,FIX_DISORDER,0,0,Same,26,21,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,FIX_NUM,10,1,Different,27,22,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,FIX_RESULT_1,"3,4,5,6,7,5,6,7,8,9,7,8,9,10,11,9,10,11,12,3,11,12,3,4,5,3,4,5,6,7","8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8",Different,28,23,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,FIX_RESULT_2,"4,5,6,7,8,6,7,8,9,10,8,9,10,11,12,10,11,12,3,4,12,3,4,5,6,4,5,6,7,8",,OnlyYngg,29,,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,FIX_RESULT_3,"5,6,7,8,9,7,8,9,10,11,9,10,11,12,3,11,12,3,4,5,3,4,5,6,7,5,6,7,8,9",,OnlyYngg,30,,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,FIX_RESULT_4,"6,7,8,9,10,8,9,10,11,12,10,11,12,3,4,12,3,4,5,6,4,5,6,7,8,6,7,8,9,10",,OnlyYngg,31,,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,FIX_RESULT_5,"7,8,9,10,11,9,10,11,12,3,11,12,3,4,5,3,4,5,6,7,5,6,7,8,9,7,8,9,10,11",,OnlyYngg,32,,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,FIX_RESULT_6,"8,9,10,11,12,10,11,12,3,4,12,3,4,5,6,4,5,6,7,8,6,7,8,9,10,8,9,10,11,12",,OnlyYngg,33,,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,FIX_RESULT_7,"9,10,11,12,3,11,12,3,4,5,3,4,5,6,7,5,6,7,8,9,7,8,9,10,11,9,10,11,12,3",,OnlyYngg,34,,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,FIX_RESULT_8,"10,11,12,3,4,12,3,4,5,6,4,5,6,7,8,6,7,8,9,10,8,9,10,11,12,10,11,12,3,4",,OnlyYngg,35,,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,FIX_RESULT_9,"11,12,3,4,5,3,4,5,6,7,5,6,7,8,9,7,8,9,10,11,9,10,11,12,3,11,12,3,4,5",,OnlyYngg,36,,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,FIX_RESULT_10,"12,3,4,5,6,4,5,6,7,8,6,7,8,9,10,8,9,10,11,12,10,11,12,3,4,12,3,4,5,6",,OnlyYngg,37,,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,ZERO_DISORDER,0,0,Same,41,24,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,ZERO_NUM,10,1,Different,42,25,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,ZERO_RESULT_1,"3,5,6,7,8,3,7,8,9,10,3,9,10,11,12,3,11,12,3,4,3,3,4,5,6,4,5,6,7,2","8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8",Different,43,26,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,ZERO_RESULT_2,"4,6,7,8,9,4,8,9,10,11,4,10,11,12,3,4,12,3,4,5,4,4,5,6,7,5,6,7,8,2",,OnlyYngg,44,,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,ZERO_RESULT_3,"5,7,8,9,10,5,9,10,11,12,5,11,12,3,4,5,3,4,5,6,5,5,6,7,8,6,7,8,9,2",,OnlyYngg,45,,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,ZERO_RESULT_4,"6,8,9,10,11,6,10,11,12,3,6,12,3,4,5,6,4,5,6,7,6,6,7,8,9,7,8,9,10,2",,OnlyYngg,46,,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,ZERO_RESULT_5,"7,9,10,11,12,7,11,12,3,4,7,3,4,5,6,7,5,6,7,8,7,7,8,9,10,8,9,10,11,2",,OnlyYngg,47,,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,ZERO_RESULT_6,"8,10,11,12,3,8,12,3,4,5,8,4,5,6,7,8,6,7,8,9,8,8,9,10,11,9,10,11,12,2",,OnlyYngg,48,,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,ZERO_RESULT_7,"9,11,12,3,4,9,3,4,5,6,9,5,6,7,8,9,7,8,9,10,9,9,10,11,12,10,11,12,3,2",,OnlyYngg,49,,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,ZERO_RESULT_8,"10,12,3,4,5,10,4,5,6,7,10,6,7,8,9,10,8,9,10,11,10,10,11,12,3,11,12,3,4,2",,OnlyYngg,50,,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,ZERO_RESULT_9,"11,3,4,5,6,11,5,6,7,8,11,7,8,9,10,11,9,10,11,12,11,11,12,3,4,12,3,4,5,2",,OnlyYngg,51,,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_ex_0.conf,GENERAL_1,ZERO_RESULT_10,"12,4,5,6,7,12,6,7,8,9,12,8,9,10,11,12,10,11,12,3,12,12,3,4,5,3,4,5,6,2",,OnlyYngg,52,,,free_reel_config/yngg_free_rand_ex_0.conf,yngg_free_rand_ex_0.conf
+yngg_free_rand_main.conf,MAIN,VERSION,101,101,Same,3,2,,free_reel_config/yngg_free_rand_main.conf,yngg_free_rand_main.conf
+yngg_free_rand_main.conf,MAIN,COL_COUNT,6,6,Same,5,3,,free_reel_config/yngg_free_rand_main.conf,yngg_free_rand_main.conf
+yngg_free_rand_main.conf,MAIN,ROW_COUNT,5,5,Same,7,4,,free_reel_config/yngg_free_rand_main.conf,yngg_free_rand_main.conf
+yngg_free_rand_main.conf,MAIN,ITEM_COUNT,13,13,Same,9,5,,free_reel_config/yngg_free_rand_main.conf,yngg_free_rand_main.conf
+yngg_free_rand_main.conf,MAIN,ITEM_COM_COUNT,1,1,Same,11,6,,free_reel_config/yngg_free_rand_main.conf,yngg_free_rand_main.conf
+yngg_free_rand_main.conf,,,,,TextOnly,,,字段值相同；注释、空行或换行格式不同,free_reel_config/yngg_free_rand_main.conf,yngg_free_rand_main.conf
+yngg_game_config.conf,MAIN,VERSION,101,101,Same,3,3,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,COL_COUNT,6,6,Same,5,5,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,ROW_COUNT,5,5,Same,6,7,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,ITEM_COUNT,13,13,Same,8,9,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,PRIZE_RATE,1,1,Same,10,11,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,USE_WILDS,"0,0,0,1,1,1,1,1,1,1,1,1,1","0,0,0,1,1,1,1,1,1,1,1,1,1",Same,12,14,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,BASE_NUMS,"0,0,0,5,5,5,5,5,5,5,5,5,5","0,0,0,5,5,5,5,5,5,5,5,5,5",Same,14,16,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,ITEM_PRIZES_0,"0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0","0,0,0,0,0,0,0,0,0,0,0,0",Different,16,20,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,ITEM_PRIZES_1,"0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0","0,0,0,0,0,0,0,0,0,0,0,0",Different,17,22,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,ITEM_PRIZES_2,"0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0","0,0,0,0,0,0,0,0,0,0,0,0",Different,18,24,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,ITEM_PRIZES_3,"0,0,0,0,10000,25000,25000,50000,50000,50000,50000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000,250000","0,0,0,0,10000,25000,25000,50000,50000,50000,50000,250000",Different,19,26,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,ITEM_PRIZES_4,"0,0,0,0,10000,25000,25000,50000,50000,50000,50000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000,100000","0,0,0,0,10000,25000,25000,50000,50000,50000,50000,100000",Different,20,28,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,ITEM_PRIZES_5,"0,0,0,0,5000,10000,10000,30000,30000,30000,30000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000,50000","0,0,0,0,5000,10000,10000,30000,30000,30000,30000,50000",Different,21,30,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,ITEM_PRIZES_6,"0,0,0,0,3000,5000,5000,10000,10000,10000,10000,30000,30000,30000,30000,30000,30000,30000,30000,30000,30000,30000,30000,30000,30000,30000,30000,30000,30000,30000","0,0,0,0,3000,5000,5000,10000,10000,10000,10000,30000",Different,22,32,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,ITEM_PRIZES_7,"0,0,0,0,3000,5000,5000,10000,10000,10000,10000,30000,30000,30000,30000,30000,30000,30000,30000,30000,30000,30000,30000,30000,30000,30000,30000,30000,30000,30000","0,0,0,0,3000,5000,5000,10000,10000,10000,10000,30000",Different,23,34,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,ITEM_PRIZES_8,"0,0,0,0,1000,2000,2000,5000,5000,5000,5000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000","0,0,0,0,1000,2000,2000,5000,5000,5000,5000,10000",Different,24,36,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,ITEM_PRIZES_9,"0,0,0,0,1000,2000,2000,5000,5000,5000,5000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000,10000","0,0,0,0,1000,2000,2000,5000,5000,5000,5000,10000",Different,25,38,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,ITEM_PRIZES_10,"0,0,0,0,1000,2000,2000,3000,3000,3000,3000,6000,6000,6000,6000,6000,6000,6000,6000,6000,6000,6000,6000,6000,6000,6000,6000,6000,6000,6000","0,0,0,0,1000,2000,2000,3000,3000,3000,3000,6000",Different,26,40,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,ITEM_PRIZES_11,"0,0,0,0,1000,2000,2000,3000,3000,3000,3000,6000,6000,6000,6000,6000,6000,6000,6000,6000,6000,6000,6000,6000,6000,6000,6000,6000,6000,6000","0,0,0,0,1000,2000,2000,3000,3000,3000,3000,6000",Different,27,42,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,ITEM_PRIZES_12,"0,0,0,0,1000,2000,2000,3000,3000,3000,3000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000,5000","0,0,0,0,1000,2000,2000,3000,3000,3000,3000,5000",Different,28,44,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,LINE_MODE,5,5,Same,29,49,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,SCATTER_MODE,0,0,Same,31,50,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,SCATTER_ID,0,0,Same,32,51,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,SCATTER_COLS,"1,1,1,1,1,1","1,1,1,1,1,1",Same,33,52,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,SCATTER_SERIAL,0,0,Same,34,53,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,SCATTER_MULTIPLES,"0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0","0,0,0,0,0,0",Different,35,54,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,SCATTER_PRIZES,"0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0","0,0,0,0,0,0",Different,36,55,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,GRID_DISABLES,"0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0","0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",Same,38,58,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,GRID_DISABLES_FREE,"0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0","0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0",Same,39,59,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,ITEM_PLATE,,0,OnlyServer,,46,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_config.conf,MAIN,ITEM_PLATE_PRIZES,,"0,0,0,0,0,0,0,0,0,0,0,0,0",OnlyServer,,47,,special/yngg_game_config.conf,yngg_game_config.conf
+yngg_game_server.conf,System Base Info,AutoSpinTimes,"10,100,500,-1,-2","10,100,500,-1,-2",Same,3,33,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,BigWinGrade,"10,20,50","10,20,50",Same,5,34,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,NewBigWinGrade,"5,10,20,50,100,500","5,10,20,50,100,500",Same,6,35,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,BetPerReel,"1,1,1,1,1,1,1,1,1","1,1,1,1,1,1,1,1,1",Same,7,29,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,BetScopes,"10,20,50,100,200,500,1000,2000,2500","10,20,50,100,200,500,1000,2000,2500",Same,9,28,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,BaseScore,10000,10000,Same,12,30,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,BetUnLockRegTime,2000/09/09 08:00:00,,OnlyYngg,17,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,BetUnLockLevel,"5,5,5,5,5,5,5,5,0","5,5,5,5,5,5,5,5,0",Same,18,31,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,BetUnLockVip,"0,0,0,0,0,0,0,0,2","0,0,0,0,0,0,0,0,2",Same,19,32,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,Version,101,101,Same,23,38,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,FreeSpinCounts,"10,10","10,10",Same,26,55,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,FreeSpinRetrigger,"0,0,2,4","0,0,2,4",Same,28,57,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,coin_multi_1,5,5,Same,30,58,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,coin_multi_2,25,25,Same,31,59,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,bonus_max_round,5,5,Same,33,60,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,BONUS_1,1,,OnlyYngg,36,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,BONUS_2,2,,OnlyYngg,38,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,BONUS_3,3,,OnlyYngg,40,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,BONUS_4,4,,OnlyYngg,42,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,BONUS_5,5,,OnlyYngg,44,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,BONUS_6,6,,OnlyYngg,46,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,BONUS_7,7,,OnlyYngg,48,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,BONUS_8,8,,OnlyYngg,50,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,BONUS_9,9,,OnlyYngg,52,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,BONUS_10,10,,OnlyYngg,54,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,0,SuperScatterProbability,200,,OnlyYngg,59,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,0,ScatterCountProbability,"10000,1000,500,57","1000,100,50,5",Different,61,65,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,0,FreeScatterCountProbability,"10000,1000,500,57","1000,100,50,5",Different,63,66,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,0,BaseNoWinBonusCountProbability,"98,2","80,20",Different,65,67,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,0,BaseWinBonusCountProbability,"92,8","90,10",Different,67,68,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,0,FreeGoldenBonusCountProbability,"60,40","60,40",Same,69,69,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,0,FreeNoGoldenBonusCountProbability,"30,70","30,70",Same,71,70,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,0,DropSpecialSymbolProbability,"998,1,1","998,1,1",Same,73,71,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,0,FreeDropSpecialSymbolProbability,"998,1,1","998,1,1",Same,75,72,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,4,SuperScatterProbability,200,,OnlyYngg,81,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,4,ScatterCountProbability,"10000,1000,500,57",,OnlyYngg,83,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,4,FreeScatterCountProbability,"10000,1000,500,57",,OnlyYngg,85,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,4,BaseNoWinBonusCountProbability,"98,2",,OnlyYngg,87,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,4,BaseWinBonusCountProbability,"92,8",,OnlyYngg,89,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,4,FreeGoldenBonusCountProbability,"60,40",,OnlyYngg,91,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,4,FreeNoGoldenBonusCountProbability,"30,70",,OnlyYngg,93,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,4,DropSpecialSymbolProbability,"998,1,1",,OnlyYngg,95,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,4,FreeDropSpecialSymbolProbability,"998,1,1",,OnlyYngg,97,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,8,SuperScatterProbability,200,,OnlyYngg,102,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,8,ScatterCountProbability,"10000,1000,500,57",,OnlyYngg,104,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,8,FreeScatterCountProbability,"10000,1000,500,57",,OnlyYngg,106,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,8,BaseNoWinBonusCountProbability,"98,2",,OnlyYngg,108,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,8,BaseWinBonusCountProbability,"92,8",,OnlyYngg,110,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,8,FreeGoldenBonusCountProbability,"60,40",,OnlyYngg,112,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,8,FreeNoGoldenBonusCountProbability,"30,70",,OnlyYngg,114,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,8,DropSpecialSymbolProbability,"998,1,1",,OnlyYngg,116,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,8,FreeDropSpecialSymbolProbability,"998,1,1",,OnlyYngg,118,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,12,SuperScatterProbability,200,,OnlyYngg,123,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,12,ScatterCountProbability,"10000,1000,500,57",,OnlyYngg,125,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,12,FreeScatterCountProbability,"10000,1000,500,57",,OnlyYngg,127,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,12,BaseNoWinBonusCountProbability,"98,2",,OnlyYngg,129,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,12,BaseWinBonusCountProbability,"92,8",,OnlyYngg,131,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,12,FreeGoldenBonusCountProbability,"60,40",,OnlyYngg,133,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,12,FreeNoGoldenBonusCountProbability,"30,70",,OnlyYngg,135,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,12,DropSpecialSymbolProbability,"998,1,1",,OnlyYngg,137,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,12,FreeDropSpecialSymbolProbability,"998,1,1",,OnlyYngg,139,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,17,SuperScatterProbability,200,,OnlyYngg,144,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,17,ScatterCountProbability,"10000,1000,500,57",,OnlyYngg,146,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,17,FreeScatterCountProbability,"10000,1000,500,57",,OnlyYngg,148,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,17,BaseNoWinBonusCountProbability,"98,2",,OnlyYngg,150,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,17,BaseWinBonusCountProbability,"92,8",,OnlyYngg,152,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,17,FreeGoldenBonusCountProbability,"60,40",,OnlyYngg,154,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,17,FreeNoGoldenBonusCountProbability,"30,70",,OnlyYngg,156,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,17,DropSpecialSymbolProbability,"998,1,1",,OnlyYngg,158,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,17,FreeDropSpecialSymbolProbability,"998,1,1",,OnlyYngg,160,,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,kick_time,,180,OnlyServer,,3,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,radius_num,,1500,OnlyServer,,5,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,cut_multiple,,"0,0,0,0,0,0,0",OnlyServer,,7,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,free_cut_multiple,,"0,0,0,0,0,0,0",OnlyServer,,9,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,limit_login_type,,-1,OnlyServer,,10,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,limit_reg_time,,2024/02/01 00:00:01,OnlyServer,,11,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,limit_lv,,"7,7",OnlyServer,,12,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,limit_vip,,0,OnlyServer,,13,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,game_gap_time,,300,OnlyServer,,14,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,merge_log_num,,1,OnlyServer,,15,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,day_play_game_num,,"18000,36000,72000",OnlyServer,,16,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,limit_send_bull_user_type,,0,OnlyServer,,17,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,limit_login_lable_user_value,,1,OnlyServer,,18,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,limit_login_lable_user_percent,,10000,OnlyServer,,19,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,daily_act_game_ver,,8,OnlyServer,,20,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,replay_open,,1,OnlyServer,,21,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,replay_min_win_money,,5000000000,OnlyServer,,22,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,replay_min_win_mul,,999999,OnlyServer,,23,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,replay_min_version,,65,OnlyServer,,24,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,SpecialBetPercent,,"0,0,0,0,0,0,0,0,0,0",OnlyServer,,25,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,System Base Info,SpecialBetUnLockVip,,"0,0,0,0,0,0,0,0,0,0",OnlyServer,,26,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,Bigwin_Pre_Win_Range,,"50,100,200",OnlyServer,,39,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,Bigwin_Pre_Rate,,"3000,5000,9000",OnlyServer,,40,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,SuperScatterProbability,,200,OnlyServer,,42,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,ScatterCountProbability,,"1000,100,50,5",OnlyServer,,44,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,FreeScatterCountProbability,,"1000,100,50,5",OnlyServer,,45,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,BaseNoWinBonusCountProbability,,"80,20",OnlyServer,,47,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,BaseWinBonusCountProbability,,"90,10",OnlyServer,,48,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,FreeGoldenBonusCountProbability,,"60,40",OnlyServer,,49,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,FreeNoGoldenBonusCountProbability,,"30,70",OnlyServer,,50,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,DropSpecialSymbolProbability,,"998,1,1",OnlyServer,,52,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,FreeDropSpecialSymbolProbability,,"998,1,1",OnlyServer,,53,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,Game Info,Max_Eli_Time,,50,OnlyServer,,61,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_game_server.conf,0,Max_Eli_Time,,50,OnlyServer,,64,,special/yngg_game_server.conf,yngg_game_server.conf
+yngg_rand_ex_0.conf,MAIN,VERSION,101,101,Same,3,2,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,BASE_RATE,"1000,0,0,0","10000,0,0,0",Different,11,6,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,NORMAL_ROLL_1,"9,12,9,5,12,9,1,5,9,5,12,12,9,5,11,9,9,1,11,11,5,1,7,9,5,9,10,8,9,11,6,8,1,9,8,6,9,5,12,10,8,9,6,11,9,9,10,7,7,10,5,10,10,6,8,12,9,5,12,6,10,5,12,9,6,11,11,8,5,6,12,11,7,5,1,10,5,11,12,7,5,8,10,12,6,9,11,12,11,8,6,1,12,11,3,10,8,12,4,10,8,6,9,1,10,10,1,7,12,5,9,11,7,6,11,9,9,6,8,8,5,5,5,8,7,12,9,5,10,5,12,12,9,6,11,6,11,5,6,12,11,7,3,4,10,8,11,12,5,5,8,7,6,9,8,3,10,6,8,12,4,10,8,1,9,5,10,10,8,3,5,9,11,7,11,9,1,10,10,6,1,9,5,10,10,4,12,9,12,10,5,9,6,10,8,11,5,3,10,12","1,3,4,5,6,7,8,9,10,11,12,1,8,9,10,3,4,5,6,7,12,11,8,9,10,1,6,7,8,9",Different,12,8,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,NORMAL_ROLL_2,"9,9,11,9,1,4,11,4,9,1,11,9,7,7,7,9,9,1,12,7,9,4,9,9,3,7,10,5,10,11,4,9,11,6,7,10,11,6,11,12,4,10,11,7,9,10,4,8,1,6,11,4,11,7,11,4,9,12,6,6,6,11,4,9,3,10,12,4,7,8,9,4,11,7,11,4,12,7,12,9,11,10,7,11,9,9,4,11,12,3,7,8,5,10,1,4,9,7,11,1,10,10,7,11,12,7,11,6,6,1,4,10,11,7,9,10,4,11,8,3,4,11,7,9,6,11,4,4,11,7,11,11,4,9,9,7,7,11,4,9,9,3,12,7,8,9,4,4,6,3,7,7,6,6,9,9,6,11,12,8,8,5,10,1,11,7,11,4,10,10,1,7,7,11,4,9,10,4,11,8,12,4,9,11,4,12,9,11,7,9,7,9,9,10,4,9,7,8,9,10","8,9,10,11,12,1,3,4,5,6,7,8,9,10,1,12,11,3,4,5,8,9,10,6,7,1,3,4,5,8",Different,13,9,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,NORMAL_ROLL_3,"9,9,9,5,1,9,10,7,12,1,8,10,10,10,12,1,8,3,10,10,5,5,5,12,1,8,3,11,10,8,8,11,11,3,11,7,8,8,5,8,9,6,6,8,8,8,7,10,8,8,1,12,6,11,11,8,10,10,6,12,12,8,3,10,10,6,12,8,10,10,3,12,5,8,6,12,11,7,5,12,10,4,4,11,8,8,11,3,10,6,7,12,8,8,5,12,1,12,8,8,12,8,1,7,11,12,6,8,10,4,8,12,6,11,1,3,11,8,10,10,3,12,8,7,10,10,8,12,8,3,12,12,5,8,6,12,12,7,5,12,11,10,8,9,6,12,8,9,3,6,8,8,8,1,12,8,11,6,8,8,12,8,12,7,11,12,10,4,3,9,8,8,8,12,1,10,6,12,1,8,7,10,8,12,8,4,10,10,3,8,9,12,5,12,11,10,4,4,10,10","3,4,5,6,7,8,9,10,11,12,1,8,9,3,4,5,6,7,10,11,12,1,8,9,4,5,6,7,8,9",Different,14,10,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,NORMAL_ROLL_4,"11,4,4,9,9,10,9,10,4,1,8,9,10,11,4,9,12,11,5,10,5,8,6,8,1,5,5,8,3,3,6,9,11,12,4,6,9,11,10,5,10,12,4,11,5,8,11,11,6,12,12,3,11,12,8,7,6,8,11,11,5,9,9,7,10,5,10,3,12,7,1,10,6,8,9,10,7,11,12,4,9,11,5,10,3,3,5,10,8,7,11,8,9,5,10,11,7,9,11,12,4,6,9,11,10,5,12,4,7,10,5,10,8,7,11,11,6,11,8,6,6,12,11,8,7,7,8,4,5,5,9,9,10,5,10,7,11,10,6,12,7,8,9,7,11,12,4,9,12,11,5,10,5,8,7,11,8,9,5,5,8,9,9,7,7,7,11,6,9,10,5,10,3,3,4,4,5,8,6,3,3,12,8,7,5,5,9,9,7,10,4,6,8,9,7,3,3,10,10,4","12,11,10,9,8,7,6,5,4,3,1,8,9,10,11,12,1,3,4,5,6,7,8,9,10,11,1,8,9,3",Different,15,11,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,NORMAL_ROLL_5,"1,12,4,4,7,7,5,9,4,4,9,9,5,12,7,5,11,10,8,3,7,9,9,5,5,6,12,3,11,9,11,5,12,12,11,8,6,12,9,4,4,8,12,6,10,8,5,9,11,6,11,9,9,10,6,7,9,10,5,10,6,8,7,12,9,5,12,10,6,10,5,3,9,6,11,11,6,8,1,5,12,4,3,10,8,5,12,5,5,6,9,11,3,8,6,12,3,12,10,6,8,12,4,10,8,6,9,3,8,12,5,4,1,7,6,11,1,6,8,8,5,5,5,10,10,6,8,7,9,5,10,10,10,6,10,5,12,12,9,11,11,6,11,5,6,12,11,7,8,7,11,11,5,5,8,9,5,12,12,8,6,12,3,7,6,8,12,4,10,8,6,5,3,8,7,5,9,6,3,9,9,6,6,9,5,4,6,8,7,5,12,6,5,4,9,6,6,8,3,3","1,8,9,10,11,12,3,4,5,6,7,8,9,10,1,3,4,5,12,11,10,9,8,7,6,5,4,3,1,8",Different,16,12,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,NORMAL_ROLL_6,"1,9,3,4,9,5,10,1,4,4,4,10,10,3,3,12,8,9,10,4,4,4,8,8,9,6,5,10,8,5,8,3,9,6,4,4,7,9,5,4,9,7,6,10,4,9,5,5,4,3,3,1,10,6,5,11,8,8,7,12,12,5,10,6,8,9,10,3,6,1,10,3,12,4,4,9,10,4,11,7,11,8,4,5,12,3,3,11,8,7,6,10,10,4,4,12,8,3,3,9,9,5,9,6,12,9,5,9,9,7,4,10,4,9,9,11,4,12,9,6,6,4,12,6,5,4,4,8,8,5,6,9,5,10,10,3,8,10,4,11,7,11,8,10,9,12,3,3,8,11,6,5,8,5,6,3,9,9,5,4,7,3,9,5,11,3,9,7,10,4,9,4,3,3,6,6,5,4,1,5,3,8,9,5,9,8,3,3,8,9,7,7,11,9,5,3,3,4,4,5","8,1,3,4,5,6,7,8,9,10,11,12,8,9,10,1,3,4,5,6,7,12,11,10,9,8,1,3,4,5",Different,17,13,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,SP_ROLL_1,"9,12,9,5,12,9,1,5,9,5,12,12,9,5,11,9,9,1,11,11,5,1,7,9,5,9,10,8,9,11,6,8,1,9,8,6,9,5,12,10,8,9,6,11,9,9,10,7,7,10,5,10,10,6,8,12,9,5,12,6,10,5,12,9,6,11,11,8,5,6,12,11,7,5,1,10,5,11,12,7,5,8,10,12,6,9,11,12,11,8,6,1,12,11,3,10,8,12,4,10,8,6,9,1,10,10,1,7,12,5,9,11,7,6,11,9,9,6,8,8,5,5,5,8,7,12,9,5,10,5,12,12,9,6,11,6,11,5,6,12,11,7,3,4,10,8,11,12,5,5,8,7,6,9,8,3,10,6,8,12,4,10,8,1,9,5,10,10,8,3,5,9,11,7,11,9,1,10,10,6,1,9,5,10,10,4,12,9,12,10,5,9,6,10,8,11,5,3,10,12","1,3,4,5,6,7,8,9,10,11,12,1,8,9,10,3,4,5,6,7,12,11,8,9,10,1,6,7,8,9",Different,18,15,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,SP_ROLL_2,"9,9,11,9,1,4,11,4,9,1,11,9,7,7,7,9,9,1,12,7,9,4,9,9,3,7,10,5,10,11,4,9,11,6,7,10,11,6,11,12,4,10,11,7,9,10,4,8,1,6,11,4,11,7,11,4,9,12,6,6,6,11,4,9,3,10,12,4,7,8,9,4,11,7,11,4,12,7,12,9,11,10,7,11,9,9,4,11,12,3,7,8,5,10,1,4,9,7,11,1,10,10,7,11,12,7,11,6,6,1,4,10,11,7,9,10,4,11,8,3,4,11,7,9,6,11,4,4,11,7,11,11,4,9,9,7,7,11,4,9,9,3,12,7,8,9,4,4,6,3,7,7,6,6,9,9,6,11,12,8,8,5,10,1,11,7,11,4,10,10,1,7,7,11,4,9,10,4,11,8,12,4,9,11,4,12,9,11,7,9,7,9,9,10,4,9,7,8,9,10","8,9,10,11,12,1,3,4,5,6,7,8,9,10,1,12,11,3,4,5,8,9,10,6,7,1,3,4,5,8",Different,19,16,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,SP_ROLL_3,"9,9,9,5,1,9,10,7,12,1,8,10,10,10,12,1,8,3,10,10,5,5,5,12,1,8,3,11,10,8,8,11,11,3,11,7,8,8,5,8,9,6,6,8,8,8,7,10,8,8,1,12,6,11,11,8,10,10,6,12,12,8,3,10,10,6,12,8,10,10,3,12,5,8,6,12,11,7,5,12,10,4,4,11,8,8,11,3,10,6,7,12,8,8,5,12,1,12,8,8,12,8,1,7,11,12,6,8,10,4,8,12,6,11,1,3,11,8,10,10,3,12,8,7,10,10,8,12,8,3,12,12,5,8,6,12,12,7,5,12,11,10,8,9,6,12,8,9,3,6,8,8,8,1,12,8,11,6,8,8,12,8,12,7,11,12,10,4,3,9,8,8,8,12,1,10,6,12,1,8,7,10,8,12,8,4,10,10,3,8,9,12,5,12,11,10,4,4,10,10","3,4,5,6,7,8,9,10,11,12,1,8,9,3,4,5,6,7,10,11,12,1,8,9,4,5,6,7,8,9",Different,20,17,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,SP_ROLL_4,"11,4,4,9,9,10,9,10,4,1,8,9,10,11,4,9,12,11,5,10,5,8,6,8,1,5,5,8,3,3,6,9,11,12,4,6,9,11,10,5,10,12,4,11,5,8,11,11,6,12,12,3,11,12,8,7,6,8,11,11,5,9,9,7,10,5,10,3,12,7,1,10,6,8,9,10,7,11,12,4,9,11,5,10,3,3,5,10,8,7,11,8,9,5,10,11,7,9,11,12,4,6,9,11,10,5,12,4,7,10,5,10,8,7,11,11,6,11,8,6,6,12,11,8,7,7,8,4,5,5,9,9,10,5,10,7,11,10,6,12,7,8,9,7,11,12,4,9,12,11,5,10,5,8,7,11,8,9,5,5,8,9,9,7,7,7,11,6,9,10,5,10,3,3,4,4,5,8,6,3,3,12,8,7,5,5,9,9,7,10,4,6,8,9,7,3,3,10,10,4","12,11,10,9,8,7,6,5,4,3,1,8,9,10,11,12,1,3,4,5,6,7,8,9,10,11,1,8,9,3",Different,21,18,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,SP_ROLL_5,"1,12,4,4,7,7,5,9,4,4,9,9,5,12,7,5,11,10,8,3,7,9,9,5,5,6,12,3,11,9,11,5,12,12,11,8,6,12,9,4,4,8,12,6,10,8,5,9,11,6,11,9,9,10,6,7,9,10,5,10,6,8,7,12,9,5,12,10,6,10,5,3,9,6,11,11,6,8,1,5,12,4,3,10,8,5,12,5,5,6,9,11,3,8,6,12,3,12,10,6,8,12,4,10,8,6,9,3,8,12,5,4,1,7,6,11,1,6,8,8,5,5,5,10,10,6,8,7,9,5,10,10,10,6,10,5,12,12,9,11,11,6,11,5,6,12,11,7,8,7,11,11,5,5,8,9,5,12,12,8,6,12,3,7,6,8,12,4,10,8,6,5,3,8,7,5,9,6,3,9,9,6,6,9,5,4,6,8,7,5,12,6,5,4,9,6,6,8,3,3","1,8,9,10,11,12,3,4,5,6,7,8,9,10,1,3,4,5,12,11,10,9,8,7,6,5,4,3,1,8",Different,22,19,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,SP_ROLL_6,"1,9,3,4,9,5,10,1,4,4,4,10,10,3,3,12,8,9,10,4,4,4,8,8,9,6,5,10,8,5,8,3,9,6,4,4,7,9,5,4,9,7,6,10,4,9,5,5,4,3,3,1,10,6,5,11,8,8,7,12,12,5,10,6,8,9,10,3,6,1,10,3,12,4,4,9,10,4,11,7,11,8,4,5,12,3,3,11,8,7,6,10,10,4,4,12,8,3,3,9,9,5,9,6,12,9,5,9,9,7,4,10,4,9,9,11,4,12,9,6,6,4,12,6,5,4,4,8,8,5,6,9,5,10,10,3,8,10,4,11,7,11,8,10,9,12,3,3,8,11,6,5,8,5,6,3,9,9,5,4,7,3,9,5,11,3,9,7,10,4,9,4,3,3,6,6,5,4,1,5,3,8,9,5,9,8,3,3,8,9,7,7,11,9,5,3,3,4,4,5","8,1,3,4,5,6,7,8,9,10,11,12,8,9,10,1,3,4,5,6,7,12,11,10,9,8,1,3,4,5",Different,23,20,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,FIX_DISORDER,0,0,Same,26,22,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,FIX_NUM,10,1,Different,27,23,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,FIX_RESULT_1,"3,4,5,6,7,5,6,7,8,9,7,8,9,10,11,9,10,11,12,3,11,12,3,4,5,3,4,5,6,7","8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8",Different,28,24,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,FIX_RESULT_2,"4,5,6,7,8,6,7,8,9,10,8,9,10,11,12,10,11,12,3,4,12,3,4,5,6,4,5,6,7,8",,OnlyYngg,29,,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,FIX_RESULT_3,"5,6,7,8,9,7,8,9,10,11,9,10,11,12,3,11,12,3,4,5,3,4,5,6,7,5,6,7,8,9",,OnlyYngg,30,,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,FIX_RESULT_4,"6,7,8,9,10,8,9,10,11,12,10,11,12,3,4,12,3,4,5,6,4,5,6,7,8,6,7,8,9,10",,OnlyYngg,31,,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,FIX_RESULT_5,"7,8,9,10,11,9,10,11,12,3,11,12,3,4,5,3,4,5,6,7,5,6,7,8,9,7,8,9,10,11",,OnlyYngg,32,,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,FIX_RESULT_6,"8,9,10,11,12,10,11,12,3,4,12,3,4,5,6,4,5,6,7,8,6,7,8,9,10,8,9,10,11,12",,OnlyYngg,33,,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,FIX_RESULT_7,"9,10,11,12,3,11,12,3,4,5,3,4,5,6,7,5,6,7,8,9,7,8,9,10,11,9,10,11,12,3",,OnlyYngg,34,,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,FIX_RESULT_8,"10,11,12,3,4,12,3,4,5,6,4,5,6,7,8,6,7,8,9,10,8,9,10,11,12,10,11,12,3,4",,OnlyYngg,35,,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,FIX_RESULT_9,"11,12,3,4,5,3,4,5,6,7,5,6,7,8,9,7,8,9,10,11,9,10,11,12,3,11,12,3,4,5",,OnlyYngg,36,,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,FIX_RESULT_10,"12,3,4,5,6,4,5,6,7,8,6,7,8,9,10,8,9,10,11,12,10,11,12,3,4,12,3,4,5,6",,OnlyYngg,37,,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,ZERO_DISORDER,0,0,Same,41,26,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,ZERO_NUM,10,1,Different,42,27,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,ZERO_RESULT_1,"3,5,6,7,8,3,7,8,9,10,3,9,10,11,12,3,11,12,3,4,3,3,4,5,6,4,5,6,7,2","8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8,8",Different,43,28,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,ZERO_RESULT_2,"4,6,7,8,9,4,8,9,10,11,4,10,11,12,3,4,12,3,4,5,4,4,5,6,7,5,6,7,8,2",,OnlyYngg,44,,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,ZERO_RESULT_3,"5,7,8,9,10,5,9,10,11,12,5,11,12,3,4,5,3,4,5,6,5,5,6,7,8,6,7,8,9,2",,OnlyYngg,45,,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,ZERO_RESULT_4,"6,8,9,10,11,6,10,11,12,3,6,12,3,4,5,6,4,5,6,7,6,6,7,8,9,7,8,9,10,2",,OnlyYngg,46,,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,ZERO_RESULT_5,"7,9,10,11,12,7,11,12,3,4,7,3,4,5,6,7,5,6,7,8,7,7,8,9,10,8,9,10,11,2",,OnlyYngg,47,,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,ZERO_RESULT_6,"8,10,11,12,3,8,12,3,4,5,8,4,5,6,7,8,6,7,8,9,8,8,9,10,11,9,10,11,12,2",,OnlyYngg,48,,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,ZERO_RESULT_7,"9,11,12,3,4,9,3,4,5,6,9,5,6,7,8,9,7,8,9,10,9,9,10,11,12,10,11,12,3,2",,OnlyYngg,49,,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,ZERO_RESULT_8,"10,12,3,4,5,10,4,5,6,7,10,6,7,8,9,10,8,9,10,11,10,10,11,12,3,11,12,3,4,2",,OnlyYngg,50,,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,ZERO_RESULT_9,"11,3,4,5,6,11,5,6,7,8,11,7,8,9,10,11,9,10,11,12,11,11,12,3,4,12,3,4,5,2",,OnlyYngg,51,,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_ex_0.conf,GENERAL_1,ZERO_RESULT_10,"12,4,5,6,7,12,6,7,8,9,12,8,9,10,11,12,10,11,12,3,12,12,3,4,5,3,4,5,6,2",,OnlyYngg,52,,,reel_config/yngg_rand_ex_0.conf,yngg_rand_ex_0.conf
+yngg_rand_main.conf,MAIN,VERSION,101,101,Same,3,2,,reel_config/yngg_rand_main.conf,yngg_rand_main.conf
+yngg_rand_main.conf,MAIN,COL_COUNT,6,6,Same,5,3,,reel_config/yngg_rand_main.conf,yngg_rand_main.conf
+yngg_rand_main.conf,MAIN,ROW_COUNT,5,5,Same,7,4,,reel_config/yngg_rand_main.conf,yngg_rand_main.conf
+yngg_rand_main.conf,MAIN,ITEM_COUNT,13,13,Same,9,5,,reel_config/yngg_rand_main.conf,yngg_rand_main.conf
+yngg_rand_main.conf,MAIN,ITEM_COM_COUNT,1,1,Same,11,6,,reel_config/yngg_rand_main.conf,yngg_rand_main.conf
+yngg_rand_main.conf,,,,,TextOnly,,,字段值相同；注释、空行或换行格式不同,reel_config/yngg_rand_main.conf,yngg_rand_main.conf

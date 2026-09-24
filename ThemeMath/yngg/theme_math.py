@@ -69,9 +69,12 @@ class ThemeMath(CountGame):
         if not self.game_server_config.has_section("Game Info"):
             raise ValueError(f"{self.game_server_config_file} missing [Game Info]")
         game_info = self.game_server_config["Game Info"]
-        if not self.game_server_config.has_section("0"):
+        self.ConfiguredTypes = tuple(
+            sorted(int(section) for section in self.game_server_config.sections()
+                   if section.isdecimal())
+        )
+        if 0 not in self.ConfiguredTypes:
             raise ValueError(f"{self.game_server_config_file} missing TYPE [0]")
-        type_info = self.game_server_config["0"]
         self.FreeSpinCounts = tuple(self._parse_int_list(game_info.get("FreeSpinCounts", "")))
         self.FreeSpinRetrigger = tuple(self._parse_int_list(game_info.get("FreeSpinRetrigger", "")))
         if len(self.FreeSpinCounts) != 2 or any(value <= 0 for value in self.FreeSpinCounts):
@@ -94,9 +97,6 @@ class ThemeMath(CountGame):
         self.JACKPOT_ID = int(game_info.get("JACKPOT_ID", self.FEATURE_ID))
         self.SUPER_SCATTER_SOURCE_ID = int(
             game_info.get("SuperScatterSourceId", self.FREE_SPIN_ID)
-        )
-        self.SUPER_SCATTER_PROBABILITY = int(
-            type_info["SuperScatterProbability"]
         )
         self.COIN_MULTI_1 = float(game_info.get("coin_multi_1", "5"))
         self.COIN_MULTI_2 = float(game_info.get("coin_multi_2", "25"))
@@ -139,14 +139,7 @@ class ThemeMath(CountGame):
                 3,
             ),
         )
-        for attribute, key, expected_length in probability_fields:
-            weights = tuple(self._parse_int_list(type_info.get(key, "")))
-            self._validate_weighted_options(
-                key,
-                tuple(range(expected_length)),
-                weights,
-            )
-            setattr(self, attribute, weights)
+        self.TypeProbabilityFields = probability_fields
         original_symbol_ids = (
             self.FREE_SPIN_ID,
             self.WILD_ID,
@@ -166,12 +159,24 @@ class ThemeMath(CountGame):
         ):
             raise ValueError("game server symbol ID outside original symbol range")
         self.wild_id = self.WILD_ID
-        if not 0 <= self.SUPER_SCATTER_PROBABILITY <= self.PROBABILITY_DENOMINATOR:
-            raise ValueError("SuperScatterProbability must be between 0 and 10000")
         if not 0 < self.COIN_MULTI_1 < self.COIN_MULTI_2:
             raise ValueError("coin_multi_1 and coin_multi_2 must be increasing")
         if self.BONUS_MAX_ROUND <= 0:
             raise ValueError("bonus_max_round must be positive")
+        self._activate_type(0)
+
+    def _activate_type(self, index: int) -> None:
+        if index not in self.ConfiguredTypes:
+            raise ValueError(f"unsupported yngg TYPE {index}: missing [{index}] in game server config")
+        type_info = self.game_server_config[str(index)]
+        self.SUPER_SCATTER_PROBABILITY = int(type_info["SuperScatterProbability"])
+        if not 0 <= self.SUPER_SCATTER_PROBABILITY <= self.PROBABILITY_DENOMINATOR:
+            raise ValueError(f"TYPE {index} SuperScatterProbability must be between 0 and 10000")
+        for attribute, key, expected_length in self.TypeProbabilityFields:
+            weights = tuple(self._parse_int_list(type_info.get(key, "")))
+            self._validate_weighted_options(key, tuple(range(expected_length)), weights)
+            setattr(self, attribute, weights)
+        self.ActiveTypeIndex = index
 
     def _load_bonus_config(self) -> None:
         if not self.bonus_config.has_section("GENERAL"):
@@ -404,10 +409,14 @@ class ThemeMath(CountGame):
     def _load_reel_config(
         self, index, general_index, reel_config_dir=None, reel_file_template=None,
     ):
-        # Only TYPE 0 has a matching server section and both reel resources.
-        # Reject missing types before the shared loader can fall back to TYPE 0.
-        if index != 0:
-            raise ValueError(f"unsupported yngg TYPE {index}; only TYPE 0 is configured")
+        if index not in self.ConfiguredTypes:
+            raise ValueError(f"unsupported yngg TYPE {index}: missing [{index}] in game server config")
+        directory = self._resolve_reel_config_dir(reel_config_dir)
+        template = reel_file_template or self.reel_file_template or "yngg_rand_ex_{index}.conf"
+        expected = directory / template.format(index=index)
+        if not expected.is_file():
+            raise FileNotFoundError(f"TYPE {index} reel config not found: {expected}")
+        self._activate_type(index)
         return super()._load_reel_config(
             index, general_index, reel_config_dir, reel_file_template
         )

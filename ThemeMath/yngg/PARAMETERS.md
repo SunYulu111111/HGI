@@ -17,7 +17,7 @@
 
 `ThemeMath.cal_item_list()` 读取以上参数，完成 Cluster 查找、Wild 参与判断和赔付计算。
 
-`special/yngg_game_server.conf` 的 `[Game Info]` 保存通用玩法参数，`[0]` 保存 TYPE 0 的特殊图标生成及 Scatter 转化参数。Wild ID 1、主盘 Bonus ID 2、Scatter 与 Super Scatter 共用 ID 0；Super Scatter 通过 `super_scatter_positions` 位置状态区分，不使用专门 ID：
+`special/yngg_game_server.conf` 的 `[Game Info]` 保存通用玩法参数，`[0]`、`[4]`、`[8]`、`[12]`、`[17]` 分别保存对应 TYPE 的特殊图标生成及 Scatter 转化参数。Wild ID 1、主盘 Bonus ID 2、Scatter 与 Super Scatter 共用 ID 0；Super Scatter 通过 `super_scatter_positions` 位置状态区分，不使用专门 ID：
 
 - 使用 `SuperScatterProbability=200` 设置每个 Spin 的转化概率；概率单位为万分比，200/10000 等于 1/50。
 - 使用 `coin_multi_1=5`、`coin_multi_2=25` 将金币倍数划分为铜币、银币和金币。
@@ -27,7 +27,7 @@ Base 初始特殊图标生成后执行一次转化判断；Base 后续掉落生�
 
 转化不会修改盘面 Symbol ID。消除掉落时同步更新 `super_scatter_positions` 中的位置，最终通过 `spin_info.super_scatter_positions` 返回给调用方。
 
-同一配置文件的 `[0]` 段还提供初始特殊图标及掉落替换权重：
+各 TYPE 段还提供初始特殊图标及掉落替换权重；下面是当前各段相同的初始值，尚未分别完成数值校准：
 
 - `ScatterCountProbability=10000,1000,500,57`：下标 0–3 分别表示生成 0–3 个 Scatter。
 - `FreeScatterCountProbability=10000,1000,500,57`：Free 下标 0–3 分别表示生成 0–3 个 Scatter。
@@ -52,12 +52,12 @@ Base 初始 Scatter 数量达到 3 个时跳过 Bonus 抽取。Base 和 Free 每
 普通游戏使用：
 
 - `reel_config/yngg_rand_main.conf`
-- `reel_config/yngg_rand_ex_0.conf`
+- `reel_config/yngg_rand_ex_<TYPE>.conf`，当前 TYPE 为 0、4、8、12、17。
 
 免费游戏使用：
 
 - `free_reel_config/yngg_free_rand_main.conf`
-- `free_reel_config/yngg_free_rand_ex_0.conf`
+- `free_reel_config/yngg_free_rand_ex_<TYPE>.conf`，当前 TYPE 同上。
 
 轴参数与功能对应关系：
 
@@ -70,13 +70,13 @@ Base 初始 Scatter 数量达到 3 个时跳过 Bonus 抽取。Base 和 Free 每
 
 `ThemeMath.ng_spin()` 使用普通轴，`ThemeMath.fg_spin()` 使用免费轴。
 
-正常轴、特殊轴均限制为每条最多 200 个物件、逗号分隔字符串不超过 500 字符。生成脚本按原始图标占比分配保留数量，在同类图标的出现位置中均匀删减，保留相对顺序和每种已有图标；不满足字符串限制时继续减少长度。当前各轴为 200 个物件，最长 479 字符。缩短轴带会改变停轴和相邻图标分布，需重新仿真确认 RTP 与触发率。
+正常轴、特殊轴均限制为每条最多 200 个物件、轴值的 UTF-8 编码长度小于 400 字节（不含字段名与 `=`）。生成脚本按原始图标占比分配保留数量，在同类图标的出现位置中均匀删减，保留相对顺序和每种已有图标；超限时继续减少长度。当前所有 TYPE 的轴值最长为 399 字节。缩短轴带会改变停轴和相邻图标分布，需重新仿真确认 RTP 与触发率。
 
 ## 3. 消除与补牌
 
 `ng_spin()` 和 `fg_spin()` 的主要参数：
 
-- 使用 `index` 选择 TYPE；当前仅支持 `index=0`，与 `[0]`、普通轴和免费轴一一对应。其他 TYPE 直接报错，不回退到 TYPE 0。
+- 使用 `index` 选择 TYPE 0、4、8、12 或 17；同一次玩法的 Base 和 Free 应使用相同的 `index`。仿真读取对应的服务器参数段、普通轴和免费轴；缺少参数段或轴文件时报错，不回退到 TYPE 0。
 - 使用 `general_index` 选择配置中的 `GENERAL_<index>`。
 - 使用 `max_cascades` 限制单次 Spin 的最大连续消除次数。
 - 使用 `return_detail` 决定是否返回每轮消除明细。
@@ -182,8 +182,8 @@ JP 使用两个按下标对应的数组：
 python -B ThemeMath\yngg\build_from_demo.py --demo-dir <参考数据目录>
 ```
 
-生成内容包括游戏配置、Bonus 配置、普通轴、免费轴以及 FIX/ZERO 固定结果。
+生成内容包括游戏配置、Bonus 配置、普通轴、免费轴以及 FIX/ZERO 固定结果。脚本为 TYPE 0 重新生成普通轴和免费轴；已有的 TYPE 4、8、12、17 轴文件仅压缩达到或超过 400 字节的轴值，其他内容及服务器参数段保留。新目录中缺少这些 TYPE 资源时，脚本以 TYPE 0 的内容创建待校准模板，不能将模板视为独立数值成果。
 
-生成脚本同时维护控制组配置、TYPE 0 参数段和回放金币门槛。当前仅发布 `CONTROL_GROUP_0`，控制值 `1` 编码为 TYPE 0、第 1 套；其余缺少独立数值资源的占位控制组已移除。两组砍分数组均按 GROUP 0–19 配置，未启用组仅预留 README 规定的阈值；GROUP 2、3、5、6、10、11、19 无明确规范值，保留 `0`。
+生成脚本同时维护控制组配置、五个 TYPE 参数段和回放金币门槛。当前控制组为 GROUP 0、4、8、12、17，控制值分别为 `1`、`401`、`801`、`1201`、`1701`，按 `control_type * 100 + control_num` 编码。两组砍分数组按 GROUP 0–17 排列，GROUP 0/4/8/12/17 的阈值分别为 5000/12000/1000/20/1000；没有配置的 GROUP 下标为 `0`。GROUP 13、14 仍缺少对应控制组，本次未补齐。
 
-当前未启用玩家控制项和道具卡；GROUP 4、8、12、17 等场景需完成独立 TYPE 数值、服务器参数及 RTP 验证后才能启用，不能用 TYPE 0 的副本冒充。Python 仿真尚不执行 GROUP 选择和服务器砍分。`replay_min_win_money` 按金币单位设置为 `3000000000`，回放开关仍由全局配置控制。
+`special/yngg_control.conf` 中原为 `80000` 的控制押注已调整为当前最低有效押注 `100000`。TYPE 4、8、12、17 的数值和轴带目前仍与 TYPE 0 相同，需分别校准并验证 RTP；Python 仿真尚不执行 GROUP 选择和服务器砍分。GROUP 17 的免费道具卡还缺少各道具的押注索引与品质，按本次要求暂不修改 `special/slot_prop_config.conf`。`replay_min_win_money` 按金币单位设置为 `3000000000`，回放开关仍由全局配置控制。

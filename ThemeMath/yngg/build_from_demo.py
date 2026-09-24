@@ -11,6 +11,7 @@ import argparse
 from collections import Counter
 import csv
 import json
+import re
 import shutil
 from pathlib import Path
 
@@ -20,6 +21,8 @@ MODEL_DIR = THEME_DIR.parent / "model_countgame"
 DEFAULT_DEMO_DIR = Path(r"C:\Users\sunyulu\le-king-demo-extract")
 BET_UNIT = 10_000
 ITEM_COUNT = 13
+MaxReelBytes = 399
+ConfiguredTypes = (0, 4, 8, 12, 17)
 DESIGN_PAYTABLE = {
     3: ("H1", {"5": 1, "6-7": 2.5, "8-11": 5, "12+": 25}),
     4: ("H2", {"5": 1, "6-7": 2.5, "8-11": 5, "12+": 10}),
@@ -65,7 +68,7 @@ def fit_server_reel(reel: list[int]) -> list[int]:
 
     if not reel or any(not 0 <= symbol < ITEM_COUNT for symbol in reel):
         raise ValueError("reel must contain valid symbol IDs")
-    if len(reel) <= 200 and len(",".join(map(str, reel))) <= 500:
+    if len(reel) <= 200 and len(",".join(map(str, reel)).encode("utf-8")) <= MaxReelBytes:
         return list(reel)
     counts = Counter(reel)
     for size in range(min(200, len(reel)), len(counts) - 1, -1):
@@ -83,31 +86,66 @@ def fit_server_reel(reel: list[int]) -> list[int]:
             seen[symbol] += 1
             if seen[symbol] * quotas[symbol] // counts[symbol] > before:
                 result.append(symbol)
-        if len(",".join(map(str, result))) <= 500:
+        if len(",".join(map(str, result)).encode("utf-8")) <= MaxReelBytes:
             return result
     raise ValueError("cannot fit reel within server limits")
 
 
-def write_control_groups() -> None:
-    """Publish only the available TYPE; retain thresholds for reserved groups."""
+def fit_existing_reel_file(path: Path) -> None:
+    """Shorten overlong roll values without replacing TYPE-specific tuning."""
 
-    thresholds = [5000, 100, 0, 0, 12000, 0, 0, 50, 1000, 1000,
-                  0, 0, 20, 12000, 12000, 12000, 12000, 1000, 1000, 0]
+    content = path.read_text(encoding="utf-8")
+    lines = content.splitlines(keepends=True)
+    changed = False
+    for index, line in enumerate(lines):
+        updated = line.replace("字符串不超过500字符", "轴值小于400字节")
+        updated = updated.replace("轴值不超过400字节", "轴值小于400字节")
+        if updated != line:
+            lines[index] = line = updated
+            changed = True
+        key, separator, value = line.partition("=")
+        if not separator or not re.fullmatch(r"(?:NORMAL|SP)_ROLL_[1-6]", key.strip()):
+            continue
+        roll_value = value.rstrip("\r\n")
+        if len(roll_value.encode("utf-8")) <= MaxReelBytes:
+            continue
+        symbols = [int(symbol.strip()) for symbol in roll_value.split(",")]
+        newline = value[len(roll_value):]
+        lines[index] = f"{key}={','.join(map(str, fit_server_reel(symbols)))}{newline}"
+        changed = True
+    if changed:
+        path.write_text("".join(lines), encoding="utf-8")
+
+
+def write_control_groups() -> None:
+    """Publish every configured TYPE and its GROUP cutoff."""
+
+    path = THEME_DIR / "special_config" / "slot_control_group.conf"
+    existing_groups = {}
+    if path.exists():
+        old_lines = path.read_text(encoding="utf-8-sig").splitlines()
+        for position, line in enumerate(old_lines):
+            match = re.fullmatch(r"\[CONTROL_GROUP_(\d+)\]", line.strip())
+            if match and int(match.group(1)) in ConfiguredTypes:
+                end = next((offset for offset in range(position + 1, len(old_lines))
+                            if old_lines[offset].strip().startswith("[")), len(old_lines))
+                existing_groups[int(match.group(1))] = old_lines[position:end]
+    thresholds = [5000, 0, 0, 0, 12000, 0, 0, 0, 1000,
+                  0, 0, 0, 20, 0, 0, 0, 0, 1000]
     values = ",".join(map(str, thresholds))
     lines = [
-        "[MAIN]", "version = 102",
-        "#按GROUP 0-19排列；未启用组仅预留阈值，不参与抽取",
+        "[MAIN]", "version = 101",
+        "#按GROUP 0-17排列；未启用组保留0",
         f"control_group_cut_multiple = {values}",
         f"control_group_free_cut_multiple = {values}", "",
-        "#当前仅有TYPE 0；其他场景需完成独立数值及RTP验证后再增加控制组",
-        "[CONTROL_GROUP_0]",
-        "lable_user_control_group_rate = 10000",
-        "#control_type * 100 + control_num：TYPE 0，第1套",
-        "lable_user_control_group_value = 1", "",
     ]
-    (THEME_DIR / "special_config" / "slot_control_group.conf").write_text(
-        "\n".join(lines), encoding="utf-8"
-    )
+    for type_index in ConfiguredTypes:
+        lines.extend(existing_groups.get(type_index, [
+            f"[CONTROL_GROUP_{type_index}]",
+            "lable_user_control_group_rate = 10000",
+            f"lable_user_control_group_value = {type_index * 100 + 1}", "",
+        ]))
+    path.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
 
 
 def fix_replay_threshold() -> None:
@@ -122,40 +160,57 @@ def fix_replay_threshold() -> None:
 def copy_model_layout() -> None:
     for directory in ("general_config", "special_config"):
         destination = THEME_DIR / directory
-        if destination.exists():
-            shutil.rmtree(destination)
-        shutil.copytree(MODEL_DIR / directory, destination)
+        if not destination.exists():
+            shutil.copytree(MODEL_DIR / directory, destination)
+            for path in destination.rglob("*.conf"):
+                content = path.read_bytes()
+                content = re.sub(
+                    rb"(?im)^([ \t]*version[ \t]*=[ \t]*)[0-9]+\b",
+                    lambda match: match[1] + b"101",
+                    content,
+                )
+                path.write_bytes(content)
     write_control_groups()
     fix_replay_threshold()
     (THEME_DIR / "special").mkdir(exist_ok=True)
-    (THEME_DIR / "special" / "yngg_control.conf").write_text(
-        "\n".join(
-            [
-                "[MAIN]",
-                "#控制配置版本",
-                "version = 1",
-                "#暂未分配内部控制ID，因此不启用控制项",
-                "",
-            ]
-        ),
-        encoding="utf-8",
-    )
-    (THEME_DIR / "special" / "slot_prop_config.conf").write_text(
-        "\n".join(
-            [
-                "[System Base Info]",
-                "#配置文件版本",
-                "VERSION = 101",
-                "#开放该道具功能所需的最低游戏版本，0表示暂不开放",
-                "OPEN_GAME_VER = 0",
-                "#单日可使用次数，0表示暂不开放",
-                "DAY_USE_MAX_NUM = 0",
-                "#暂未分配内部GAME_ID和PROP_ID，因此不启用道具",
-                "",
-            ]
-        ),
-        encoding="utf-8",
-    )
+    control_path = THEME_DIR / "special" / "yngg_control.conf"
+    if not control_path.exists():
+        control_path.write_text(
+            "\n".join(
+                [
+                    "[MAIN]",
+                    "#控制配置版本",
+                    "version = 101",
+                    "#暂未分配内部控制ID，因此不启用控制项",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
+    else:
+        content = control_path.read_text(encoding="utf-8")
+        content = re.sub(r"(?m)^(lable_user_bet_money\s*=\s*)80000\s*$",
+                         r"\g<1>100000", content)
+        if content != control_path.read_text(encoding="utf-8"):
+            control_path.write_text(content, encoding="utf-8")
+    prop_path = THEME_DIR / "special" / "slot_prop_config.conf"
+    if not prop_path.exists():
+        prop_path.write_text(
+            "\n".join(
+                [
+                    "[System Base Info]",
+                    "#配置文件版本",
+                    "VERSION = 101",
+                    "#开放该道具功能所需的最低游戏版本，0表示暂不开放",
+                    "OPEN_GAME_VER = 0",
+                    "#单日可使用次数，0表示暂不开放",
+                    "DAY_USE_MAX_NUM = 0",
+                    "#暂未分配内部GAME_ID和PROP_ID，因此不启用道具",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
 
 
 def payout_row(payouts: dict[str, float]) -> list[int]:
@@ -295,16 +350,14 @@ def write_reel_config(
     file_prefix: str = "",
 ) -> None:
     target = THEME_DIR / directory
-    if target.exists():
-        shutil.rmtree(target)
-    target.mkdir()
+    target.mkdir(exist_ok=True)
     reels = [fit_server_reel(reel) for reel in load_strip(demo_dir, strip_name)]
     (target / f"yngg_{file_prefix}rand_main.conf").write_text(
         "\n".join(
             [
                 "[MAIN]",
                 "#配置文件版本，变更后重新读取配置",
-                "VERSION=102",
+                "VERSION=101",
                 "#盘面列数",
                 "COL_COUNT=6",
                 "#盘面行数",
@@ -321,11 +374,11 @@ def write_reel_config(
     lines = [
         "[MAIN]",
         "#配置文件版本",
-        "VERSION=102",
+        "VERSION=101",
         "",
         "[GENERAL_1]",
         f"#参考轴来源：numeric/reels/strips/{strip_name}.csv",
-        "#按图标占比分配保留数量并均匀删减；每轴最多200个物件且字符串不超过500字符",
+        "#按图标占比分配保留数量并均匀删减；每轴最多200个物件且轴值小于400字节",
         "#BASE_RATE依次为正常盘、特殊盘、固定盘、零概率盘；当前仅使用正常盘",
         "#NORMAL_ROLL_1-6为各列基础轴，SP_ROLL_1-6暂与基础轴一致",
         "#FIX包含10个完全无奖盘；ZERO包含10个必定生成金色区域并保留Bonus ID 2的盘面",
@@ -354,10 +407,17 @@ def write_reel_config(
         for index, result in enumerate(zero_results, 1)
     )
     lines.append("")
-    (target / f"yngg_{file_prefix}rand_ex_0.conf").write_text(
+    type_zero_path = target / f"yngg_{file_prefix}rand_ex_0.conf"
+    type_zero_path.write_text(
         "\n".join(lines),
         encoding="utf-8",
     )
+    for type_index in ConfiguredTypes[1:]:
+        type_path = target / f"yngg_{file_prefix}rand_ex_{type_index}.conf"
+        if not type_path.exists():
+            type_path.write_bytes(type_zero_path.read_bytes())
+        else:
+            fit_existing_reel_file(type_path)
 
 
 def write_metadata(demo_dir: Path) -> None:
@@ -477,9 +537,17 @@ def write_metadata(demo_dir: Path) -> None:
         ),
         encoding="utf-8",
     )
-    (THEME_DIR / "special" / "yngg_game_server.conf").write_text(
-        "\n".join(
-            [
+    server_path = THEME_DIR / "special" / "yngg_game_server.conf"
+    existing_type_lines = {}
+    if server_path.exists():
+        old_lines = server_path.read_text(encoding="utf-8-sig").splitlines()
+        for position, line in enumerate(old_lines):
+            match = re.fullmatch(r"\[(\d+)\]", line.strip())
+            if match and int(match.group(1)) in ConfiguredTypes:
+                end = next((offset for offset in range(position + 1, len(old_lines))
+                            if old_lines[offset].strip().startswith("[")), len(old_lines))
+                existing_type_lines[int(match.group(1))] = old_lines[position:end]
+    server_lines = [
                 "[System Base Info]",
                 "#相同配置",
                 "AutoSpinTimes = 10,100,500,-1,-2",
@@ -502,7 +570,7 @@ def write_metadata(demo_dir: Path) -> None:
                 "",
                 "[Game Info]",
                 "#配置文件版本",
-                "Version=102",
+                "Version=101",
                 "#Super Scatter沿用Scatter ID 0，通过位置状态区分，不配置专门ID",
                 "#普通免费、超级免费初始次数",
                 "FreeSpinCounts=10,10",
@@ -557,9 +625,20 @@ def write_metadata(demo_dir: Path) -> None:
                 "FreeDropSpecialSymbolProbability=998,1,1",
                 "",
             ]
-        ),
-        encoding="utf-8",
-    )
+    type_start = server_lines.index("[0]")
+    type_template = server_lines[type_start:]
+    server_lines = server_lines[:type_start]
+    for type_index in ConfiguredTypes:
+        if type_index in existing_type_lines:
+            server_lines.extend(existing_type_lines[type_index])
+        else:
+            server_lines.extend(
+                [f"[{type_index}]"] + [
+                    line.replace("#TYPE 0的", f"#TYPE {type_index}的")
+                    for line in type_template[1:]
+                ]
+            )
+    server_path.write_text("\n".join(server_lines).rstrip() + "\n", encoding="utf-8")
 
 
 def main(argv: list[str] | None = None) -> None:

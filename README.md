@@ -271,6 +271,8 @@ python ThemeMath/symbol_count.py --root ThemeMath/rzcs --dry-run
 
 视频给出的服务器配置上限：固定盘和零盘各最多 200 条；正常轴及特殊轴的单条滚轮字符串最长 500，且每条滚轮最多 200 个物件。两项滚轮长度限制需同时满足。
 
+本仓库的 yngg 轴带采用更严格的发布要求：`NORMAL_ROLL_N` 和 `SP_ROLL_N` 的每条轴值按 UTF-8 编码后必须**小于 400 字节**（不含字段名和 `=`），同时仍须满足每条最多 200 个物件。普通游戏和免费游戏的所有 TYPE 均适用。
+
 ### TYPE、GROUP 与控制字段（00:06–00:12、01:26–01:38）
 
 TYPE 是一套完整数值的最小单位，关联同 TYPE 的主游戏轴带、免费游戏轴带，以及 `{name}_game_server.conf` 中相应数字配置段。例如 TYPE 4 对应 `rand_ex_4`、`free_rand_ex_4` 和 `[4]`。
