@@ -4,7 +4,8 @@
 index；若该位置是 symbol 0，则按 BonusWinWeightConfig 加权、不放回地
 抽取配置数量的不同 index。基础赢分可能按玩家 control group 进行砍分；
 赢钱后可选择翻倍，成功则赢钱乘 2 并可继续，失败归零。翻倍后的最终赢分
-若仍超过控制组阈值，会再次砍分且不再翻倍。
+若仍超过控制组阈值，会再次砍分且不再翻倍。MaxWinCoin 仅检查比大小
+成功后的赢分，超限则结束比大小并按原砍分规则替换结果。
 """
 
 from __future__ import annotations
@@ -65,6 +66,16 @@ class ThemeMath:
 
         main = game_config["MAIN"]
         game_info = server_config["Game Info"]
+        self.MaxWinCoin = self._parse_nonnegative_int(
+            game_info.get("MaxWinCoin", "0"), "[Game Info] MaxWinCoin"
+        )
+        self.GroupMaxWinCoin = {
+            int(section): self._parse_nonnegative_int(
+                server_config[section]["MaxWinCoin"], f"[{section}] MaxWinCoin"
+            )
+            for section in server_config.sections()
+            if section.isdigit() and "MaxWinCoin" in server_config[section]
+        }
         self.base_bet = self._parse_positive_int(main.get("BaseBet"), "BaseBet")
         self.item_count = self._parse_positive_int(main.get("ITEM_COUNT"), "ITEM_COUNT")
         self.item_prizes = self._load_item_prizes(main)
@@ -205,6 +216,7 @@ class ThemeMath:
             base_win,
             double_times,
             total_bet=total_bet,
+            MaxWinCoin=self.get_max_win_coin(group_index),
         )
         post_triggers, _, _ = self._get_cut_triggers(
             group_index,
@@ -212,6 +224,10 @@ class ThemeMath:
             total_bet,
             is_bonus=False,
         )
+        MaxWinCoin = self.get_max_win_coin(group_index)
+        if (double_result["attempted_times"] > 0 and MaxWinCoin > 0
+                and double_result["total_win"] > MaxWinCoin):
+            post_triggers.append("MaxWinCoin")
         if post_triggers:
             if control_result["is_cut"]:
                 for trigger_name in post_triggers:
@@ -336,7 +352,7 @@ class ThemeMath:
         outcomes: Sequence[dict],
         symbol_multi_index: int | None,
     ) -> dict:
-        """超过 control group 阈值时选择一个受控的新开奖结果。"""
+        """超过任一生效限额时选择一个受控的新开奖结果。"""
 
         cut_triggers, cut_multiple, respin_max_multi = self._get_cut_triggers(
             group_index,
@@ -349,6 +365,7 @@ class ThemeMath:
             "group_index": group_index,
             "cut_multiple": cut_multiple,
             "respin_max_multi": respin_max_multi,
+            "MaxWinCoin": self.get_max_win_coin(group_index),
             "cut_triggers": cut_triggers,
             "is_cut": False,
             "original_base_win": base_win,
@@ -399,7 +416,7 @@ class ThemeMath:
         total_bet: int,
         is_bonus: bool,
     ) -> tuple[list[str], int, int]:
-        """返回触发的砍分来源，以及本组控制组和 Bonus 阈值。"""
+        """返回所有砍分来源，以及本组控制组和 Bonus 倍数阈值。"""
 
         cut_multiple = self.get_control_group_cut_multiple(group_index)
         respin_max_multi = self.respin_max_multiples.get(group_index, 0)
@@ -409,6 +426,12 @@ class ThemeMath:
         if is_bonus and respin_max_multi > 0 and win > total_bet * respin_max_multi:
             cut_triggers.append("RespinMaxMulti")
         return cut_triggers, cut_multiple, respin_max_multi
+
+    def get_max_win_coin(self, group_index: int) -> int:
+        """控制组显式值优先；缺失时回退基础配置，0 表示关闭金额限制。"""
+
+        self.get_control_group_cut_multiple(group_index)
+        return self.GroupMaxWinCoin.get(group_index, self.MaxWinCoin)
 
     def _settle_winning_indexes(
         self,
@@ -576,10 +599,12 @@ class ThemeMath:
         win_amount: int,
         double_times: int = 0,
         total_bet: int | None = None,
+        MaxWinCoin: int = 0,
     ) -> dict:
-        """按玩家选择的次数连续翻倍，失败或达到次数后立即停止。"""
+        """执行比大小；成功后超过金额上限时停止，由整局入口替换结果。"""
 
         self._validate_win_amount(win_amount, allow_zero=True)
+        self._validate_win_amount(MaxWinCoin, allow_zero=True)
         if isinstance(double_times, bool) or not isinstance(double_times, int):
             raise TypeError("double_times 必须是整数")
         if double_times < 0 or double_times > self.double_max_times:
@@ -614,6 +639,8 @@ class ThemeMath:
             current_win = round_result["total_win"]
             if not round_result["success"]:
                 break
+            if MaxWinCoin > 0 and current_win > MaxWinCoin:
+                break
 
         success_times = sum(round_result["success"] for round_result in rounds)
         return {
@@ -629,6 +656,7 @@ class ThemeMath:
             "can_double": (
                 current_win > 0
                 and len(rounds) < self.double_max_times
+                and not (rounds and MaxWinCoin > 0 and current_win > MaxWinCoin)
             ),
             "rounds": rounds,
         }

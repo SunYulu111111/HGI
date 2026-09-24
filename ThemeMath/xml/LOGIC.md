@@ -183,6 +183,7 @@ win_multiple = base_win / total_bet
 
 翻倍参数当前读取 `[Game Info]`，尚未使用控制段覆盖。
 控制段的 `RespinMaxMulti` 已按 `group_index` 读取，用于 Bonus 砍分。
+`MaxWinCoin` 按当前控制段优先读取，缺失时回退 `[Game Info]`，详见 6.5。
 
 ### 6.4 Control Group 与 RespinMaxMulti 共同砍分
 
@@ -206,9 +207,10 @@ win_multiple = base_win / total_bet
    `RespinMaxMulti`。任意一个大于 0 的阈值被严格超过，就丢弃整个 Bonus，
    按下述砍分规则生成一个受控结果；否则保留整个 Bonus。等于阈值不砍分。
 
-`RespinMaxMulti` 仅约束 Bonus，且只在倍乘前检查；普通开奖只受控制组
-阈值约束。控制段或该字段缺失时按 0 处理，表示关闭 Bonus 专属限制。
-控制组阈值会再检查一次翻倍后的最终赢分。两次检查都只在被触发时替换
+`RespinMaxMulti` 仅约束 Bonus，且只在倍乘前检查；普通开奖受控制组倍数
+阈值约束。控制段或 `RespinMaxMulti` 缺失时按 0 处理，表示关闭 Bonus 专属
+限制。控制组阈值会再检查一次翻倍后的最终赢分。`MaxWinCoin` 仅在实际
+比大小成功后检查，不检查普通开奖或 Bonus 的基础派彩。检查被触发时替换
 开奖结果；若倍乘前已经砍分，倍乘后又超过阈值，则保留第一次强制结果
 并取消本次倍乘。
 
@@ -224,10 +226,70 @@ win_multiple = base_win / total_bet
 结果中的 `control_result` 会记录 group、阈值、原始赢分、原始赢分倍数、
 原始 trigger、完整 `original_bonus_result`、是否重新 Spin、砍分原因及强制后的
 symbol/index。
-若因翻倍后才超过控制组阈值，`original_base_win` 记录翻倍后的最终赢分。
+若因翻倍后才超过控制组阈值或 `MaxWinCoin`，`original_base_win` 记录翻倍后的最终赢分。
 若倍乘前已经砍分，则仍记录第一次砍分前的基础赢分。
-其中 `respin_max_multi` 记录本组 Bonus 阈值；`cut_triggers` 记录触发的
-`control_group_cut_multiple` 和/或 `RespinMaxMulti`，未触发时为空列表。
+其中 `respin_max_multi` 记录本组 Bonus 阈值，`MaxWinCoin` 记录本组生效的
+金额上限；`cut_triggers` 记录所有触发的 `control_group_cut_multiple`、
+`RespinMaxMulti`、`MaxWinCoin`，未触发时为空列表。
+
+### 6.5 MaxWinCoin 比大小金额上限
+
+`special/xml_game_server.conf` 的 `MaxWinCoin` 表示玩家在比大小中实际能赢得
+的最大金额，超过此值的奖励按现有规则砍分，**仅在比大小时使用**。单位与
+`total_win` 一致，是金币金额，不是总押注倍数或扣除押注后的净利润。当前配置为：
+
+```ini
+#玩家实际能赢钱的最大值，超过此值的奖励将被砍掉，仅在比大小时使用
+MaxWinCoin=300000000000
+```
+
+读取规则：
+
+- 优先使用当前 `[group_index]` 控制段显式配置的 `MaxWinCoin`。
+- 控制段或该字段缺失时，回退 `[Game Info].MaxWinCoin`；基础字段也缺失则为 0。
+- 0 表示关闭本项金额限制。控制段显式配置 0 时不会回退基础值，其他倍数限额仍生效。
+- 值必须是非负整数；负数、空值、小数及非数字配置在加载时拒绝。
+- 配置在 `ThemeMath` 初始化时载入，修改后需要重新创建实例或重启模拟。
+
+结算流程：
+
+1. 普通开奖和完整 Bonus 的基础派彩不检查 `MaxWinCoin`；不比大小时，即使
+   `base_win` 超过该金额，也不会触发本项砍分。原有控制组倍数及 Bonus 倍数
+   限制照常执行。`MaxWinCoin` 不用于下注校验，不因该值拒绝全押组合。
+2. 基础派彩大于 0 且玩家实际选择比大小后，执行原翻倍成功或失败判定。
+   失败按原规则归零，不因翻倍前的金额超过上限而额外砍分。
+3. **每次比大小成功后**，检查本次翻倍后的完整赢钱：仅当 `MaxWinCoin > 0`
+   且赢钱严格大于 `MaxWinCoin` 时触发，等于上限不砍分。超限立即停止后续
+   比大小，不能继续执行后面的成功或失败结果。
+4. 超限时沿用 6.4 的替换开奖结果规则：部分下注选择未押图标返 0；全押选择
+   symbol 3—9 中最低下注额图标的 3 倍位置。清除原 Bonus 状态，保留原始结果
+   供追溯。**不把奖励截到 `MaxWinCoin`，也不只扣除超出部分。**
+5. 替换结果不再参加本次比大小；若比大小前已经因其他限额砍分，保留第一次
+   替换结果并取消本次比大小收益。替换所得的普通派彩不再用 `MaxWinCoin`
+   重复检查。最终 `total_win` 与 `double_result.total_win` 均为处理后的实际派彩。
+
+三个限额独立生效，任意一项超限都会触发替换，同局只执行对应阶段的一次替换：
+
+| 限额 | 比较方式 | 检查阶段 |
+|---|---|---|
+| `control_group_cut_multiple` | 赢分 > 总押注 × 控制组倍数 | 翻倍前和翻倍后，普通及 Bonus |
+| `RespinMaxMulti` | 完整 Bonus 赢分 > 总押注 × Bonus 倍数 | 仅 Bonus，翻倍前 |
+| `MaxWinCoin` | 本次比大小成功后的赢钱 > 固定金币金额 | 仅实际比大小成功后；普通及 Bonus 奖励参加比大小时适用 |
+
+例如 `MaxWinCoin=300000000000` 时，普通开奖或 Bonus 派彩 400000000000、
+玩家不比大小，本项金额限制不会砍分；若以 200000000000 参加比大小，首次
+成功至 400000000000，则立即停止比大小并替换结果。比大小成功后恰好为
+300000000000 不触发本项砍分。即使条件成功率为 50%，超限替换仍可能降低 RTP。
+
+结果中的 `control_result.MaxWinCoin` 始终记录生效上限；超限时
+`control_result.cut_triggers` 包含 `MaxWinCoin`，其余原始赢分、Bonus 明细、
+强制图标与索引沿用 6.4 的记录规则。模拟的砍分次数、砍分前赢分及最终 RTP
+统一纳入该项限制，不额外重复累计同一局的砍分次数。
+
+`spin` / `ng_spin` 负责完整砍分结算。`apply_double_up` 新增可选参数
+`MaxWinCoin=0`：传入正整数时，在某次成功超限后停止，并返回待砍分的金额，
+由整局入口执行结果替换；直接调用该函数不能把超限返回值当作最终到账。
+`double_win` 仍只计算单次成功或失败，不负责控制组及金额限奖。
 
 ## 7. RTP
 
@@ -277,7 +339,8 @@ RTP = (1/13) × 0.7 + (12/13) × (3/8) = 0.4
 
 该目标仅针对 symbol 2–9 八种图标等额全押且不翻倍。此时单次最高赢分为
 总下注的 100/8=12.5 倍，不超过 type12 的 20 倍砍分阈值，所以砍分不改变
-上述 RTP。部分下注或不等额下注的 RTP 不保证为 0.4，仍按原规则执行砍分。
+上述 RTP。不翻倍时不检查 `MaxWinCoin`。部分下注或不等额下注的 RTP 不保证
+为 0.4，仍按原规则执行砍分。
 模拟时设置 `GROUP_INDEXES=[12]`、`Double_Times=0`，并将 `Bet_Multi[2:10]`
 设为相同的正整数即可。
 
@@ -327,6 +390,7 @@ result = math.spin(
 - `double_result.failed`：是否因超过允许次数而归零。
 - `group_index`：本次使用的玩家控制组下标。
 - `control_result`：砍分判断和强制结果明细。
+- `control_result.MaxWinCoin`：本组实际生效的比大小金币上限，0 表示关闭金额限制。
 
 ## 9. 模拟
 
@@ -428,6 +492,7 @@ python simulation.py \
 - 每个 `DoubleWeight_X` 长度为 `DoubleMaxTimes + 1`。
 - `DoubleWeight_100` 必须存在。
 - 所有 DoubleWeight 非负且权重总和大于 0。
+- `[Game Info]` 和各控制段的 `MaxWinCoin` 如有配置，必须是非负整数。
 
 ## 11. MJWL 格式兼容文件
 
