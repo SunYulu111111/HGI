@@ -117,11 +117,21 @@ class SlotsGame:
         elif spin_type == "fix":
             result = self._choose_result(reel_config["fix_results"], "FIX_RESULT")
             board_cols = self._split_result(result, row, col)
-            spin_state = self._build_result_spin_state(board_cols, row, col, spin_type)
+            if reel_config["FixDisorder"]:
+                for column in board_cols:
+                    random.shuffle(column)
+            spin_state = self._build_result_spin_state(
+                reel_config["normal_rolls"], row, col, spin_type
+            )
         elif spin_type == "zero":
             result = self._choose_result(reel_config["zero_results"], "ZERO_RESULT")
             board_cols = self._split_result(result, row, col)
-            spin_state = self._build_result_spin_state(board_cols, row, col, spin_type)
+            if reel_config["ZeroDisorder"]:
+                for column in board_cols:
+                    random.shuffle(column)
+            spin_state = self._build_result_spin_state(
+                reel_config["normal_rolls"], row, col, spin_type
+            )
         else:
             raise RuntimeError(f"unknown spin type: {spin_type}")
 
@@ -271,8 +281,10 @@ class SlotsGame:
             "base_rate": self._parse_int_list(section.get("BASE_RATE", "")),
             "normal_rolls": self._collect_rolls(section, "NORMAL_ROLL_", col_count=self.config.col_count),
             "special_rolls": self._collect_rolls(section, "SP_ROLL_", col_count=self.config.col_count),
-            "fix_results": self._collect_numbered_values(section, "FIX_RESULT_"),
-            "zero_results": self._collect_numbered_values(section, "ZERO_RESULT_"),
+            "fix_results": self._collect_enabled_results(section, "FIX"),
+            "zero_results": self._collect_enabled_results(section, "ZERO"),
+            "FixDisorder": self._parse_result_disorder(section, "FIX_DISORDER"),
+            "ZeroDisorder": self._parse_result_disorder(section, "ZERO_DISORDER"),
         }
         if len(config["base_rate"]) < len(self.SPIN_TYPES):
             raise ValueError(f"{path.name} [{section_name}] BASE_RATE must contain 4 values")
@@ -420,13 +432,15 @@ class SlotsGame:
         return board_cols, spin_state
 
     @staticmethod
-    def _build_result_spin_state(board_cols: list[list[int]], row: int, col: int, spin_type: str) -> dict:
-        """固定盘/0 几率盘没有真实 reel，因此用结果列本身作为循环补牌来源。"""
+    def _build_result_spin_state(normal_rolls: list[list[int]], row: int, col: int, spin_type: str) -> dict:
+        """Fixed results refill from random positions on the current NORMAL_ROLLs."""
 
+        if len(normal_rolls) < col or any(not roll for roll in normal_rolls[:col]):
+            raise ValueError(f"{spin_type.upper()}_RESULT requires {col} NORMAL_ROLL columns for refill")
         return {
-            "source_type": f"{spin_type}_result_cycle",
-            "columns": [list(board_cols[col_index]) for col_index in range(col)],
-            "top_indexes": [0 for _ in range(col)],
+            "source_type": f"{spin_type}_result_normal_rolls",
+            "columns": [list(roll) for roll in normal_rolls[:col]],
+            "top_indexes": [random.randrange(len(roll)) for roll in normal_rolls[:col]],
             "row": row,
             "col": col,
         }
@@ -519,6 +533,28 @@ class SlotsGame:
 
         values.sort(key=lambda item: item[0])
         return [value for _, value in values]
+
+    @classmethod
+    def _collect_enabled_results(cls, section, kind: str) -> list[list[int]]:
+        numbered = {}
+        prefix = f"{kind}_RESULT_"
+        for key in section:
+            if key.startswith(prefix) and key[len(prefix):].isdigit():
+                numbered[int(key[len(prefix):])] = cls._parse_int_list(section[key])
+        count = int(section.get(f"{kind}_NUM", str(len(numbered))))
+        if not 0 <= count <= 200:
+            raise ValueError(f"{kind}_NUM must be between 0 and 200")
+        missing = [index for index in range(1, count + 1) if index not in numbered]
+        if missing:
+            raise ValueError(f"{kind}_NUM requires {kind}_RESULT_{missing[0]}")
+        return [numbered[index] for index in range(1, count + 1)]
+
+    @staticmethod
+    def _parse_result_disorder(section, field: str) -> bool:
+        value = int(section.get(field, "0"))
+        if value not in (0, 1):
+            raise ValueError(f"{field} must be 0 or 1")
+        return bool(value)
 
     @staticmethod
     def _parse_int_list(value: str) -> list[int]:

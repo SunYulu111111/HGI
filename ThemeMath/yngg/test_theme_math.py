@@ -744,12 +744,14 @@ class ThemeMathTest(unittest.TestCase):
             self.assertEqual(len(config["fix_results"]), 10)
             self.assertEqual(len(config["zero_results"]), 10)
             for fixed_result in config["fix_results"]:
+                self.assertEqual(len(fixed_result), 30)
                 board = self.math._split_result(fixed_result, 5, 6)
                 self.assertEqual(self.math.cal_item_list(board), 0)
             for zero_result in config["zero_results"]:
+                self.assertEqual(len(zero_result), 30)
                 board = self.math._split_result(zero_result, 5, 6)
                 spin_state = self.math._build_result_spin_state(
-                    board,
+                    config["normal_rolls"],
                     5,
                     6,
                     "zero",
@@ -764,6 +766,42 @@ class ThemeMathTest(unittest.TestCase):
                 self.assertGreaterEqual(result["cascade_count"], 1)
                 self.assertEqual(result["bonus_count"], 1)
                 self.assertTrue(result["is_trigger_feature"])
+
+    def test_fixed_result_count_selects_only_first_entries(self):
+        section = {
+            "FIX_NUM": "2",
+            "FIX_RESULT_1": "3,4",
+            "FIX_RESULT_2": "5,6",
+            "FIX_RESULT_3": "7,8",
+        }
+        self.assertEqual(self.math._collect_enabled_results(section, "FIX"),
+                         [[3, 4], [5, 6]])
+        section["FIX_NUM"] = "0"
+        self.assertEqual(self.math._collect_enabled_results(section, "FIX"), [])
+        section["FIX_NUM"] = "4"
+        with self.assertRaisesRegex(ValueError, "FIX_RESULT_4"):
+            self.math._collect_enabled_results(section, "FIX")
+
+    def test_fixed_result_disorders_columns_and_refills_from_normal_rolls(self):
+        for kind, disorder_key, result_key in (
+            ("fix", "FixDisorder", "fix_results"),
+            ("zero", "ZeroDisorder", "zero_results"),
+        ):
+            with self.subTest(Kind=kind):
+                config = dict(self.math._load_reel_config(0, 1))
+                config[disorder_key] = True
+                original = self.math._split_result(config[result_key][0], 5, 6)
+                with patch.object(self.math, "_load_reel_config", return_value=config), \
+                     patch.object(self.math, "_choose_spin_type", return_value=kind), \
+                     patch.object(self.math, "_choose_result", return_value=config[result_key][0]), \
+                     patch("random.shuffle", side_effect=lambda column: column.reverse()), \
+                     patch("random.randrange", return_value=2):
+                    board = self.math.spin(0, 1, 5, 6)
+                self.assertEqual(board, [list(reversed(column)) for column in original])
+                self.assertEqual(self.math.last_spin_state["columns"], config["normal_rolls"])
+                self.assertEqual(self.math.last_spin_state["top_indexes"], [2] * 6)
+                self.assertEqual(self.math.last_spin_state["source_type"],
+                                 f"{kind}_result_normal_rolls")
 
     @patch.object(
         ThemeMath,

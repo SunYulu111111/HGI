@@ -64,9 +64,11 @@ Base 初始 Scatter 数量达到 3 个时跳过 Bonus 抽取。Base 和 Free 每
 - 使用 `BASE_RATE` 决定正常盘、特殊盘、固定盘、零概率盘的选择权重。
 - 使用 `NORMAL_ROLL_1` 至 `NORMAL_ROLL_6` 生成正常盘面。
 - 使用 `SP_ROLL_1` 至 `SP_ROLL_6` 生成特殊盘面。
-- 使用 `FIX_NUM=10` 和 `FIX_RESULT_1` 至 `FIX_RESULT_10` 提供 10 个完全无奖盘面。
-- 使用 `ZERO_NUM=10` 和 `ZERO_RESULT_1` 至 `ZERO_RESULT_10` 提供 10 个必定触发 Bonus 的盘面。
-- `FIX_DISORDER`、`ZERO_DISORDER` 作为通用配置兼容字段保留；当前 Python 数学逻辑不对固定结果额外乱序。
+- 使用 `FIX_NUM=10` 和 `FIX_RESULT_1` 至 `FIX_RESULT_10` 提供 10 个无奖盘面。
+- 使用 `ZERO_NUM=10` 和 `ZERO_RESULT_1` 至 `ZERO_RESULT_10` 提供 10 个可触发 Bonus 的盘面；零盘并不表示零奖励。
+- 结果数组从最左列起，列内由下到上填写，每条包含 6 × 5 = 30 个图标。当前 ZERO 结果的前五列底部组成 5 连 Cluster，并保留一个 Bonus ID 2。
+- `FIX_NUM`、`ZERO_NUM` 决定只从对应前 n 条结果中等概率抽取；`FIX_DISORDER`、`ZERO_DISORDER` 为 `1` 时随机打乱每列内部顺序。当前两个乱序开关均为 `0`。
+- 固定结果发生消除后，从该 GENERAL 的 `NORMAL_ROLL` 各列随机位置补牌。
 
 `ThemeMath.ng_spin()` 使用普通轴，`ThemeMath.fg_spin()` 使用免费轴。
 

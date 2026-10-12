@@ -397,7 +397,7 @@ def write_reel_config(
         [
             "",
             "#零概率盘：10个必定触发Bonus玩法的牌面",
-            "#每盘前五列顶部组成5连Cluster以生成金色区域，同时保留一个Bonus ID 2",
+            "#每盘前五列底部组成5连Cluster以生成金色区域，同时保留一个Bonus ID 2",
             "ZERO_DISORDER=0",
             f"ZERO_NUM={len(zero_results)}",
         ]

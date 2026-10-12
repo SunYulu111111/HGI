@@ -19,6 +19,8 @@ HGI Math 是一个 Slots 数学逻辑与仿真项目。仓库核心在 `ThemeMat
     |-- mahj3/                 # Ways：麻将主题（消除补牌 / 金色 symbol）
     |-- mjwl/                  # Ways：有效格裁剪 / 金色变 Wild
     |-- rzcs/                  # Lines：第三列分裂 / Free 与 Super Free
+    |-- cjyx/                  # Lines：超级英雄玩法介绍与数值逻辑草稿
+    |-- kldg/                  # Ways：恐龙帝国数学入口、仿真与配置
     |-- yngg/                  # Count：Cluster 消除 / 金色玩法
     `-- xml/                   # 独立水果机轮盘玩法（不继承上述三类）
 ```
@@ -47,6 +49,8 @@ HGI Math 是一个 Slots 数学逻辑与仿真项目。仓库核心在 `ThemeMat
 | `mahj3` | `WaysGame` | 消除补牌、金色 symbol、级联倍数 |
 | `mjwl` | `WaysGame` | 5×6 有效格裁剪、金色 symbol 变 Wild |
 | `rzcs` | `LinesGame` | 押注解锁第三列分裂、Free / Super Free |
+| `cjyx` | Lines 玩法文档 | 5×5、19 线、Wild 延展与乘倍、超级免费列激活；[项目文档](ThemeMath/cjyx/README.md) |
+| `kldg` | `WaysGame` | 六列 Megaways、银框升级、连消倍数与免费游戏；[项目文档](ThemeMath/kldg/README.md) |
 | `yngg` | `CountGame` | 6×5 Cluster、Scatter / Super Scatter、金色玩法 |
 | `xml` | 独立实现 | 多 symbol 下注的轮盘水果机 + Bonus / 翻倍 |
 
