@@ -1,4 +1,4 @@
-"""恐龙帝国临时轴带仿真入口。正式数值结论需替换临时配置后重跑。"""
+"""恐龙世界临时轴带仿真入口。正式数值结论需替换临时配置后重跑。"""
 
 from __future__ import annotations
 
@@ -35,6 +35,7 @@ def simulate(
         if remaining:
             triggers += 1
         free_spin_number = 0
+        FreeStartMultiplier = 1
         while remaining:
             remaining -= 1
             free_spin_number += 1
@@ -43,9 +44,11 @@ def simulate(
                 index=index,
                 general_index=general_index,
                 FreeSpinNumber=free_spin_number,
+                FreeStartMultiplier=FreeStartMultiplier,
             )
             free_win += free["TotalWin"]
             remaining += free["ExtraFreeSpins"]
+            FreeStartMultiplier = free["FreeEndMultiplier"] + 1
             if free_spin_number > 100000:
                 raise RuntimeError("free round exceeded simulation safety limit")
 
@@ -69,7 +72,7 @@ def simulate(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="恐龙帝国临时配置仿真")
+    parser = argparse.ArgumentParser(description="恐龙世界临时配置仿真")
     parser.add_argument("--spins", type=int, default=1000)
     parser.add_argument("--base-bet", type=int, default=10000)
     parser.add_argument("--index", type=int, default=0)
