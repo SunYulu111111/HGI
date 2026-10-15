@@ -4,6 +4,8 @@ This model file intentionally keeps theme-specific feature logic out of the
 theme layer. Line evaluation is delegated to slots_math.LinesGame.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 import sys
 

@@ -1,4 +1,4 @@
-"""恐龙世界结果规则的关键场景检查。"""
+"""恐龙世界结算、图标生成和免费倍数的场景测试。"""
 
 from configparser import ConfigParser
 import random
@@ -48,10 +48,14 @@ class ThemeMathTests(unittest.TestCase):
             server_text = server_text.replace(
                 "MainExtraFreeSpinsPerScatter=2", "MainExtraFreeSpinsPerScatter=3"
             )
-            server_text = server_text.replace("FreeExtraSpinsPerScatter=1", "FreeExtraSpinsPerScatter=2")
             server_text = server_text.replace("BaseMaxEliTimes = 100", "BaseMaxEliTimes = 7")
             server_text = server_text.replace("Free_Max_EliTimes = 100", "Free_Max_EliTimes = 9")
-            server_path.write_text(server_text, encoding="utf-8")
+            Server = ConfigParser(inline_comment_prefixes=("#", ";"))
+            Server.optionxform = str
+            Server.read_string(server_text)
+            Server["Game Info"]["Free_Max_Times"] = "37"
+            with server_path.open("w") as Output:
+                Server.write(Output)
 
             game = ThemeMath(project_dir=project_dir)
 
@@ -60,9 +64,10 @@ class ThemeMathTests(unittest.TestCase):
         self.assertEqual(game.FreeTriggerScatterCount, 5)
         self.assertEqual(game.BaseFreeSpins, 10)
         self.assertEqual(game.MainExtraFreeSpinsPerScatter, 3)
-        self.assertEqual(game.FreeExtraSpinsPerScatter, 2)
+        self.assertEqual(game.FreeExtraSpinsPerScatter, 1)
         self.assertEqual(game.BaseMaxEliTimes, 7)
         self.assertEqual(game.FreeMaxEliTimes, 9)
+        self.assertEqual(game.FreeMaxTimes, 37)
 
     def test_reference_elimination_limits_are_used_in_both_modes(self):
         self.game.BaseMaxEliTimes = 2
@@ -146,6 +151,16 @@ class ThemeMathTests(unittest.TestCase):
         server.read(Path(__file__).resolve().parent / "special/klsj_game_server.conf")
         return server
 
+    def _scatter_candidate_spin(self, **kwargs):
+        self.game.last_spin_state = {
+            "source_type": "rolls",
+            "columns": [[0] * 12 + [8, 9, 9] for _ in range(6)],
+            "top_indexes": [6] * 6,
+            "row": 6,
+            "col": 6,
+        }
+        return [[0] * 6 for _ in range(6)]
+
     def test_yjzr_fields_drive_each_column_height_and_mode(self):
         with tempfile.TemporaryDirectory() as temp_dir:
             project_dir = Path(temp_dir)
@@ -156,7 +171,7 @@ class ThemeMathTests(unittest.TestCase):
             info = server["Game Info"]
             for column in range(1, 7):
                 for mode in ("base", "free"):
-                    # Make each column and mode choose a distinct initial partition.
+                    # 为不同列和模式指定不同的初始布局。
                     index = column - 1 + (3 if mode == "free" else 0)
                     info[f"{mode}_height_weight_{column}"] = ",".join(
                         "1" if value == index else "0" for value in range(9)
@@ -213,6 +228,7 @@ class ThemeMathTests(unittest.TestCase):
             ("base_height_weight_1", None),
             ("free_elim_height_weight_6_2", None),
             ("BaseMaxEliTimes", None),
+            ("Free_Max_Times", None),
             ("MainHeightWeights1", "1,1,1,1,1,1,1,1,1"),
             ("MainEliminationHeightWeights1", "2:100,0"),
             ("MainHeightPatterns", "111111"),
@@ -738,6 +754,281 @@ class ThemeMathTests(unittest.TestCase):
         )
         self.assertEqual(self.game.NextFreeStartMultiplier, 2)
 
+    def test_free_round_cap_requires_a_positive_integer_server_field(self):
+        SourceDir = Path(__file__).resolve().parent
+        with tempfile.TemporaryDirectory() as TempDir:
+            ProjectDir = Path(TempDir)
+            for Directory in ("special", "reel_config", "free_reel_config"):
+                shutil.copytree(SourceDir / Directory, ProjectDir / Directory)
+            for Value in (None, "0", "-1", "2.5", "x"):
+                with self.subTest(Value=Value):
+                    Server = self._server_config()
+                    if Value is None:
+                        del Server["Game Info"]["Free_Max_Times"]
+                    else:
+                        Server["Game Info"]["Free_Max_Times"] = Value
+                    with (ProjectDir / "special/klsj_game_server.conf").open("w") as Output:
+                        Server.write(Output)
+                    with self.assertRaisesRegex(ValueError, "Free_Max_Times"):
+                        ThemeMath(project_dir=ProjectDir)
+
+    def test_initial_scatter_generation_keeps_the_complete_award_within_fifty(self):
+        self.assertEqual(self.game.FreeMaxTimes, 50)
+        self.game.ReelHeightWeights = [[0, 0, 0, 0, 1] for _ in range(6)]
+
+        with (
+            patch.object(self.game, "spin", side_effect=self._scatter_candidate_spin),
+            patch.object(self.game, "_select_layout",
+                         side_effect=lambda total_height, col, free_game, initial: (1,) * total_height),
+        ):
+            Result = self.game.ng_spin(return_detail=True)
+        self.assertEqual(Result["ScatterCount"], 25)
+        self.assertEqual(Result["FreeSpinsAwarded"], 50)
+        self.assertEqual(Result["FreeSpinsAwarded"], 8 + 2 * (Result["ScatterCount"] - 4))
+        self.assertEqual(Result["TotalWin"], 0)
+
+    def test_main_scatter_budget_uses_configured_base_and_complete_extra_awards(self):
+        self.game.ReelHeightWeights = [[0, 0, 0, 0, 1] for _ in range(6)]
+        for Maximum, Base, Extra, Trigger, ExpectedScatters, ExpectedAward in (
+            (50, 46, 3, 4, 5, 49),
+            (37, 10, 3, 5, 14, 37),
+        ):
+            with self.subTest(Maximum=Maximum, Base=Base, Extra=Extra, Trigger=Trigger):
+                self.game.FreeMaxTimes = Maximum
+                self.game.BaseFreeSpins = Base
+                self.game.MainExtraFreeSpinsPerScatter = Extra
+                self.game.FreeTriggerScatterCount = Trigger
+                with (
+                    patch.object(self.game, "spin", side_effect=self._scatter_candidate_spin),
+                    patch.object(self.game, "_select_layout",
+                                 side_effect=lambda total_height, col, free_game, initial: (1,) * total_height),
+                    patch.object(self.game, "_evaluate_paths", return_value=(0, set(), [])),
+                ):
+                    Result = self.game.ng_spin()
+                self.assertEqual(Result["ScatterCount"], ExpectedScatters)
+                self.assertEqual(Result["FreeSpinsAwarded"], ExpectedAward)
+                self.assertEqual(Result["FreeSpinsAwarded"], Base + Extra * (ExpectedScatters - Trigger))
+
+    def test_base_free_award_configuration_cannot_exceed_the_round_budget(self):
+        SourceDir = Path(__file__).resolve().parent
+        with tempfile.TemporaryDirectory() as TempDir:
+            ProjectDir = Path(TempDir)
+            for Directory in ("special", "reel_config", "free_reel_config"):
+                shutil.copytree(SourceDir / Directory, ProjectDir / Directory)
+            Server = self._server_config()
+            Server["Game Info"]["BaseFreeSpins"] = "51"
+            with (ProjectDir / "special/klsj_game_server.conf").open("w") as Output:
+                Server.write(Output)
+            with self.assertRaisesRegex(ValueError, "BaseFreeSpins.*Free_Max_Times"):
+                ThemeMath(project_dir=ProjectDir)
+
+    def test_extra_free_spins_reserve_the_existing_queue_near_the_cap(self):
+        self.game.ReelHeightWeights = [[0, 0, 0, 0, 1] for _ in range(6)]
+        for Number, Remaining, ExpectedExtra in (
+            (48, 0, 2), (48, 1, 1), (49, 0, 1), (49, 1, 0), (50, 0, 0),
+        ):
+            with self.subTest(FreeSpinNumber=Number, FreeSpinsRemaining=Remaining):
+                with (
+                    patch.object(self.game, "spin", side_effect=self._scatter_candidate_spin),
+                    patch.object(self.game, "_select_layout",
+                                 side_effect=lambda total_height, col, free_game, initial: (1,) * total_height),
+                    patch.object(self.game, "_evaluate_paths", return_value=(0, set(), [])),
+                ):
+                    Result = self.game.fg_spin(
+                        FreeSpinNumber=Number, FreeStartMultiplier=73,
+                        FreeSpinsRemaining=Remaining, return_detail=True,
+                    )
+                self.assertEqual(Result["ScatterCount"], ExpectedExtra)
+                self.assertEqual(Result["ExtraFreeSpins"], ExpectedExtra)
+                self.assertEqual(Result["ExtraFreeSpins"], Result["ScatterCount"])
+                self.assertEqual(Result["FreeEndMultiplier"], 73)
+                self.assertLessEqual(Number + Remaining + Result["ExtraFreeSpins"], 50)
+
+    def test_initial_and_all_refills_share_scatter_budget_without_recounting_survivors(self):
+        self.game.ReelHeightWeights = [[1, 0, 0, 0, 0] for _ in range(6)]
+
+        def FakeSpin(**kwargs):
+            self._scatter_candidate_spin(**kwargs)
+            Board = [[8] * 6 for _ in range(6)]
+            Board[1][0] = 0
+            return Board
+
+        Evaluations = [
+            (self.game.base_bet, {(1, 1)}, [{"ItemId": 8, "Win": self.game.base_bet}]),
+            (self.game.base_bet, {(2, 0)}, [{"ItemId": 8, "Win": self.game.base_bet}]),
+            (0, set(), []),
+        ]
+        with (
+            patch.object(self.game, "spin", side_effect=FakeSpin),
+            patch.object(self.game, "_select_layout",
+                         side_effect=lambda total_height, col, free_game, initial: (1,) * total_height),
+            patch.object(self.game, "_evaluate_paths", side_effect=Evaluations),
+        ):
+            Result = self.game.fg_spin(
+                FreeSpinNumber=48, FreeStartMultiplier=5, FreeSpinsRemaining=0, return_detail=True,
+            )
+        self.assertEqual(sum(Item["SymbolId"] == 0 for Column in Result["InitialBoard"]
+                             for Item in Column), 1)
+        self.assertEqual([Round["NewScatterCount"] for Round in Result["Rounds"]], [1, 0])
+        self.assertEqual(Result["ScatterCount"], 2)
+        self.assertEqual(Result["ExtraFreeSpins"], 2)
+        self.assertEqual(sum(Item["SymbolId"] == 0 for Column in Result["FinalBoard"]
+                             for Item in Column), 2)
+        self.assertEqual(Result["TotalWin"], 11 * self.game.base_bet)
+
+    def test_scatter_remainder_slots_share_the_original_symbols_budget(self):
+        Generation = {"ScatterBudget": 2, "OrdinaryPools": [[8] for _ in range(6)]}
+        with patch.object(self.game, "_select_layout", return_value=(1,)):
+            Cells = self.game._build_column(
+                [0, 0, 0, 0], (3, 3), 1, True, ScatterGeneration=Generation,
+            )
+        self.assertEqual([(Item.SymbolId, Item.Height) for Item in Cells],
+                         [(8, 1), (0, 2), (8, 1), (0, 2)])
+        self.assertEqual(Generation["ScatterBudget"], 0)
+        self.assertEqual(sum(Item.Height for Item in Cells), 6)
+
+    def test_overflow_tall_scatter_becomes_framed_ordinary_without_extra_reel_draws(self):
+        self.game.SilverFrameChance = self.game.ChanceBase
+        for Height in (3, 4):
+            with self.subTest(Height=Height):
+                Generation = {"ScatterBudget": 0, "OrdinaryPools": [[8, 9, 9] for _ in range(6)]}
+                State = {
+                    "source_type": "rolls", "columns": [[0, 8, 9, 9] for _ in range(6)],
+                    "top_indexes": [1] * 6, "row": 6, "col": 6,
+                    "ScatterGeneration": Generation,
+                }
+                with (
+                    patch("theme_math.random.choice", return_value=9) as Choice,
+                    patch.object(self.game, "_select_layout") as Layout,
+                    patch.object(self.game, "take_symbols_above",
+                                 wraps=self.game.take_symbols_above) as Take,
+                ):
+                    Cells = self.game._build_column([0], (Height,), 1, True, State)
+                self.assertEqual(Cells, [Cell(9, 1, Height)])
+                Choice.assert_called_once_with([8, 9, 9])
+                Layout.assert_not_called()
+                Take.assert_called_once_with(State, 1, 1)
+                self.assertEqual(State["top_indexes"], [1, 0, 1, 1, 1, 1])
+                self.assertEqual(Generation["ScatterBudget"], 0)
+
+    def test_overflow_uses_each_actual_source_columns_ordinary_frequency(self):
+        Pools = [[8] + [9] * (Col + 1) for Col in range(6)]
+        self.game.ReelHeightWeights = [[0, 0, 0, 0, 1] for _ in range(6)]
+
+        def FakeSpin(**kwargs):
+            self._scatter_candidate_spin(**kwargs)
+            self.game.last_spin_state["columns"] = [[0] * 12 + Pool for Pool in Pools]
+            return [[0] * 6 for _ in range(6)]
+
+        with (
+            patch.object(self.game, "spin", side_effect=FakeSpin),
+            patch.object(self.game, "_select_layout", return_value=(3, 3)),
+            patch.object(self.game, "_evaluate_paths", return_value=(0, set(), [])),
+            patch("theme_math.random.choice", return_value=9) as Choice,
+            patch.object(self.game, "take_symbols_above", wraps=self.game.take_symbols_above) as Take,
+        ):
+            Result = self.game.fg_spin(FreeSpinNumber=50, FreeSpinsRemaining=0)
+        self.assertEqual([Call.args[0] for Call in Choice.call_args_list],
+                         [Pool for Pool in Pools for _ in range(2)])
+        Take.assert_not_called()
+        self.assertEqual(self.game.last_spin_state["top_indexes"], [6] * 6)
+        self.assertEqual(Result["ScatterCount"], 0)
+        self.assertTrue(all(Item["SymbolId"] == 9 and Item["Height"] == 3
+                            for Column in Result["InitialBoard"] for Item in Column))
+
+    def test_free_scatter_award_must_be_one_and_main_extra_award_must_be_positive(self):
+        SourceDir = Path(__file__).resolve().parent
+        with tempfile.TemporaryDirectory() as TempDir:
+            ProjectDir = Path(TempDir)
+            for Directory in ("special", "reel_config", "free_reel_config"):
+                shutil.copytree(SourceDir / Directory, ProjectDir / Directory)
+            for Field, Value in (
+                ("FreeExtraSpinsPerScatter", "0"),
+                ("FreeExtraSpinsPerScatter", "2"),
+                ("MainExtraFreeSpinsPerScatter", "0"),
+                ("MainExtraFreeSpinsPerScatter", "-1"),
+            ):
+                with self.subTest(Field=Field, Value=Value):
+                    Server = self._server_config()
+                    Server["Game Info"][Field] = Value
+                    with (ProjectDir / "special/klsj_game_server.conf").open("w") as Output:
+                        Server.write(Output)
+                    with self.assertRaisesRegex(ValueError, Field):
+                        ThemeMath(project_dir=ProjectDir)
+
+    def test_overflow_scatter_requires_an_ordinary_symbol_in_the_same_source_column(self):
+        Generation = {"ScatterBudget": 0, "OrdinaryPools": [[8] for _ in range(6)]}
+        Generation["OrdinaryPools"][1] = []
+        State = {
+            "source_type": "rolls", "columns": [[0] for _ in range(6)],
+            "top_indexes": [0] * 6, "row": 6, "col": 6,
+            "ScatterGeneration": Generation,
+        }
+        with self.assertRaisesRegex(ValueError, "column 2.*no ordinary"):
+            self.game._build_column([0], (3,), 1, True, State)
+        self.assertEqual(State["top_indexes"], [0] * 6)
+
+    def test_fiftieth_free_spin_completes_all_wins_and_does_not_add_more_spins(self):
+        WinningEvaluation = (
+            self.game.base_bet, {(0, 0)}, [{"ItemId": 2, "Win": self.game.base_bet}]
+        )
+        with (
+            patch.object(self.game, "spin", side_effect=self._scatter_candidate_spin),
+            patch.object(self.game, "_evaluate_paths",
+                         side_effect=[WinningEvaluation] * 6 + [(0, set(), [])]),
+        ):
+            Result = self.game.fg_spin(
+                FreeSpinNumber=50, FreeStartMultiplier=20, FreeSpinsRemaining=0, return_detail=True,
+            )
+        self.assertEqual([Round["Multiplier"] for Round in Result["Rounds"]], [20, 21, 22, 23, 24, 24])
+        self.assertEqual(Result["CascadeCount"], 6)
+        self.assertEqual(Result["TotalWin"], 134 * self.game.base_bet)
+        self.assertEqual(Result["ScatterCount"], 0)
+        self.assertEqual(Result["ExtraFreeSpins"], 0)
+        self.assertEqual([Round["NewScatterCount"] for Round in Result["Rounds"]], [0] * 6)
+        self.assertEqual(Result["FreeEndMultiplier"], 24)
+        self.assertEqual(self.game.NextFreeStartMultiplier, 25)
+        self.assertEqual(self.game.NextFreeSpinNumber, 51)
+
+    def test_invalid_free_progress_is_rejected_before_board_generation_or_state_changes(self):
+        self.game.NextFreeStartMultiplier = 99
+        for Number, Remaining in ((51, 0), (0, 0), (49, 2), (50, 1), (1, -1)):
+            with self.subTest(FreeSpinNumber=Number, FreeSpinsRemaining=Remaining):
+                with (
+                    patch.object(self.game, "spin") as Spin,
+                    patch.object(self.game, "_evaluate_paths") as Evaluate,
+                ):
+                    with self.assertRaises(ValueError):
+                        self.game.fg_spin(FreeSpinNumber=Number, FreeSpinsRemaining=Remaining)
+                    Spin.assert_not_called()
+                    Evaluate.assert_not_called()
+                self.assertEqual(self.game.NextFreeStartMultiplier, 99)
+                self.assertEqual(self.game.NextFreeSpinNumber, 1)
+
+    def test_default_free_progress_stops_at_fifty_and_paid_spin_starts_a_new_round(self):
+        with (
+            patch.object(self.game, "_choose_spin_type", return_value="zero"),
+            patch.object(self.game, "_evaluate_paths", return_value=(0, set(), [])),
+        ):
+            for Number in range(1, 51):
+                Result = self.game.fg_spin()
+                self.assertEqual(Result["FreeSpinNumber"], Number)
+                self.assertEqual(Result["FreeStartMultiplier"], Number)
+                self.assertEqual(Result["FreeEndMultiplier"], Number)
+                self.assertEqual(self.game.NextFreeSpinNumber, Number + 1)
+            with patch.object(self.game, "spin") as Spin:
+                with self.assertRaises(ValueError):
+                    self.game.fg_spin()
+                Spin.assert_not_called()
+            self.assertEqual(self.game.NextFreeSpinNumber, 51)
+            self.assertEqual(self.game.NextFreeStartMultiplier, 51)
+            self.game.ng_spin()
+            self.assertEqual(self.game.NextFreeSpinNumber, 1)
+            self.assertEqual(self.game.NextFreeStartMultiplier, 1)
+            NextRound = self.game.fg_spin()
+            self.assertEqual(NextRound["FreeSpinNumber"], 1)
+            self.assertEqual(NextRound["FreeStartMultiplier"], 1)
+
     def test_each_ways_path_pays_once_when_multiple_symbols_match_wild(self):
         board = [
             [Cell(1), Cell(1)],
@@ -779,17 +1070,21 @@ class ThemeMathTests(unittest.TestCase):
     def test_free_spin_number_advances_even_without_a_win_or_with_extra_spins(self):
         free_numbers = []
         FreeStarts = []
+        FreeRemaining = []
 
         class FakeGame:
+            FreeMaxTimes = 50
+
             def __init__(self, base_bet):
                 pass
 
             def ng_spin(self, **kwargs):
                 return {"TotalWin": 0, "FreeSpinsAwarded": 2}
 
-            def fg_spin(self, FreeSpinNumber, FreeStartMultiplier, **kwargs):
+            def fg_spin(self, FreeSpinNumber, FreeStartMultiplier, FreeSpinsRemaining, **kwargs):
                 free_numbers.append(FreeSpinNumber)
                 FreeStarts.append(FreeStartMultiplier)
+                FreeRemaining.append(FreeSpinsRemaining)
                 return {
                     "TotalWin": 0,
                     "ExtraFreeSpins": 1 if FreeSpinNumber == 1 else 0,
@@ -800,12 +1095,15 @@ class ThemeMathTests(unittest.TestCase):
             result = simulation.simulate(1)
         self.assertEqual(free_numbers, [1, 2, 3])
         self.assertEqual(FreeStarts, [1, 2, 3])
+        self.assertEqual(FreeRemaining, [1, 1, 0])
         self.assertEqual(result["FreeSpins"], 3)
 
     def test_simulation_extra_spins_keep_multiplier_and_new_paid_round_restarts_at_one(self):
         FreeCalls = []
 
         class FakeGame:
+            FreeMaxTimes = 50
+
             def __init__(self, base_bet):
                 self.BaseBet = base_bet
                 self.PaidSpinNumber = 0
@@ -814,8 +1112,9 @@ class ThemeMathTests(unittest.TestCase):
                 self.PaidSpinNumber += 1
                 return {"TotalWin": 0, "FreeSpinsAwarded": 2}
 
-            def fg_spin(self, FreeSpinNumber, FreeStartMultiplier, **kwargs):
-                FreeCalls.append((self.PaidSpinNumber, FreeSpinNumber, FreeStartMultiplier))
+            def fg_spin(self, FreeSpinNumber, FreeStartMultiplier, FreeSpinsRemaining, **kwargs):
+                FreeCalls.append((self.PaidSpinNumber, FreeSpinNumber,
+                                  FreeStartMultiplier, FreeSpinsRemaining))
                 Wins = FreeSpinNumber == 1
                 return {
                     "TotalWin": self.BaseBet if Wins else 0,
@@ -825,9 +1124,74 @@ class ThemeMathTests(unittest.TestCase):
 
         with patch.object(simulation, "ThemeMath", FakeGame):
             Result = simulation.simulate(2)
-        self.assertEqual(FreeCalls, [(1, 1, 1), (1, 2, 6), (1, 3, 7),
-                                    (2, 1, 1), (2, 2, 6), (2, 3, 7)])
+        self.assertEqual(FreeCalls, [(1, 1, 1, 1), (1, 2, 6, 1), (1, 3, 7, 0),
+                                    (2, 1, 1, 1), (2, 2, 6, 1), (2, 3, 7, 0)])
         self.assertEqual(Result["FreeSpins"], 6)
+
+    def test_simulation_settles_every_awarded_spin_and_restarts_the_next_paid_round(self):
+        FreeCalls = []
+        BaseBet = 10000
+
+        class FakeGame:
+            FreeMaxTimes = 50
+
+            def __init__(self, base_bet):
+                self.BaseBet = base_bet
+                self.PaidSpinNumber = 0
+
+            def ng_spin(self, **kwargs):
+                self.PaidSpinNumber += 1
+                return {"TotalWin": 0, "FreeSpinsAwarded": 2 if self.PaidSpinNumber == 1 else 50}
+
+            def fg_spin(self, FreeSpinNumber, FreeStartMultiplier, FreeSpinsRemaining, **kwargs):
+                if FreeSpinNumber > self.FreeMaxTimes:
+                    raise AssertionError("simulation exceeded the free round cap")
+                FreeCalls.append((self.PaidSpinNumber, FreeSpinNumber,
+                                  FreeStartMultiplier, FreeSpinsRemaining))
+                return {
+                    "TotalWin": self.BaseBet * (10 if FreeSpinNumber == 50 else 1),
+                    "ExtraFreeSpins": self.FreeMaxTimes - FreeSpinNumber - FreeSpinsRemaining,
+                    "FreeEndMultiplier": FreeStartMultiplier + 4,
+                }
+
+        with patch.object(simulation, "ThemeMath", FakeGame):
+            Result = simulation.simulate(2, base_bet=BaseBet)
+        for PaidSpinNumber in (1, 2):
+            Calls = [Call for Call in FreeCalls if Call[0] == PaidSpinNumber]
+            self.assertEqual([Call[1] for Call in Calls], list(range(1, 51)))
+            self.assertEqual([Call[2] for Call in Calls], [1 + 5 * Index for Index in range(50)])
+            self.assertEqual(
+                [Call[3] for Call in Calls],
+                ([1] + list(range(48, -1, -1))) if PaidSpinNumber == 1 else list(range(49, -1, -1)),
+            )
+        self.assertEqual(Result["FreeSpins"], 100)
+        self.assertEqual(Result["FreeTriggers"], 2)
+        self.assertEqual(Result["AverageFreeSpinsPerTrigger"], 50)
+        self.assertEqual(Result["FreeWin"], 118 * BaseBet)
+        self.assertEqual(Result["TotalWin"], 118 * BaseBet)
+
+    def test_simulation_reports_invalid_awards_instead_of_silently_cutting_them(self):
+        for InitialAward, ExtraAward, Error in (
+            (51, 0, "initial free award"),
+            (1, 50, "extra free award"),
+        ):
+            with self.subTest(InitialAward=InitialAward, ExtraAward=ExtraAward):
+                class FakeGame:
+                    FreeMaxTimes = 50
+
+                    def __init__(self, base_bet):
+                        pass
+
+                    def ng_spin(self, **kwargs):
+                        return {"TotalWin": 0, "FreeSpinsAwarded": InitialAward}
+
+                    def fg_spin(self, FreeSpinNumber, FreeStartMultiplier, FreeSpinsRemaining, **kwargs):
+                        return {"TotalWin": 0, "ExtraFreeSpins": ExtraAward,
+                                "FreeEndMultiplier": FreeStartMultiplier}
+
+                with patch.object(simulation, "ThemeMath", FakeGame):
+                    with self.assertRaisesRegex(RuntimeError, Error):
+                        simulation.simulate(1)
 
     def test_sample_special_fixed_and_zero_results_load_in_both_modes(self):
         self.game.ReelHeightWeights = [[1, 0, 0, 0, 0] for _ in range(6)]

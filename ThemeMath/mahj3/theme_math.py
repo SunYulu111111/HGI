@@ -4,6 +4,8 @@ ThemeMath 继承通用 WaysGame，只负责把 mahj3 主题自己的流程串起
 正常 spin、生成金色 symbol、计算赢钱、消除中奖格、从原停轴上方补牌并继续计算。
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 import sys
 from configparser import ConfigParser

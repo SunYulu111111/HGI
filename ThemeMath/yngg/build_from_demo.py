@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+from configparser import ConfigParser
 import csv
 import json
 import re
@@ -308,7 +309,11 @@ def write_game_config(demo_dir: Path) -> None:
 
 
 def write_bonus_config() -> None:
-    """Write JP and golden-area outcome weights."""
+    """Initialize missing Bonus weights and preserve existing TYPE tuning."""
+
+    BonusPath = THEME_DIR / "special" / "yngg_bonus.conf"
+    if BonusPath.exists():
+        return
 
     lines = [
         "[GENERAL]",
@@ -337,7 +342,7 @@ def write_bonus_config() -> None:
         "BONUS_CLOVER_MULTIPLE_PROBABILITY=40,28,16,10,5,1",
         "",
     ]
-    (THEME_DIR / "special" / "yngg_bonus.conf").write_text(
+    BonusPath.write_text(
         "\n".join(lines),
         encoding="utf-8",
     )
@@ -408,16 +413,66 @@ def write_reel_config(
     )
     lines.append("")
     type_zero_path = target / f"yngg_{file_prefix}rand_ex_0.conf"
-    type_zero_path.write_text(
-        "\n".join(lines),
-        encoding="utf-8",
-    )
+    if type_zero_path.exists():
+        fit_existing_reel_file(type_zero_path)
+    else:
+        type_zero_path.write_text(
+            "\n".join(lines),
+            encoding="utf-8",
+        )
     for type_index in ConfiguredTypes[1:]:
         type_path = target / f"yngg_{file_prefix}rand_ex_{type_index}.conf"
         if not type_path.exists():
             type_path.write_bytes(type_zero_path.read_bytes())
         else:
             fit_existing_reel_file(type_path)
+
+
+def update_type_zero_metadata(Metadata: dict) -> None:
+    """Read the published TYPE 0 parameters after preserving tuned configs."""
+
+    Server = ConfigParser(interpolation=None)
+    Bonus = ConfigParser(interpolation=None)
+    Server.optionxform = str
+    Bonus.optionxform = str
+    Server.read(THEME_DIR / "special/yngg_game_server.conf", encoding="utf-8-sig")
+    Bonus.read(THEME_DIR / "special/yngg_bonus.conf", encoding="utf-8-sig")
+    if Server.has_section("0"):
+        TypeZero = Server["0"]
+        Fields = (
+            ("scatter_count_weights", "ScatterCountProbability"),
+            ("free_scatter_count_weights", "FreeScatterCountProbability"),
+            ("base_no_win_bonus_count_weights", "BaseNoWinBonusCountProbability"),
+            ("base_win_bonus_count_weights", "BaseWinBonusCountProbability"),
+            ("free_golden_bonus_count_weights", "FreeGoldenBonusCountProbability"),
+            ("free_no_golden_bonus_count_weights", "FreeNoGoldenBonusCountProbability"),
+            ("drop_special_symbol_weights", "DropSpecialSymbolProbability"),
+            ("free_drop_special_symbol_weights", "FreeDropSpecialSymbolProbability"),
+        )
+        for Field, Key in Fields:
+            Metadata["special_symbol_generation"][Field] = [
+                int(Value.strip()) for Value in TypeZero[Key].split(",")
+            ]
+        Probability = int(TypeZero["SuperScatterProbability"])
+        Metadata["super_scatter_conversion"]["probability_per_10000"] = Probability
+        Metadata["super_scatter_conversion"]["probability"] = str(Probability / 10000)
+    Metadata["super_scatter_conversion"]["free_initial_rolls"] = 0
+    Metadata["super_scatter_conversion"]["free_drop_scatter_rolls_when_no_super"] = False
+    if Bonus.has_section("GENERAL"):
+        Effective = dict(Bonus["GENERAL"])
+        if Bonus.has_section("0"):
+            Effective.update(Bonus["0"])
+        for Field, Key in (
+            ("symbol_type_weights", "BONUS_SYMBOL_TYPE_PROBABILITY"),
+            ("coin_value_weights", "BONUS_COIN_MULTIPLE_PROBABILITY"),
+            ("clover_multiplier_weights", "BONUS_CLOVER_MULTIPLE_PROBABILITY"),
+            ("jackpot_type_weights", "BONUS_JP_TYPE_PROBABILITY"),
+        ):
+            Metadata["bonus_generation"][Field] = [
+                int(Value.strip()) for Value in Effective[Key].split(",")
+            ]
+        Metadata["bonus_generation"]["TypeIndex"] = 0
+        Metadata["bonus_generation"]["ConfigSectionOrder"] = ["GENERAL", "0"]
 
 
 def write_metadata(demo_dir: Path) -> None:
@@ -437,9 +492,13 @@ def write_metadata(demo_dir: Path) -> None:
             "program_name": "yngg",
         },
         "math_targets": {
-            "total_rtp": 0.985,
-            "free_trigger_rate": 0.005,
-            "base_bonus_trigger_interval": 75,
+            "total_rtp": 0.98,
+            "BaseClusterRtp": 0.55,
+            "BaseBonusRtp": 0.10,
+            "FreeClusterRtp": 0.13,
+            "FreeBonusRtp": 0.20,
+            "free_trigger_rate": 0.0095,
+            "base_bonus_trigger_interval": 50,
         },
         "layout": {
             "reels": 6,
@@ -519,10 +578,6 @@ def write_metadata(demo_dir: Path) -> None:
             "Configured local bonus weights can be overridden by authoritative server rounds.",
         ],
     }
-    (THEME_DIR / "source_math.json").write_text(
-        json.dumps(metadata, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
     (THEME_DIR / "special_config" / "base_game_name.conf").write_text(
         "\n".join(
             [
@@ -639,6 +694,11 @@ def write_metadata(demo_dir: Path) -> None:
                 ]
             )
     server_path.write_text("\n".join(server_lines).rstrip() + "\n", encoding="utf-8")
+    update_type_zero_metadata(metadata)
+    (THEME_DIR / "source_math.json").write_text(
+        json.dumps(metadata, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
 
 
 def main(argv: list[str] | None = None) -> None:

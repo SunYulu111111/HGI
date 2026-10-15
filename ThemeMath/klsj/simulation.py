@@ -1,4 +1,4 @@
-"""恐龙世界临时轴带仿真入口。正式数值结论需替换临时配置后重跑。"""
+"""恐龙世界仿真：统计付费游戏、免费次数和总奖励。"""
 
 from __future__ import annotations
 
@@ -32,9 +32,12 @@ def simulate(
         main_win += main["TotalWin"]
         main_hits += main["TotalWin"] > 0
         remaining = main["FreeSpinsAwarded"]
+        if not 0 <= remaining <= game.FreeMaxTimes:
+            raise RuntimeError("initial free award exceeds the generated Scatter budget")
         if remaining:
             triggers += 1
         free_spin_number = 0
+        # 首手免费从 1 开始，后续继承终倍加 1；追加次数不重置倍数。
         FreeStartMultiplier = 1
         while remaining:
             remaining -= 1
@@ -45,12 +48,13 @@ def simulate(
                 general_index=general_index,
                 FreeSpinNumber=free_spin_number,
                 FreeStartMultiplier=FreeStartMultiplier,
+                FreeSpinsRemaining=remaining,
             )
             free_win += free["TotalWin"]
+            if not 0 <= free["ExtraFreeSpins"] <= game.FreeMaxTimes - free_spin_number - remaining:
+                raise RuntimeError("extra free award exceeds the generated Scatter budget")
             remaining += free["ExtraFreeSpins"]
             FreeStartMultiplier = free["FreeEndMultiplier"] + 1
-            if free_spin_number > 100000:
-                raise RuntimeError("free round exceeded simulation safety limit")
 
     total_bet = spins * base_bet
     return {

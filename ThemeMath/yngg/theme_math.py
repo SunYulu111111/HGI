@@ -177,78 +177,92 @@ class ThemeMath(CountGame):
             self._validate_weighted_options(key, tuple(range(expected_length)), weights)
             setattr(self, attribute, weights)
         self.ActiveTypeIndex = index
+        if (
+            hasattr(self, "bonus_config")
+            and getattr(self, "ActiveBonusTypeIndex", None) != index
+        ):
+            self._load_bonus_config()
 
     def _load_bonus_config(self) -> None:
         if not self.bonus_config.has_section("GENERAL"):
             raise ValueError(f"{self.bonus_config_file} missing [GENERAL]")
-        general = self.bonus_config["GENERAL"]
+        BonusValues = dict(self.bonus_config["GENERAL"])
+        TypeSection = str(self.ActiveTypeIndex)
+        if self.bonus_config.has_section(TypeSection):
+            BonusValues.update(self.bonus_config[TypeSection])
 
-        self.BONUS_SYMBOL_TYPES = tuple(
+        SymbolTypes = tuple(
             value.strip().lower()
-            for value in general.get("BONUS_SYMBOL_TYPE", "").split(",")
+            for value in BonusValues.get("BONUS_SYMBOL_TYPE", "").split(",")
             if value.strip()
         )
-        self.BONUS_SYMBOL_TYPE_WEIGHTS = tuple(
-            self._parse_int_list(general.get("BONUS_SYMBOL_TYPE_PROBABILITY", ""))
+        SymbolWeights = tuple(
+            self._parse_int_list(BonusValues.get("BONUS_SYMBOL_TYPE_PROBABILITY", ""))
         )
-        self.COIN_VALUES = tuple(
-            self._parse_float_list(general.get("BONUS_COIN_MULTIPLE", ""))
+        CoinValues = tuple(
+            self._parse_float_list(BonusValues.get("BONUS_COIN_MULTIPLE", ""))
         )
-        self.COIN_VALUE_WEIGHTS = tuple(
-            self._parse_int_list(general.get("BONUS_COIN_MULTIPLE_PROBABILITY", ""))
+        CoinWeights = tuple(
+            self._parse_int_list(BonusValues.get("BONUS_COIN_MULTIPLE_PROBABILITY", ""))
         )
-        self.GREEN_CLOVER_MULTIPLIERS = tuple(
-            self._parse_int_list(general.get("BONUS_CLOVER_MULTIPLE", ""))
+        CloverValues = tuple(
+            self._parse_int_list(BonusValues.get("BONUS_CLOVER_MULTIPLE", ""))
         )
-        self.GOLD_CLOVER_MULTIPLIERS = self.GREEN_CLOVER_MULTIPLIERS
-        self.CLOVER_MULTIPLIER_WEIGHTS = tuple(
-            self._parse_int_list(general.get("BONUS_CLOVER_MULTIPLE_PROBABILITY", ""))
+        CloverWeights = tuple(
+            self._parse_int_list(BonusValues.get("BONUS_CLOVER_MULTIPLE_PROBABILITY", ""))
         )
-        jackpot_multiples = tuple(
-            self._parse_int_list(general.get("BONUS_JP_MULTIPLE", ""))
+        JackpotValues = tuple(
+            self._parse_int_list(BonusValues.get("BONUS_JP_MULTIPLE", ""))
         )
-        self.JACKPOT_TYPE_WEIGHTS = tuple(
-            self._parse_int_list(general.get("BONUS_JP_TYPE_PROBABILITY", ""))
-        )
-        self.JACKPOT_MULTIPLIERS = dict(
-            zip(self.JACKPOT_TIERS, jackpot_multiples)
+        JackpotWeights = tuple(
+            self._parse_int_list(BonusValues.get("BONUS_JP_TYPE_PROBABILITY", ""))
         )
 
-        if len(jackpot_multiples) != len(self.JACKPOT_TIERS):
+        if len(JackpotValues) != len(self.JACKPOT_TIERS):
             raise ValueError("BONUS_JP_MULTIPLE must configure four JP tiers")
         if (
-            len(self.BONUS_SYMBOL_TYPES) != len(set(self.BONUS_SYMBOL_TYPES))
-            or set(self.BONUS_SYMBOL_TYPES) != set(self.ALLOWED_BONUS_TYPES)
+            len(SymbolTypes) != len(set(SymbolTypes))
+            or set(SymbolTypes) != set(self.ALLOWED_BONUS_TYPES)
         ):
             raise ValueError(
                 "BONUS_SYMBOL_TYPE must contain coin, clover, pot and jackpot once"
             )
         self._validate_weighted_options(
             "BONUS_SYMBOL_TYPE",
-            self.BONUS_SYMBOL_TYPES,
-            self.BONUS_SYMBOL_TYPE_WEIGHTS,
+            SymbolTypes,
+            SymbolWeights,
         )
         self._validate_weighted_options(
             "BONUS_COIN_MULTIPLE",
-            self.COIN_VALUES,
-            self.COIN_VALUE_WEIGHTS,
+            CoinValues,
+            CoinWeights,
         )
         self._validate_weighted_options(
             "BONUS_CLOVER_MULTIPLE",
-            self.GREEN_CLOVER_MULTIPLIERS,
-            self.CLOVER_MULTIPLIER_WEIGHTS,
+            CloverValues,
+            CloverWeights,
         )
         self._validate_weighted_options(
             "BONUS_JP_MULTIPLE",
-            jackpot_multiples,
-            self.JACKPOT_TYPE_WEIGHTS,
+            JackpotValues,
+            JackpotWeights,
         )
-        if any(value <= 0 for value in self.COIN_VALUES):
+        if any(value <= 0 for value in CoinValues):
             raise ValueError("BONUS_COIN_MULTIPLE values must be positive")
-        if any(value <= 0 for value in self.GREEN_CLOVER_MULTIPLIERS):
+        if any(value <= 0 for value in CloverValues):
             raise ValueError("BONUS_CLOVER_MULTIPLE values must be positive")
-        if any(value <= 0 for value in jackpot_multiples):
+        if any(value <= 0 for value in JackpotValues):
             raise ValueError("BONUS_JP_MULTIPLE values must be positive")
+        self.BONUS_SYMBOL_TYPES = SymbolTypes
+        self.BONUS_SYMBOL_TYPE_WEIGHTS = SymbolWeights
+        self.COIN_VALUES = CoinValues
+        self.COIN_VALUE_WEIGHTS = CoinWeights
+        self.GREEN_CLOVER_MULTIPLIERS = CloverValues
+        self.GOLD_CLOVER_MULTIPLIERS = CloverValues
+        self.CLOVER_MULTIPLIER_WEIGHTS = CloverWeights
+        self.JACKPOT_TYPE_WEIGHTS = JackpotWeights
+        self.JACKPOT_MULTIPLIERS = dict(zip(self.JACKPOT_TIERS, JackpotValues))
+        self.ActiveBonusTypeIndex = self.ActiveTypeIndex
 
     def apply_super_scatter_conversion(
         self,
@@ -286,7 +300,7 @@ class ThemeMath(CountGame):
         free_game: bool = False,
         candidate_positions: set[tuple[int, int]] | None = None,
     ) -> list[tuple[int, int]]:
-        """Return replaceable base-symbol positions outside current wins."""
+        """Return ordinary-symbol positions outside wins and extended removal."""
 
         board = self._clone_board(item_list)
         win_result = self.cal_item_list(
@@ -296,19 +310,41 @@ class ThemeMath(CountGame):
             row=self.config.row_count,
             col=self.config.col_count,
         )
-        winning_positions = set(win_result["win_positions"])
+        remove_positions, _ = self.get_cascade_remove_positions(
+            board, win_result["items"]
+        )
         allowed_positions = candidate_positions
         return [
             (column, row)
             for column, values in enumerate(board)
             for row, symbol_id in enumerate(values)
             if (allowed_positions is None or (column, row) in allowed_positions)
-            and (column, row) not in winning_positions
-            and (
-                symbol_id == self.WILD_ID
-                or symbol_id in self.PAYING_SYMBOL_IDS
-            )
+            and (column, row) not in remove_positions
+            and symbol_id in self.PAYING_SYMBOL_IDS
         ]
+
+    def get_cascade_remove_positions(
+        self, item_list, win_items: list[dict],
+    ) -> tuple[set[tuple[int, int]], set[tuple[int, int]]]:
+        """Extend removal to matching ordinary symbols without extending wins."""
+
+        WinningPositions = {
+            tuple(Position)
+            for Item in win_items
+            for Position in Item["positions"]
+        }
+        WinningIds = {
+            Item["item_id"]
+            for Item in win_items
+            if Item["item_id"] in self.PAYING_SYMBOL_IDS
+        }
+        ExtendedPositions = {
+            (Column, Row)
+            for Column, Values in enumerate(item_list)
+            for Row, SymbolId in enumerate(Values)
+            if SymbolId in WinningIds and (Column, Row) not in WinningPositions
+        }
+        return WinningPositions | ExtendedPositions, ExtendedPositions
 
     def place_special_symbols(
         self,
@@ -420,6 +456,57 @@ class ThemeMath(CountGame):
         return super()._load_reel_config(
             index, general_index, reel_config_dir, reel_file_template
         )
+
+    @staticmethod
+    def _ensure_next_reel_indexes(spin_state: dict) -> list[int]:
+        """Keep yngg's forward cursor separate from the initial reel stops."""
+
+        if "NextReelIndexes" not in spin_state:
+            IsFixedResult = spin_state.get("source_type", "").endswith(
+                "_result_normal_rolls"
+            )
+            InitialCount = 0 if IsFixedResult else spin_state["row"]
+            spin_state["NextReelIndexes"] = [
+                (TopIndex + InitialCount) % len(Source)
+                for TopIndex, Source in zip(
+                    spin_state["top_indexes"], spin_state["columns"]
+                )
+            ]
+        return spin_state["NextReelIndexes"]
+
+    @staticmethod
+    def _spin_from_rolls(rolls: list[list[int]], row: int, col: int):
+        Board, SpinState = CountGame._spin_from_rolls(rolls, row, col)
+        ThemeMath._ensure_next_reel_indexes(SpinState)
+        return Board, SpinState
+
+    @staticmethod
+    def _build_result_spin_state(
+        normal_rolls: list[list[int]], row: int, col: int, spin_type: str,
+    ) -> dict:
+        SpinState = CountGame._build_result_spin_state(
+            normal_rolls, row, col, spin_type
+        )
+        ThemeMath._ensure_next_reel_indexes(SpinState)
+        return SpinState
+
+    @staticmethod
+    def take_symbols_after(spin_state: dict, col_index: int, count: int) -> list[int]:
+        """Continue forward after the preceding window, as the server does."""
+
+        if count <= 0:
+            return []
+        Source = spin_state["columns"][col_index]
+        if not Source:
+            raise ValueError("spin state source column cannot be empty")
+        NextIndexes = ThemeMath._ensure_next_reel_indexes(spin_state)
+        StartIndex = NextIndexes[col_index]
+        Symbols = [
+            Source[(StartIndex + Offset) % len(Source)]
+            for Offset in range(count)
+        ]
+        NextIndexes[col_index] = (StartIndex + count) % len(Source)
+        return Symbols
 
     def ng_spin(
         self,
@@ -660,11 +747,12 @@ class ThemeMath(CountGame):
         bonus_seen: bool = False,
         feature_outcome: dict | None = None,
     ) -> dict:
-        """Run cluster removal/refill until no winning cluster remains."""
+        """Run server-style extended removal/refill until no cluster remains."""
 
         if max_cascades <= 0:
             raise ValueError("max_cascades must be positive")
         board = self._validate_board(item_list)
+        self._ensure_next_reel_indexes(spin_state)
         initial_board = self._clone_board(board)
         state = set(golden_squares or ())
         rounds: list[dict] = []
@@ -847,7 +935,7 @@ class ThemeMath(CountGame):
             "feature_outcome_injected": feature_outcome_injected,
             "feature_outcome_generated": feature_outcome_generated,
             "spin_info": result_spin_info,
-            "final_top_indexes": spin_state.get("top_indexes", [])[:],
+            "final_top_indexes": spin_state["NextReelIndexes"][:],
         }
         self.last_spin_info = result["spin_info"]
         self.last_spin_state = spin_state
@@ -861,18 +949,16 @@ class ThemeMath(CountGame):
         free_game: bool = False,
         super_scatter_positions: set[tuple[int, int]] | None = None,
     ) -> tuple[list[list[int]], dict]:
-        """Remove only winning cluster positions, then refill from above."""
+        """Remove winning IDs across the board and refill forward along reels."""
 
         board = self._clone_board(item_list)
         winning_ids = {item["item_id"] for item in win_items}
-        remove_positions = {
-            tuple(position)
-            for item in win_items
-            for position in item["positions"]
-        }
+        remove_positions, ExtendedPositions = self.get_cascade_remove_positions(
+            board, win_items
+        )
+        NextIndexes = self._ensure_next_reel_indexes(spin_state)
         refill_items = []
         dropped_positions: set[tuple[int, int]] = set()
-        dropped_symbol_count = 0
         current_super_positions = set(super_scatter_positions or ())
         updated_super_positions: set[tuple[int, int]] = set()
         for column, values in enumerate(board):
@@ -883,25 +969,24 @@ class ThemeMath(CountGame):
             ]
             survivors = [values[row] for row in survivor_rows]
             count = len(values) - len(survivors)
-            top_before = spin_state["top_indexes"][column]
-            new_items = self.take_symbols_above(spin_state, column, count)
-            dropped_symbol_count += len(new_items)
-            board[column] = new_items + survivors
+            top_before = NextIndexes[column]
+            new_items = self.take_symbols_after(spin_state, column, count)
+            board[column] = survivors + new_items
             dropped_positions.update(
                 (column, row)
-                for row in range(count)
+                for row in range(len(survivors), len(values))
             )
             for survivor_index, old_row in enumerate(survivor_rows):
                 if (column, old_row) in current_super_positions:
                     updated_super_positions.add(
-                        (column, count + survivor_index)
+                        (column, survivor_index)
                     )
             refill_items.append(
                 {
                     "col": column,
                     "items": new_items,
                     "top_index_before": top_before,
-                    "top_index_after": spin_state["top_indexes"][column],
+                    "top_index_after": NextIndexes[column],
                 }
             )
         special_block_reason = None
@@ -917,28 +1002,20 @@ class ThemeMath(CountGame):
                 free_game=free_game,
                 candidate_positions=dropped_positions,
             )
-            selected_symbol_id = None
-            for _ in range(dropped_symbol_count):
+            for column, row in candidates:
                 selected_symbol_id = self.choose_drop_special_symbol_id(
                     free_game=free_game
                 )
-                if selected_symbol_id is not None:
-                    break
-            if selected_symbol_id is not None and candidates:
-                candidate_index = random.randrange(len(candidates))
-                column, row = candidates[candidate_index]
+                if selected_symbol_id is None:
+                    continue
                 board[column][row] = selected_symbol_id
                 result_symbol_id = selected_symbol_id
-                is_super_scatter = False
-                if (
-                    not free_game
-                    and selected_symbol_id == self.FREE_SPIN_ID
-                    and not updated_super_positions
-                    and random.randrange(self.PROBABILITY_DENOMINATOR)
-                    < self.SUPER_SCATTER_PROBABILITY
-                ):
-                    is_super_scatter = True
-                    updated_super_positions.add((column, row))
+                if not free_game and selected_symbol_id == self.FREE_SPIN_ID:
+                    board, SuperPositions = self.apply_super_scatter_conversion(
+                        board, updated_super_positions
+                    )
+                    updated_super_positions = set(SuperPositions)
+                is_super_scatter = (column, row) in updated_super_positions
                 special_placements.append(
                     {
                         "position": (column, row),
@@ -947,8 +1024,10 @@ class ThemeMath(CountGame):
                         "is_super_scatter": is_super_scatter,
                     }
                 )
+                break
         return board, {
             "remove_positions": sorted(remove_positions),
+            "ExtendedRemovePositions": sorted(ExtendedPositions),
             "winning_item_ids": sorted(winning_ids),
             "refill_items": refill_items,
             "special_placements": special_placements,
@@ -1124,7 +1203,7 @@ class ThemeMath(CountGame):
         Each round is a list of changed cells. A cell has ``position`` and
         ``type`` (coin, clover, pot, jackpot). Rounds after a pot must contain
         every regenerated non-pot cell. Clover effects run before pots; pots
-        run top-to-bottom then left-to-right.
+        follow the server scan: column ascending, then row descending.
         """
 
         if not isinstance(rounds, list):
@@ -1211,7 +1290,7 @@ class ThemeMath(CountGame):
                     for position, cell in cells.items()
                     if position in revealed_positions and cell["type"] == "pot"
                 ),
-                key=lambda item: (item[0][1], item[0][0]),
+                key=lambda item: (item[0][0], -item[0][1]),
             )
             for position, pot in pots:
                 collected = sum(

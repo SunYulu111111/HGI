@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -47,6 +48,7 @@ class ThemeMathTest(unittest.TestCase):
             self.assertEqual(actual, payouts)
 
     def test_bonus_config_matches_design_weights(self):
+        self.math._activate_type(4)
         self.assertEqual(
             self.math.BONUS_SYMBOL_TYPES,
             ("coin", "clover", "pot", "jackpot"),
@@ -65,6 +67,96 @@ class ThemeMathTest(unittest.TestCase):
         self.assertEqual(self.math.COIN_MULTI_1, 5)
         self.assertEqual(self.math.COIN_MULTI_2, 25)
         self.assertEqual(self.math.BONUS_MAX_ROUND, 5)
+
+    def test_type_bonus_overrides_inherit_and_switch_without_leaking(self):
+        General = self.math.bonus_config["GENERAL"]
+        Text = "[GENERAL]\n" + "\n".join(
+            f"{Key}={Value}" for Key, Value in General.items()
+        )
+        TypeWeights = (10000, 80, 6, 2)
+        CoinWeights = (1,) * len(self.math.COIN_VALUES)
+        Text += (
+            "\n[0]\nBONUS_SYMBOL_TYPE_PROBABILITY=10000,80,6,2\n"
+            "BONUS_COIN_MULTIPLE_PROBABILITY="
+            + ",".join(map(str, CoinWeights)) + "\n"
+        )
+        with TemporaryDirectory() as Directory:
+            ConfigPath = Path(Directory) / "bonus.conf"
+            ConfigPath.write_text(Text, encoding="utf-8")
+            Game = ThemeMath(bonus_config_file=str(ConfigPath))
+            self.assertEqual(Game.ActiveBonusTypeIndex, 0)
+            self.assertEqual(Game.BONUS_SYMBOL_TYPE_WEIGHTS, TypeWeights)
+            self.assertEqual(Game.COIN_VALUE_WEIGHTS, CoinWeights)
+            self.assertEqual(Game.COIN_VALUES, self.math.COIN_VALUES)
+            self.assertEqual(
+                Game.CLOVER_MULTIPLIER_WEIGHTS,
+                tuple(Game._parse_int_list(General["BONUS_CLOVER_MULTIPLE_PROBABILITY"])),
+            )
+            with patch.object(
+                Game, "_load_bonus_config", wraps=Game._load_bonus_config
+            ) as Loader:
+                Game._activate_type(0)
+                Game._activate_type(0)
+                Loader.assert_not_called()
+                Game._activate_type(4)
+                Game._activate_type(4)
+                self.assertEqual(Loader.call_count, 1)
+                self.assertEqual(Game.ActiveBonusTypeIndex, 4)
+                self.assertEqual(
+                    Game.BONUS_SYMBOL_TYPE_WEIGHTS,
+                    tuple(Game._parse_int_list(General["BONUS_SYMBOL_TYPE_PROBABILITY"])),
+                )
+                self.assertEqual(
+                    Game.COIN_VALUE_WEIGHTS,
+                    tuple(Game._parse_int_list(General["BONUS_COIN_MULTIPLE_PROBABILITY"])),
+                )
+                Game._activate_type(0)
+                self.assertEqual(Loader.call_count, 2)
+                self.assertEqual(Game.ActiveBonusTypeIndex, 0)
+                self.assertEqual(Game.BONUS_SYMBOL_TYPE_WEIGHTS, TypeWeights)
+                self.assertEqual(Game.COIN_VALUE_WEIGHTS, CoinWeights)
+
+    def test_invalid_type_bonus_overrides_fail_validation(self):
+        GeneralText = "[GENERAL]\n" + "\n".join(
+            f"{Key}={Value}"
+            for Key, Value in self.math.bonus_config["GENERAL"].items()
+        )
+        Cases = (
+            ("BONUS_SYMBOL_TYPE_PROBABILITY", "0,0,0,0", "BONUS_SYMBOL_TYPE"),
+            ("BONUS_COIN_MULTIPLE_PROBABILITY", "1,2", "BONUS_COIN_MULTIPLE"),
+            ("BONUS_CLOVER_MULTIPLE_PROBABILITY", "-1,2,3,4,5,6", "BONUS_CLOVER_MULTIPLE"),
+            ("BONUS_JP_MULTIPLE", "10,25,100", "BONUS_JP_MULTIPLE"),
+            ("BONUS_COIN_MULTIPLE", "", "BONUS_COIN_MULTIPLE"),
+        )
+        with TemporaryDirectory() as Directory:
+            ConfigPath = Path(Directory) / "bonus.conf"
+            for Key, Value, Error in Cases:
+                with self.subTest(Field=Key, Value=Value):
+                    ConfigPath.write_text(
+                        GeneralText + f"\n[0]\n{Key}={Value}\n", encoding="utf-8"
+                    )
+                    with self.assertRaisesRegex(ValueError, Error):
+                        ThemeMath(bonus_config_file=str(ConfigPath))
+
+    def test_invalid_type_bonus_does_not_replace_active_values(self):
+        GeneralText = "[GENERAL]\n" + "\n".join(
+            f"{Key}={Value}"
+            for Key, Value in self.math.bonus_config["GENERAL"].items()
+        )
+        with TemporaryDirectory() as Directory:
+            ConfigPath = Path(Directory) / "bonus.conf"
+            ConfigPath.write_text(
+                GeneralText + "\n[4]\nBONUS_JP_TYPE_PROBABILITY=0,0,0,0\n",
+                encoding="utf-8",
+            )
+            Game = ThemeMath(bonus_config_file=str(ConfigPath))
+            OriginalWeights = Game.JACKPOT_TYPE_WEIGHTS
+            with self.assertRaisesRegex(ValueError, "BONUS_JP_MULTIPLE"):
+                Game._activate_type(4)
+            self.assertEqual(Game.ActiveBonusTypeIndex, 0)
+            self.assertEqual(Game.JACKPOT_TYPE_WEIGHTS, OriginalWeights)
+            Game._activate_type(0)
+            self.assertEqual(Game.JACKPOT_TYPE_WEIGHTS, OriginalWeights)
 
     def test_coin_tiers_follow_server_thresholds(self):
         self.assertEqual(self.math.get_coin_tier(4), "bronze")
@@ -157,6 +249,7 @@ class ThemeMathTest(unittest.TestCase):
             "source_type": "normal",
             "columns": [[3, 4, 5, 6, 7] for _ in range(6)],
             "top_indexes": [0] * 6,
+            "NextReelIndexes": [0] * 6,
             "row": 5,
             "col": 6,
         }
@@ -216,6 +309,7 @@ class ThemeMathTest(unittest.TestCase):
                 [6],
             ],
             "top_indexes": [0] * 6,
+            "NextReelIndexes": [0] * 6,
             "row": 5,
             "col": 6,
         }
@@ -231,8 +325,10 @@ class ThemeMathTest(unittest.TestCase):
                 state,
                 super_scatter_positions={(0, 0)},
             )
-        self.assertEqual(drop_info["super_scatter_positions"], [(0, 3)])
-        self.assertEqual(result[0][3], self.math.FREE_SPIN_ID)
+        self.assertEqual(drop_info["super_scatter_positions"], [(0, 0)])
+        self.assertEqual(result[0][0], self.math.FREE_SPIN_ID)
+        self.assertEqual(result[0], [0, 4, 5, 6, 7])
+        self.assertEqual(result[1], [5, 6, 7, 8, 9])
 
     def test_game_config_only_contains_common_math_fields(self):
         game_config = self.math._read_config_file(
@@ -284,6 +380,7 @@ class ThemeMathTest(unittest.TestCase):
             self.assertEqual(getattr(self.math, key), value)
 
     def test_special_symbol_probability_config(self):
+        self.math._activate_type(4)
         self.assertEqual(self.math.SCATTER_COUNT_WEIGHTS, (10000, 1000, 500, 57))
         self.assertEqual(
             self.math.FREE_SCATTER_COUNT_WEIGHTS,
@@ -425,7 +522,7 @@ class ThemeMathTest(unittest.TestCase):
             )
         self.assertEqual(guaranteed, [self.math.FEATURE_ID])
 
-    def test_special_symbols_replace_only_nonwinning_positions(self):
+    def test_special_symbols_exclude_winning_and_extended_positions(self):
         board = [
             [12, 12, 12, 3, 4],
             [12, 12, 5, 6, 7],
@@ -441,10 +538,12 @@ class ThemeMathTest(unittest.TestCase):
                 [self.math.FREE_SPIN_ID, self.math.FEATURE_ID],
             )
         winning_positions = set(before["win_positions"])
+        excluded_positions = winning_positions | {(2, 4)}
         self.assertEqual(len(placements), 2)
         self.assertTrue(
-            all(item["position"] not in winning_positions for item in placements)
+            all(item["position"] not in excluded_positions for item in placements)
         )
+        self.assertEqual(result[2][4], 12)
         self.assertEqual(
             self.math.cal_item_list(result),
             before["total_win"],
@@ -470,6 +569,7 @@ class ThemeMathTest(unittest.TestCase):
                 [6],
             ],
             "top_indexes": [0] * 6,
+            "NextReelIndexes": [0] * 6,
             "row": 5,
             "col": 6,
         }
@@ -479,7 +579,7 @@ class ThemeMathTest(unittest.TestCase):
                 "choose_drop_special_symbol_id",
                 return_value=0,
             ),
-            patch("theme_math.random.randrange", side_effect=[0, 200]),
+            patch("theme_math.random.randrange", return_value=200),
         ):
             result = self.math.evaluate_cascades(
                 board,
@@ -511,6 +611,7 @@ class ThemeMathTest(unittest.TestCase):
             "source_type": "normal",
             "columns": [[3, 4, 5, 6, 7] for _ in range(6)],
             "top_indexes": [0] * 6,
+            "NextReelIndexes": [0] * 6,
             "row": 5,
             "col": 6,
         }
@@ -544,6 +645,7 @@ class ThemeMathTest(unittest.TestCase):
             "source_type": "normal",
             "columns": [[3, 4, 5, 6, 7] for _ in range(6)],
             "top_indexes": [0] * 6,
+            "NextReelIndexes": [0] * 6,
             "row": 5,
             "col": 6,
         }
@@ -570,6 +672,7 @@ class ThemeMathTest(unittest.TestCase):
             [self.math.FEATURE_ID],
         )
         self.assertEqual(chooser.call_count, 2)
+        self.assertEqual(drop_info["special_placements"][0]["position"], (0, 3))
         self.assertIsNone(drop_info["special_block_reason"])
 
     def test_base_dropped_scatter_can_convert_to_super_scatter(self):
@@ -585,6 +688,7 @@ class ThemeMathTest(unittest.TestCase):
             "source_type": "normal",
             "columns": [[3, 4, 5, 6, 7] for _ in range(6)],
             "top_indexes": [0] * 6,
+            "NextReelIndexes": [0] * 6,
             "row": 5,
             "col": 6,
         }
@@ -595,7 +699,7 @@ class ThemeMathTest(unittest.TestCase):
                 "choose_drop_special_symbol_id",
                 return_value=self.math.FREE_SPIN_ID,
             ),
-            patch("theme_math.random.randrange", side_effect=[0, 199]),
+            patch("theme_math.random.randrange", return_value=0),
         ):
             result, drop_info = self.math.drop_cluster_symbols(
                 board,
@@ -633,6 +737,7 @@ class ThemeMathTest(unittest.TestCase):
             "source_type": "normal",
             "columns": [[3, 4, 5, 6, 7] for _ in range(6)],
             "top_indexes": [0] * 6,
+            "NextReelIndexes": [0] * 6,
             "row": 5,
             "col": 6,
         }
@@ -665,6 +770,7 @@ class ThemeMathTest(unittest.TestCase):
             "source_type": "normal",
             "columns": [[3, 4, 5, 6, 7] for _ in range(6)],
             "top_indexes": [0] * 6,
+            "NextReelIndexes": [0] * 6,
             "row": 5,
             "col": 6,
         }
@@ -699,6 +805,7 @@ class ThemeMathTest(unittest.TestCase):
             "source_type": "normal",
             "columns": [[3, 4, 5, 6, 7] for _ in range(6)],
             "top_indexes": [0] * 6,
+            "NextReelIndexes": [0] * 6,
             "row": 5,
             "col": 6,
         }
@@ -800,6 +907,7 @@ class ThemeMathTest(unittest.TestCase):
                 self.assertEqual(board, [list(reversed(column)) for column in original])
                 self.assertEqual(self.math.last_spin_state["columns"], config["normal_rolls"])
                 self.assertEqual(self.math.last_spin_state["top_indexes"], [2] * 6)
+                self.assertEqual(self.math.last_spin_state["NextReelIndexes"], [2] * 6)
                 self.assertEqual(self.math.last_spin_state["source_type"],
                                  f"{kind}_result_normal_rolls")
 
@@ -869,26 +977,201 @@ class ThemeMathTest(unittest.TestCase):
         self.assertEqual(self.math.evaluate(board)["total_win"], 0)
 
     @patch.object(ThemeMath, "choose_drop_special_symbol_id", return_value=None)
-    def test_cascade_removes_only_winning_cluster_positions(self, _drop_choice):
+    def test_extended_removal_does_not_increase_pay_or_golden_area(self, _drop_choice):
         board = [
             [12, 12, 12, 3, 4],
             [12, 12, 5, 6, 7],
             [8, 9, 10, 11, 12],
             [3, 4, 5, 6, 7],
             [4, 5, 6, 7, 8],
-            [5, 6, 7, 8, 9],
+            [5, 6, 7, 8, 1],
         ]
         state = {
             "source_type": "normal",
             "columns": [[3, 4, 5, 6, 7, 8, 9] for _ in range(6)],
-            "top_indexes": [5] * 6,
+            "top_indexes": [0] * 6,
+            "NextReelIndexes": [0] * 6,
+            "row": 5,
+            "col": 6,
+        }
+        result = self.math.evaluate_cascades(
+            board,
+            state,
+            return_detail=True,
+            feature_outcome={"activated": False},
+        )
+        winning_positions = {(0, 0), (0, 1), (0, 2), (1, 0), (1, 1)}
+        self.assertEqual(result["cascade_count"], 1)
+        self.assertEqual(result["total_win"], self.math.base_bet // 10)
+        self.assertEqual(set(result["golden_squares"]), winning_positions)
+        self.assertEqual(
+            set(result["rounds"][0]["drop_info"]["remove_positions"]),
+            winning_positions | {(2, 4)},
+        )
+        self.assertEqual(
+            result["rounds"][0]["drop_info"]["ExtendedRemovePositions"], [(2, 4)]
+        )
+        self.assertNotIn(12, result["final_item_list"][2])
+        self.assertEqual(result["final_item_list"][5][4], self.math.WILD_ID)
+
+    def test_special_symbol_candidates_exclude_nonwinning_wild(self):
+        board = [[0] * 5 for _ in range(6)]
+        board[2][3] = self.math.WILD_ID
+        with patch("theme_math.random.randrange") as rng:
+            unchanged, placements = self.math.place_special_symbols(board, [2])
+        self.assertEqual(placements, [])
+        self.assertEqual(unchanged, board)
+        rng.assert_not_called()
+
+        board[1][1] = 3
+        with patch("theme_math.random.randrange", return_value=0):
+            result, placements = self.math.place_special_symbols(board, [2])
+        self.assertEqual(placements, [{"position": (1, 1), "symbol_id": 2}])
+        self.assertEqual(result[2][3], self.math.WILD_ID)
+
+    def test_normal_and_special_reels_start_refill_after_initial_window(self):
+        for kind in ("normal", "special"):
+            with self.subTest(Kind=kind), patch.object(
+                self.math, "_choose_spin_type", return_value=kind
+            ), patch("theme_math.random.randrange", return_value=0):
+                board = self.math.spin(0, 1, 5, 6)
+            state = self.math.last_spin_state
+            self.assertEqual(state["top_indexes"], [0] * 6)
+            self.assertEqual(state["NextReelIndexes"], [5] * 6)
+            self.assertEqual(board, [column[:5] for column in state["columns"]])
+
+    @patch.object(ThemeMath, "choose_drop_special_symbol_id", return_value=None)
+    def test_fixed_result_refills_from_random_cursor_without_window_offset(self, _drop_choice):
+        board = [
+            [3, 3, 3, 3, 3],
+            [6, 7, 8, 9, 10],
+            [7, 8, 9, 10, 11],
+            [8, 9, 10, 11, 12],
+            [9, 10, 11, 12, 5],
+            [10, 11, 12, 5, 6],
+        ]
+        columns = [list(range(3, 13)) for _ in range(6)]
+        win_items = self.math.cal_item_list(board, return_detail=True)["items"]
+        for kind in ("fix", "zero"):
+            with self.subTest(Kind=kind), patch("theme_math.random.randrange", return_value=2):
+                state = self.math._build_result_spin_state(columns, 5, 6, kind)
+            self.assertEqual(state["NextReelIndexes"], [2] * 6)
+            result, _ = self.math.drop_cluster_symbols(board, win_items, state)
+            self.assertEqual(result[0], [5, 6, 7, 8, 9])
+            self.assertEqual(state["NextReelIndexes"], [7, 2, 2, 2, 2, 2])
+            self.assertEqual(state["top_indexes"], [2] * 6)
+
+    @patch.object(ThemeMath, "choose_drop_special_symbol_id", return_value=None)
+    def test_two_cascades_continue_forward_and_wrap_the_same_reel_cursor(self, _drop_choice):
+        board = [
+            [3, 3, 3, 3, 3],
+            [6, 7, 8, 9, 10],
+            [7, 8, 9, 10, 11],
+            [8, 9, 10, 11, 12],
+            [9, 10, 11, 12, 5],
+            [10, 11, 12, 5, 6],
+        ]
+        state = {
+            "source_type": "rolls",
+            "columns": [[3] * 5 + [4] * 5 + [5, 6, 7, 8, 9] for _ in range(6)],
+            "top_indexes": [0] * 6,
+            "NextReelIndexes": [5] * 6,
+            "row": 5,
+            "col": 6,
+        }
+        result = self.math.evaluate_cascades(
+            board, state, return_detail=True, feature_outcome={"activated": False}
+        )
+        self.assertEqual(result["cascade_count"], 2)
+        self.assertEqual(result["total_win"], self.math.base_bet * 2)
+        self.assertEqual(result["rounds"][1]["item_list"][0], [4] * 5)
+        self.assertEqual(result["final_item_list"][0], [5, 6, 7, 8, 9])
+        self.assertEqual(state["NextReelIndexes"], [0, 5, 5, 5, 5, 5])
+        self.assertEqual(state["top_indexes"], [0] * 6)
+        self.assertEqual(result["golden_squares"], [(0, row) for row in range(5)])
+
+    def test_drop_draws_only_for_eligible_new_cells(self):
+        board = [
+            [12, 12, 12, 12, 12],
+            [3, 5, 6, 7, 8],
+            [4, 6, 7, 8, 9],
+            [5, 7, 8, 9, 10],
+            [6, 8, 9, 10, 11],
+            [7, 9, 10, 11, 12],
+        ]
+        win_items = self.math.cal_item_list(board, return_detail=True)["items"]
+        for new_items, expected_draws in (([3, 3, 3, 3, 4], 1), ([3] * 5, 0)):
+            with self.subTest(NewItems=new_items):
+                state = {
+                    "source_type": "normal",
+                    "columns": [new_items] + [[5] for _ in range(4)] + [[3]],
+                    "top_indexes": [0] * 6,
+                    "NextReelIndexes": [0] * 6,
+                    "row": 5,
+                    "col": 6,
+                }
+                with patch.object(
+                    self.math, "choose_drop_special_symbol_id", side_effect=[None, 2]
+                ) as chooser:
+                    result, drop_info = self.math.drop_cluster_symbols(board, win_items, state)
+                self.assertEqual(chooser.call_count, expected_draws)
+                self.assertEqual(drop_info["special_placements"], [])
+                self.assertEqual(drop_info["ExtendedRemovePositions"], [(5, 4)])
+                self.assertEqual(result[0], new_items)
+                self.assertEqual(result[5][4], 3)
+
+    def test_drop_skips_new_wild_and_replaces_the_first_eligible_cell(self):
+        board = [
+            [12, 12, 12, 12, 12],
+            [3, 5, 6, 7, 8],
+            [4, 6, 7, 8, 9],
+            [5, 7, 8, 9, 10],
+            [6, 8, 9, 10, 11],
+            [7, 9, 10, 11, 3],
+        ]
+        state = {
+            "source_type": "normal",
+            "columns": [[1, 3, 4, 5, 6]] + [[5] for _ in range(5)],
+            "top_indexes": [0] * 6,
+            "NextReelIndexes": [0] * 6,
             "row": 5,
             "col": 6,
         }
         win_items = self.math.cal_item_list(board, return_detail=True)["items"]
-        next_board, drop = self.math.drop_cluster_symbols(board, win_items, state)
-        self.assertEqual(len(drop["remove_positions"]), 5)
-        self.assertIn(12, next_board[2])
+        with patch.object(self.math, "choose_drop_special_symbol_id", return_value=2) as chooser:
+            result, drop_info = self.math.drop_cluster_symbols(board, win_items, state)
+        self.assertEqual(chooser.call_count, 1)
+        self.assertEqual(drop_info["special_placements"][0]["position"], (0, 1))
+        self.assertEqual(result[0], [1, 2, 4, 5, 6])
+
+    def test_dropped_scatter_can_mark_an_existing_scatter_as_super(self):
+        board = [
+            [12, 12, 12, 3, 4],
+            [12, 12, 5, 6, 7],
+            [8, 9, 10, 11, 12],
+            [3, 4, 5, 6, 7],
+            [4, 5, 6, 7, 8],
+            [5, 6, 7, 8, 0],
+        ]
+        state = {
+            "source_type": "normal",
+            "columns": [[3, 4, 5, 6, 7] for _ in range(6)],
+            "top_indexes": [0] * 6,
+            "NextReelIndexes": [0] * 6,
+            "row": 5,
+            "col": 6,
+        }
+        win_items = self.math.cal_item_list(board, return_detail=True)["items"]
+        with patch.object(self.math, "choose_drop_special_symbol_id", return_value=0), patch(
+            "theme_math.random.randrange", side_effect=[0, 1]
+        ):
+            result, drop_info = self.math.drop_cluster_symbols(board, win_items, state)
+        placement = drop_info["special_placements"][0]
+        self.assertEqual(placement["position"], (0, 2))
+        self.assertFalse(placement["is_super_scatter"])
+        self.assertEqual(drop_info["super_scatter_positions"], [(5, 4)])
+        self.assertEqual(result[0][2], self.math.FREE_SPIN_ID)
+        self.assertEqual(result[5][4], self.math.FREE_SPIN_ID)
 
     def test_result_contract_and_normal_free_trigger(self):
         board = [
@@ -903,6 +1186,7 @@ class ThemeMathTest(unittest.TestCase):
             "source_type": "normal",
             "columns": [[3, 4, 5, 6, 7] for _ in range(6)],
             "top_indexes": [0] * 6,
+            "NextReelIndexes": [0] * 6,
             "row": 5,
             "col": 6,
         }
@@ -938,6 +1222,7 @@ class ThemeMathTest(unittest.TestCase):
             "source_type": "normal",
             "columns": [[3, 4, 5, 6, 7] for _ in range(6)],
             "top_indexes": [0] * 6,
+            "NextReelIndexes": [0] * 6,
             "row": 5,
             "col": 6,
         }
@@ -1018,12 +1303,15 @@ class ThemeMathTest(unittest.TestCase):
 
     def test_type_probabilities_follow_selected_reels(self):
         original = self.math.game_server_config["4"]["ScatterCountProbability"]
+        TypeZeroWeights = tuple(self.math._parse_int_list(
+            self.math.game_server_config["0"]["ScatterCountProbability"]
+        ))
         self.math.game_server_config["4"]["ScatterCountProbability"] = "1,2,3,4"
         try:
             self.math._load_reel_config(4, 1)
             self.assertEqual(self.math.SCATTER_COUNT_WEIGHTS, (1, 2, 3, 4))
             self.math._load_reel_config(0, 1)
-            self.assertEqual(self.math.SCATTER_COUNT_WEIGHTS, (10000, 1000, 500, 57))
+            self.assertEqual(self.math.SCATTER_COUNT_WEIGHTS, TypeZeroWeights)
         finally:
             self.math.game_server_config["4"]["ScatterCountProbability"] = original
 
@@ -1055,6 +1343,7 @@ class ThemeMathTest(unittest.TestCase):
             "source_type": "normal",
             "columns": [[3, 4, 5, 6, 7] for _ in range(6)],
             "top_indexes": [0] * 6,
+            "NextReelIndexes": [0] * 6,
             "row": 5,
             "col": 6,
         }
@@ -1102,6 +1391,7 @@ class ThemeMathTest(unittest.TestCase):
             "source_type": "normal",
             "columns": [[3, 4, 5, 6, 7] for _ in range(6)],
             "top_indexes": [0] * 6,
+            "NextReelIndexes": [0] * 6,
             "row": 5,
             "col": 6,
         }
@@ -1133,6 +1423,7 @@ class ThemeMathTest(unittest.TestCase):
             "source_type": "normal",
             "columns": [[3, 4, 5, 6, 7] for _ in range(6)],
             "top_indexes": [0] * 6,
+            "NextReelIndexes": [0] * 6,
             "row": 5,
             "col": 6,
         }
@@ -1169,20 +1460,43 @@ class ThemeMathTest(unittest.TestCase):
         )
         self.assertEqual(result["golden_squares"], [])
 
-    def test_multiple_pots_collect_top_to_bottom_then_left_to_right(self):
+    def test_pots_collect_by_column_before_later_clover_multiplies(self):
         result = self.math.resolve_golden_feature(
             [
                 [
-                    {"position": [0, 0], "type": "coin", "value": 5},
-                    {"position": [0, 1], "type": "pot"},
-                    {"position": [1, 1], "type": "pot"},
-                ]
+                    {"position": [1, 0], "type": "pot"},
+                    {"position": [1, 1], "type": "coin", "value": 1},
+                    {"position": [0, 4], "type": "pot"},
+                ],
+                [{"position": [1, 1], "type": "clover", "multiplier": 2}],
             ],
-            golden_squares={(0, 0), (0, 1), (1, 1)},
+            golden_squares={(0, 4), (1, 0), (1, 1)},
         )
         collects = [event for event in result["events"] if event["type"] == "Collect"]
-        self.assertEqual([event["position"] for event in collects], [(0, 1), (1, 1)])
-        self.assertEqual([event["value"] for event in collects], [5, 10])
+        self.assertEqual([event["position"] for event in collects], [(0, 4), (1, 0)])
+        self.assertEqual([event["value"] for event in collects], [1, 2])
+        self.assertEqual(result["total_multiple"], 5)
+        self.assertEqual(result["total_win"], 500_000)
+        self.assertEqual(result["pot_count"], 2)
+        self.assertEqual(
+            [cell["position"] for cell in result["cells"]], [(1, 0), (1, 1), (0, 4)]
+        )
+
+    def test_same_column_pots_collect_in_descending_row_order(self):
+        result = self.math.resolve_golden_feature(
+            [
+                [
+                    {"position": [0, 0], "type": "pot"},
+                    {"position": [1, 2], "type": "coin", "value": 1},
+                    {"position": [0, 4], "type": "pot"},
+                ]
+            ],
+            golden_squares={(0, 0), (0, 4), (1, 2)},
+        )
+        collects = [event for event in result["events"] if event["type"] == "Collect"]
+        self.assertEqual([event["position"] for event in collects], [(0, 4), (0, 0)])
+        self.assertEqual([event["value"] for event in collects], [1, 2])
+        self.assertEqual(result["total_multiple"], 4)
 
     def test_jackpot_values_follow_design(self):
         self.assertEqual(self.math.jackpot_win("mini"), self.math.base_bet * 10)
@@ -1272,6 +1586,33 @@ class ServerConfigTest(unittest.TestCase):
                 build_from_demo, "load_strip", return_value=[[12] * 220 + [1, 3]] * 6
             ):
                 build_from_demo.main(["--demo-dir", str(root)])
+                TypeZeroSnapshots = []
+                for Directory, Prefix in (
+                    ("reel_config", "yngg"),
+                    ("free_reel_config", "yngg_free"),
+                ):
+                    TypeZeroPath = root / Directory / f"{Prefix}_rand_ex_0.conf"
+                    TunedLines = []
+                    for Line in TypeZeroPath.read_text(encoding="utf-8").splitlines():
+                        if Line.startswith("BASE_RATE="):
+                            Line = "BASE_RATE=321,0,0,0"
+                        elif Line.startswith(("NORMAL_ROLL_1=", "SP_ROLL_1=")):
+                            Line = Line.split("=", 1)[0] + "=3,4,5,6,7"
+                        TunedLines.append(Line)
+                    TypeZeroPath.write_text(
+                        "\n".join(TunedLines) + "\n# retained TYPE 0 calibration\n",
+                        encoding="utf-8",
+                    )
+                    TypeZeroSnapshots.append((TypeZeroPath, TypeZeroPath.read_bytes()))
+                BonusPath = root / "special/yngg_bonus.conf"
+                BonusPath.write_text(
+                    BonusPath.read_text(encoding="utf-8")
+                    + "\n# retained TYPE Bonus calibration\n"
+                    "[0]\nBONUS_SYMBOL_TYPE_PROBABILITY=10000,80,6,2\n"
+                    "[4]\nBONUS_JP_TYPE_PROBABILITY=1,2,3,4\n",
+                    encoding="utf-8",
+                )
+                BonusSnapshot = BonusPath.read_bytes()
                 server_path = root / "special/yngg_game_server.conf"
                 server_text = server_path.read_text(encoding="utf-8")
                 server_path.write_text(server_text.replace(
@@ -1288,6 +1629,17 @@ class ServerConfigTest(unittest.TestCase):
                     "[CONTROL_GROUP_4]\n", "[CONTROL_GROUP_4]\n# retained GROUP tuning\n", 1
                 ), encoding="utf-8")
                 build_from_demo.main(["--demo-dir", str(root)])
+                for TypeZeroPath, Snapshot in TypeZeroSnapshots:
+                    self.assertEqual(TypeZeroPath.read_bytes(), Snapshot)
+                self.assertEqual(BonusPath.read_bytes(), BonusSnapshot)
+                Targets = json.loads((root / "source_math.json").read_text(
+                    encoding="utf-8"
+                ))["math_targets"]
+                self.assertEqual(Targets["total_rtp"], 0.98)
+                self.assertEqual(Targets["BaseClusterRtp"], 0.55)
+                self.assertEqual(Targets["BaseBonusRtp"], 0.10)
+                self.assertEqual(Targets["FreeClusterRtp"], 0.13)
+                self.assertEqual(Targets["FreeBonusRtp"], 0.20)
                 self.assertIn("# retained TYPE tuning", server_path.read_text(encoding="utf-8"))
                 self.assertIn("# retained reel tuning", reel_path.read_text(encoding="utf-8"))
                 self.assertIn("# retained prop config", prop_path.read_text(encoding="utf-8"))

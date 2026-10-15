@@ -4,6 +4,8 @@ ThemeMath 继承通用 CountGame，负责串起本主题自己的流程：
 普通 spin、金色 symbol、ways 算奖、消除补牌、free 选择和 free spin。
 """
 
+from __future__ import annotations
+
 import ast
 from pathlib import Path
 import random

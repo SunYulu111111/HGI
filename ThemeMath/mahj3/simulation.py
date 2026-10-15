@@ -4,6 +4,8 @@
 就按照返回的 free_times 进入免费游戏，并把普通游戏和免费游戏的赢钱合并统计。
 """
 
+from __future__ import annotations
+
 import sys
 from configparser import ConfigParser
 

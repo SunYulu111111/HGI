@@ -1,4 +1,4 @@
-"""恐龙世界数学入口：六列变高 Ways、边框升级、连消和免费旋转。"""
+"""恐龙世界数值结算：六列变高 Ways、框转换、连消和免费游戏。"""
 
 from __future__ import annotations
 
@@ -19,13 +19,13 @@ from slots_math import WaysGame
 
 @dataclass(frozen=True)
 class Cell:
-    SymbolId: int
+    SymbolId: int  # 0=Scatter，1=Wild，2～12=普通图标
     FrameStage: int = 0  # 0=无框，1=银框，2=金框
-    Height: int = 1  # 高图标占据的物理格子数；Ways 仍按一个图标计算
+    Height: int = 1  # 物理占格数；每个图标只计一个 Ways 物件
 
 
 class ThemeMath(WaysGame):
-    """沿用 Ways 模板的配置和转轴入口，执行 klsj 专属结算。"""
+    """读取盘面、轴带和权重，结算主游戏及免费游戏。"""
 
     DefaultGameConfigFile = "special/klsj_game_config.conf"
     DefaultGameServerConfigFile = "special/klsj_game_server.conf"
@@ -33,7 +33,7 @@ class ThemeMath(WaysGame):
     ScatterId = 0
     WildId = 1
     OrdinaryIds = tuple(range(2, 13))
-    FrameColumns = (1, 2, 3, 4)
+    FrameColumns = (1, 2, 3, 4)  # 列索引从 0 开始，对应第 2～5 列
     SilverFrameHeights = (2, 3, 4)
     ChanceBase = 10000
     MinimumReelHeight = 2
@@ -67,7 +67,7 @@ class ThemeMath(WaysGame):
             raise ValueError(f"missing [Game Info]: {server_path}")
         info = server["Game Info"]
         self.ReelHeightWeights = self._parse_height_weights(info)
-        # yjzr 固定布局顺序；服务器配置仅存放各列的逗号分隔权重。
+        # 各列权重与固定顺序的图标高度拆分一一对应。
         self.MainHeightPatterns = self._canonical_patterns(6)
         self.FreeHeightPatterns = self._canonical_patterns(6)
         self._validate_layout_keys(info)
@@ -98,13 +98,19 @@ class ThemeMath(WaysGame):
             info, "BaseFreeSpins", self.BaseFreeSpins, minimum=0
         )
         self.MainExtraFreeSpinsPerScatter = self._parse_control_int(
-            info, "MainExtraFreeSpinsPerScatter", self.ExtraFreeSpinsPerScatter, minimum=0
+            info, "MainExtraFreeSpinsPerScatter", self.ExtraFreeSpinsPerScatter, minimum=1
         )
-        # Keep the existing attribute as a compatibility alias for callers that read it.
         self.ExtraFreeSpinsPerScatter = self.MainExtraFreeSpinsPerScatter
         self.FreeExtraSpinsPerScatter = self._parse_control_int(
             info, "FreeExtraSpinsPerScatter", self.FreeExtraSpinsPerScatter, minimum=0
         )
+        if self.FreeExtraSpinsPerScatter != 1:
+            raise ValueError("FreeExtraSpinsPerScatter must be 1: each new Scatter adds one free spin")
+        self.FreeMaxTimes = self._parse_control_int(
+            info, "Free_Max_Times", None, minimum=1
+        )
+        if self.BaseFreeSpins > self.FreeMaxTimes:
+            raise ValueError("BaseFreeSpins must not exceed Free_Max_Times")
         self.BaseMaxEliTimes = self._parse_control_int(
             info, "BaseMaxEliTimes", None, minimum=1
         )
@@ -113,12 +119,13 @@ class ThemeMath(WaysGame):
         )
         self.ValidatedReelFiles: set[Path] = set()
         self.NextFreeStartMultiplier = 1
+        self.NextFreeSpinNumber = 1
         self._CurrentFreeGame = False
         self.LastNgResult: dict = {}
         self.LastFgResult: dict = {}
 
     def _validate_game_protocol(self, ConfigPath: Path) -> None:
-        """读取 yjzr 同名开关，拒绝当前 klsj 结算器不支持的固定屏蔽/连线模式。"""
+        """校验左起 Ways 开关及全有效的固定盘面容器。"""
         Parser = ConfigParser(inline_comment_prefixes=("#", ";"))
         Parser.optionxform = str
         Parser.read(ConfigPath, encoding="utf-8-sig")
@@ -157,7 +164,7 @@ class ThemeMath(WaysGame):
         return Config
 
     def _validate_reel_file(self, ConfigPath: Path) -> None:
-        """所有轴段和预设结果均校验，未启用的特殊／固定／零奖盘也不例外。"""
+        """校验所有轴段和预设盘面的图标 ID、列数及 Wild 列限制。"""
         Parser = self._read_config_file(ConfigPath)
         for SectionName in Parser.sections():
             if not SectionName.startswith("GENERAL_"):
@@ -231,7 +238,7 @@ class ThemeMath(WaysGame):
 
     @classmethod
     def _canonical_patterns(cls, total_height: int) -> list[tuple[int, ...]]:
-        """Return the reference theme's high-symbol partitions for a given height."""
+        """按固定顺序列出总高度的拆分，每个图标高度为 1～4。"""
 
         patterns = []
 
@@ -247,8 +254,8 @@ class ThemeMath(WaysGame):
 
     @staticmethod
     def _validate_layout_keys(info) -> None:
-        """拒绝旧布局字段和错写的索引，避免配置被静默忽略。"""
-        expected = {"BaseMaxEliTimes", "Free_Max_EliTimes"}
+        """校验布局字段、列号、高度索引及必填控制参数。"""
+        expected = {"BaseMaxEliTimes", "Free_Max_EliTimes", "Free_Max_Times"}
         for mode in ("base", "free"):
             for column in range(1, 7):
                 expected.add(f"{mode}_height_weight_{column}")
@@ -307,7 +314,7 @@ class ThemeMath(WaysGame):
         col: int,
         height: int = 1,
     ) -> Cell:
-        """校验新图标后，按 symbol 自身高度判定银框资格。"""
+        """校验图标 ID、尺寸和 Wild 列，再为符合条件的新普通图标抽取银框。"""
         if symbol_id < 0 or symbol_id >= self.config.item_count:
             raise ValueError("symbol ID must be in 0..12")
         if not 1 <= height <= 4:
@@ -342,6 +349,31 @@ class ThemeMath(WaysGame):
         random.shuffle(layout)
         return tuple(layout)
 
+    def _scatter_generation_budget(
+        self, FreeGame: bool, FreeSpinNumber: int, FreeSpinsRemaining: int,
+    ) -> int:
+        """将可追加次数换算为本手初盘和全部补牌共享的新 Scatter 额度。"""
+        if FreeGame:
+            return self.FreeMaxTimes - FreeSpinNumber - FreeSpinsRemaining
+        return self.FreeTriggerScatterCount + (
+            self.FreeMaxTimes - self.BaseFreeSpins
+        ) // self.MainExtraFreeSpinsPerScatter
+
+    def _limit_new_scatter(
+        self, SymbolId: int, Col: int, ScatterGeneration: dict | None,
+    ) -> int:
+        if SymbolId != self.ScatterId or ScatterGeneration is None:
+            return SymbolId
+        Budget = ScatterGeneration["ScatterBudget"]
+        if Budget > 0:
+            ScatterGeneration["ScatterBudget"] -= 1
+            return SymbolId
+        Pool = ScatterGeneration["OrdinaryPools"][Col]
+        if not Pool:
+            raise ValueError(f"column {Col + 1} has no ordinary symbols for Scatter replacement")
+        # 重复项保留原轴频次；替换不额外读取轴带或推进停轴。
+        return random.choice(Pool)
+
     def _build_column(
         self,
         Symbols: list[int],
@@ -349,12 +381,20 @@ class ThemeMath(WaysGame):
         Col: int,
         FreeGame: bool,
         SpinState: dict | None = None,
+        ScatterGeneration: dict | None = None,
     ) -> list[Cell]:
-        """局部拆分高 Scatter，保留原配对图标和列高；额外空缺置于 Scatter 上方。"""
+        """先限制新 Scatter 生成，再将准入的高 Scatter 设为 2 格并补足空缺。"""
         OriginalCount = len(Layout)
         if len(Symbols) < OriginalCount:
             raise ValueError("not enough symbols for column layout")
-        OriginalSymbols = Symbols[:OriginalCount]
+        if ScatterGeneration is None and SpinState is not None:
+            ScatterGeneration = SpinState.get("ScatterGeneration")
+        RawOriginalSymbols = Symbols[:OriginalCount]
+        # 原配对图标先取得额度；被替换的高图标保留高度，不再按 Scatter 拆分。
+        OriginalSymbols = [
+            self._limit_new_scatter(Symbol, Col, ScatterGeneration)
+            for Symbol in RawOriginalSymbols
+        ]
         ExtraLayouts = []
         for Symbol, Height in zip(OriginalSymbols, Layout):
             ExtraLayout = ()
@@ -365,12 +405,12 @@ class ThemeMath(WaysGame):
             ExtraLayouts.append(ExtraLayout)
         ExtraCount = sum(len(ExtraLayout) for ExtraLayout in ExtraLayouts)
         if SpinState is None:
-            # 初盘保留前 N 个原配对符号，额外槽位使用窗口中尚未配对的缓冲。
+            # 前 N 个符号参与布局，剩余缓冲用于补足 Scatter 上方空缺。
             ExtraSymbols = Symbols[OriginalCount:OriginalCount + ExtraCount]
         else:
-            # 预览后的实际读取只进行一次。前段是较高的新增符号，后段保留原配对。
+            # 一次读取全部补牌：前段填额外空缺，后段对应布局中的图标。
             DrawnSymbols = self.take_symbols_above(SpinState, Col, OriginalCount + ExtraCount)
-            if DrawnSymbols[ExtraCount:] != OriginalSymbols:
+            if DrawnSymbols[ExtraCount:] != RawOriginalSymbols:
                 raise ValueError("refill preview does not match reel state")
             ExtraSymbols = DrawnSymbols[:ExtraCount]
         if len(ExtraSymbols) != ExtraCount:
@@ -379,7 +419,10 @@ class ThemeMath(WaysGame):
         ExtraIndex = 0
         for Symbol, Height, ExtraLayout in zip(OriginalSymbols, Layout, ExtraLayouts):
             for ExtraHeight in ExtraLayout:
-                Cells.append(self._initial_cell(ExtraSymbols[ExtraIndex], Col, ExtraHeight))
+                ExtraSymbol = self._limit_new_scatter(
+                    ExtraSymbols[ExtraIndex], Col, ScatterGeneration
+                )
+                Cells.append(self._initial_cell(ExtraSymbol, Col, ExtraHeight))
                 ExtraIndex += 1
             CellHeight = 2 if ExtraLayout else Height
             Cells.append(self._initial_cell(Symbol, Col, CellHeight))
@@ -394,8 +437,9 @@ class ThemeMath(WaysGame):
         return_detail: bool = False,
         max_cascades: int = 100,
     ) -> dict:
-        # 一手新的付费游戏开始新的免费整轮，首手免费起始倍数为 1。
+        # 新付费手触发的免费游戏从 x1 开始。
         self.NextFreeStartMultiplier = 1
+        self.NextFreeSpinNumber = 1
         result = self._spin_and_evaluate(index, general_index, False, 0, 0, return_detail, max_cascades)
         self.LastNgResult = result
         return result
@@ -404,22 +448,32 @@ class ThemeMath(WaysGame):
         self,
         index: int = 0,
         general_index: int = 1,
-        FreeSpinNumber: int = 1,
+        FreeSpinNumber: int | None = None,
         return_detail: bool = False,
         max_cascades: int = 100,
         FreeStartMultiplier: int | None = None,
+        FreeSpinsRemaining: int = 0,
     ) -> dict:
-        if FreeSpinNumber <= 0:
-            raise ValueError("FreeSpinNumber must be positive")
+        """免费起始倍数继承上一手终倍加 1；待玩次数为扣除本手后的次数。"""
+        if FreeSpinNumber is None:
+            FreeSpinNumber = self.NextFreeSpinNumber
+        if not isinstance(FreeSpinNumber, int) or not 1 <= FreeSpinNumber <= self.FreeMaxTimes:
+            raise ValueError(f"FreeSpinNumber must be in 1..{self.FreeMaxTimes}")
+        if not isinstance(FreeSpinsRemaining, int) or FreeSpinsRemaining < 0:
+            raise ValueError("FreeSpinsRemaining must be a nonnegative integer")
+        if FreeSpinNumber + FreeSpinsRemaining > self.FreeMaxTimes:
+            raise ValueError("FreeSpinNumber + FreeSpinsRemaining exceeds Free_Max_Times")
         if FreeStartMultiplier is None:
             FreeStartMultiplier = self.NextFreeStartMultiplier
         if FreeStartMultiplier <= 0:
             raise ValueError("FreeStartMultiplier must be positive")
         result = self._spin_and_evaluate(
             index, general_index, True, FreeSpinNumber, FreeStartMultiplier,
-            return_detail, max_cascades,
+            return_detail, max_cascades, FreeSpinsRemaining,
         )
+        # 下一手继承本手最终结算倍数，再加 1。
         self.NextFreeStartMultiplier = result["FreeEndMultiplier"] + 1
+        self.NextFreeSpinNumber = FreeSpinNumber + 1
         self.LastFgResult = result
         return result
 
@@ -432,6 +486,7 @@ class ThemeMath(WaysGame):
         FreeStartMultiplier: int,
         return_detail: bool,
         max_cascades: int,
+        FreeSpinsRemaining: int = 0,
     ) -> dict:
         if max_cascades <= 0:
             raise ValueError("max_cascades must be positive")
@@ -454,28 +509,42 @@ class ThemeMath(WaysGame):
             ),
         )
         spin_state = self.clone_spin_state(self.last_spin_state)
+        spin_state["ScatterGeneration"] = {
+            "ScatterBudget": self._scatter_generation_budget(
+                free_game, FreeSpinNumber, FreeSpinsRemaining
+            ),
+            "OrdinaryPools": [
+                [Symbol for Symbol in Column if Symbol in self.OrdinaryIds]
+                for Column in spin_state["columns"]
+            ],
+        }
         self._CurrentFreeGame = free_game
         layouts = [
             self._select_layout(height, col, free_game, initial=True)
             for col, height in enumerate(heights)
         ]
         board = [
-            self._build_column(raw_board[col], layout, col, free_game)
+            self._build_column(
+                raw_board[col], layout, col, free_game,
+                ScatterGeneration=spin_state["ScatterGeneration"],
+            )
             for col, layout in enumerate(layouts)
         ]
-        # Scatter 拆分后的实际布局是结果协议的来源。
+        # 输出实际图标高度和数量，包含 Scatter 上方补入的图标。
         layouts = [tuple(cell.Height for cell in column) for column in board]
         initial_board = self._board_detail(board)
         scatter_count = self._count_scatter(board)
         total_win = 0
         cascade_count = 0
         rounds = []
+        # 无中奖时，免费结束倍数等于本手起始倍数。
         FreeEndMultiplier = FreeStartMultiplier if free_game else 0
 
         for cascade_index in range(1, max_cascades + 1):
             base_win, win_positions, win_items = self._evaluate_paths(board)
             if not win_positions:
                 break
+            # 手内增量达到上限后仍按该倍数结算后续中奖。
             multiplier = (
                 FreeStartMultiplier + min(cascade_index - 1, self.FreeSpinMultiplierIncrementCap)
                 if free_game else min(cascade_index, self.MainMultiplierCap)
@@ -527,7 +596,7 @@ class ThemeMath(WaysGame):
                 if not free_game and scatter_count >= self.FreeTriggerScatterCount else 0
             ),
             "ExtraFreeSpins": (
-                scatter_count * self.FreeExtraSpinsPerScatter if free_game else 0
+                scatter_count if free_game else 0
             ),
             "FreeSpinNumber": FreeSpinNumber if free_game else 0,
             "FreeStartMultiplier": FreeStartMultiplier if free_game else 0,
@@ -559,7 +628,7 @@ class ThemeMath(WaysGame):
         row: int | None = None,
         col: int | None = None,
     ):
-        """保留 WaysGame 入口，使用本机台的 Wild 最高奖规则算当前盘面。"""
+        """计算当前盘面奖励，同一路径只结算最高奖项。"""
 
         columns, _, _ = self._normalize_item_list(item_list, row=row, col=col)
         board = [[Cell(symbol) for symbol in column] for column in columns]
@@ -567,7 +636,6 @@ class ThemeMath(WaysGame):
         self.last_win_items = win_items
         self.last_win_positions = sorted(win_positions)
         if return_detail:
-            # 这些键来自现有 WaysGame 返回约定，供旧调用者复用。
             return {
                 "total_win": total_win,
                 "items": win_items,
@@ -576,7 +644,7 @@ class ThemeMath(WaysGame):
         return total_win
 
     def _evaluate_paths(self, board: list[list[Cell]]) -> tuple[int, set[tuple[int, int]], list[dict]]:
-        """相同路径及共享 Wild 前缀的长短路径只结算最高一奖。"""
+        """计算有效路径奖励，共享 Wild 前缀不重复派奖。"""
 
         best_by_path: dict[tuple[tuple[int, int], ...], tuple[int, int]] = {}
         for item_id in self.OrdinaryIds:
@@ -631,7 +699,7 @@ class ThemeMath(WaysGame):
         spin_state: dict,
     ) -> tuple[list[list[Cell]], int]:
         next_board = []
-        new_scatter_count = 0
+        new_scatter_count = 0  # 只累计本轮新补入的物理 Scatter
         free_game = getattr(self, "_CurrentFreeGame", False)
         for col, column in enumerate(board):
             survivors = []

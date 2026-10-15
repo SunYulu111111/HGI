@@ -2,6 +2,8 @@
 
 本文供数值策划、服务器程序和数值模拟共同走查，覆盖本机台定制的特殊图标生成、扩展消除、免费游戏状态和金色玩法。普通停轴、基础 Cluster 查找和通用结果下发沿用平台能力。
 
+TYPE 0 当前校准目标为 Base Cluster 55%、Base Bonus 10%、Free Cluster 13%、Free Bonus 20%，合计 98%。四项 RTP 统一使用付费 Base Spin 的累计下注作分母，Free 不增加下注分母；此处列出目标，实测结果另行验证。其他 TYPE 保留原配置，本次不随 TYPE 0 一起调整。
+
 ## 术语说明
 
 - 中奖位置：实际组成中奖 Cluster 的普通图标和 Wild 位置，参与赔付。
@@ -42,15 +44,23 @@
 
 初始特殊图标和掉落特殊图标的候选位置必须排除本轮全部实际消除位置，不能通过替换规避同 ID 扩展消除。
 
+## 正向补牌与轴游标
+
+对每列 `board[Col][Row]`，删除全部实际消除位置后，幸存图标维持原相对顺序并占据数组低下标；新图标占据其后的高下标，拼成 `NewColumn = Survivors + NewItems`。新图标从同一轴当前窗口后方沿正方向连续读取，而非从窗口前方反向读取。
+
+`NextReelIndexes` 保存各列下一次正向补牌的轴下标。正常轴盘和特殊轴盘初始化为 `(StartIndex + 5) % ReelLength`；补入 `Count` 个图标后推进为 `(NextReelIndexes[Col] + Count) % ReelLength`。未删牌的列不推进。FIX、ZERO 从正常轴随机选择入口，随后沿正向连续补牌。显式注入初始盘只替换盘面，补牌延续原停轴状态的轴与游标，不重新随机选择入口。已有 `top_indexes` 保留初始停轴及旧接口语义。
+
+Scatter 和 Super Scatter 随幸存图标移动；金色区域固定在盘面坐标，不随图标移动。扩展消除只增加补牌数量，不改变本轮已计算的赔付和金色区域。
+
 ## Base 初始特殊图标
 
 原始轴带不直接包含 Scatter 和 Bonus。初始盘面完成 Cluster 判断并得到全部实际消除位置后，再生成特殊图标。
 
-1. 读取 `ScatterCountProbability`。数组下标 0–3 对应 0–3 个 Scatter，当前权重为 10000/1000/500/57。
-2. 按抽取数量，从不属于实际消除位置的普通图标中随机选择不同位置放置 Scatter。
+1. 读取当前 TYPE 的 `ScatterCountProbability`。数组下标 0–3 对应 0–3 个 Scatter；TYPE 0 权重为 10000/1000/500/107，其他 TYPE 保留 10000/1000/500/57。
+2. 按抽取数量，从不属于实际消除位置的 ID 3–12 普通图标中随机选择不同位置放置 Scatter；Wild、Scatter、Bonus 均不作为候选。
 3. Scatter 数量为 0–2 时继续判断 Bonus；Scatter 数量为 3 时跳过 Bonus。
 4. 初始盘面无奖时读取 `BaseNoWinBonusCountProbability`，下标 0/1 对应 0/1 个 Bonus，当前权重为 98/2。
-5. 初始盘面有奖时读取 `BaseWinBonusCountProbability`，下标 0/1 对应 0/1 个 Bonus，当前权重为 92/8。
+5. 初始盘面有奖时读取 `BaseWinBonusCountProbability`，下标 0/1 对应 0/1 个 Bonus；TYPE 0 权重为 964/36，其他 TYPE 保留 92/8。
 6. Bonus 在 Scatter 之后放置。候选不足时按 Scatter、Bonus 的抽取顺序使用全部可用位置，超出数量丢弃。
 
 以上顺序保证 Base 不会同时触发免费游戏和金色玩法：3 个 Scatter 时不生成 Bonus；Bonus 出现时 Scatter 类图标最多为 2 个，且后续掉落不再生成特殊图标。
@@ -63,15 +73,15 @@
 - Scatter 类图标总数达到 3 个：本轮不读取掉落特殊图标权重。
 - 其余情况继续执行掉落特殊图标判断。
 
-对本轮新掉落图标依次读取 `DropSpecialSymbolProbability`：
+在补牌后的新盘面重新计算中奖位置与扩展消除位置。只对本轮新补入、ID 为 3–12、且不属于这两类位置的候选，按列、列内下标顺序逐格读取 `DropSpecialSymbolProbability`：
 
 - 下标 0：不替换，当前权重 998。
 - 下标 1：生成 Scatter，当前权重 1。
 - 下标 2：生成 Bonus，当前权重 1。
 
-首次抽中 Scatter 或 Bonus 后停止本轮判断，因此一次掉落过程最多生成 1 个特殊图标。候选位置仅限本轮新掉落、且不属于下一轮实际消除位置的普通图标；抽中特殊图标但没有候选时，本轮不放置。
+每个候选只抽一次，首次抽中 Scatter 或 Bonus 后直接替换当前扫描格并停止，因此一次掉落过程最多生成 1 个特殊图标。未中奖 Wild 不参与抽样；没有候选时不读取权重，也不放置。
 
-掉落生成 Scatter 且盘面没有 Super Scatter 时，立即读取 `SuperScatterProbability`；当前值 200，按万分比计算为 1/50。命中后只将本次掉落的 Scatter 转化为 Super Scatter。盘面已有 Super Scatter 时，不再执行转化判断。
+Base 掉落生成 Scatter 且盘面没有 Super Scatter 时，立即读取 `SuperScatterProbability`；当前值 200，按万分比计算为 1/50。命中后从全盘现存普通 Scatter 中随机选择 1 个转化，允许选中此前已有的 Scatter。盘面已有 Super Scatter 时，不再执行转化判断。Free 不执行转化。
 
 ## Base Super Scatter
 
@@ -94,17 +104,17 @@ Free 不生成也不转化 Super Scatter，单次 Spin 最多出现 3 个普通 
 2. Scatter 放置后独立判断 Bonus。
 3. Spin 开始时已有金色区域，读取 `FreeGoldenBonusCountProbability`，下标 0/1 对应 0/1 个 Bonus，当前权重为 60/40。
 4. Spin 开始时没有金色区域，读取 `FreeNoGoldenBonusCountProbability`，下标 0/1 对应 0/1 个 Bonus，当前权重为 30/70。
-5. Scatter 和 Bonus 均从不属于实际消除位置的普通图标中随机选择位置，候选不足时按 Scatter、Bonus 顺序放置。
+5. Scatter 和 Bonus 均从不属于实际消除位置的 ID 3–12 普通图标中随机选择位置，不替换 Wild；候选不足时按 Scatter、Bonus 顺序放置。
 
 ## Free 消除掉落特殊图标
 
 Free 使用与 Base 相同的单次掉落限制：
 
 - 盘面存在 Bonus，或普通 Scatter 已达到 3 个时，本轮不读取掉落权重。
-- 其余情况对新掉落图标依次读取 `FreeDropSpecialSymbolProbability`。
+- 其余情况对新补入且符合条件的候选逐格读取 `FreeDropSpecialSymbolProbability`，扫描顺序与 Base 相同。
 - 下标 0/1/2 分别表示不替换、Scatter、Bonus，当前权重为 998/1/1。
-- 首次抽中特殊图标后停止，一次掉落过程最多生成 1 个。
-- 候选位置仅限本轮新掉落、且不属于下一轮实际消除位置的普通图标。
+- 首次抽中特殊图标后直接替换当前扫描格并停止，一次掉落过程最多生成 1 个。
+- 候选位置仅限本轮新补入、ID 3–12、且不属于下一轮中奖或扩展消除位置的普通图标；Wild 不作为候选，无候选时不读取权重。
 - Free 中不执行 Super Scatter 转化。
 
 ## 免费触发、再触发与状态
@@ -131,16 +141,18 @@ Base 触发免费游戏时不带入 Scatter 位置或 Base 消除位置产生的
 
 ## 金色位置结果生成
 
+Bonus 参数由 `special/yngg_bonus.conf` 的 `[GENERAL]` 默认值与当前 TYPE 数字节逐字段合并。TYPE 0 的 `[0]` 仅覆盖类型和金币档位权重，其余字段继承 `[GENERAL]`；TYPE 4、8、12、17 保留原默认参数。TYPE 切换后重新选择合并参数，主游戏、免费游戏与重翻均使用同一 TYPE 的结果；覆盖字段非法时直接报错，不能静默回退。
+
 每个金色位置先抽取结果类型，再抽取对应档位：
 
 - `BONUS_SYMBOL_TYPE` 依次为 coin、clover、pot、jackpot。
-- `BONUS_SYMBOL_TYPE_PROBABILITY` 为对应类型权重，当前为 1000/80/6/2。
+- `BONUS_SYMBOL_TYPE_PROBABILITY` 为对应类型权重，TYPE 0 为 10000/80/6/2，其他 TYPE 沿用 `[GENERAL]` 的 1000/80/6/2。
 - coin 使用 `BONUS_COIN_MULTIPLE` 和 `BONUS_COIN_MULTIPLE_PROBABILITY`，两个数组按下标对应。
 - clover 使用 `BONUS_CLOVER_MULTIPLE` 和 `BONUS_CLOVER_MULTIPLE_PROBABILITY`，两个数组按下标对应。
 - jackpot 使用 `BONUS_JP_MULTIPLE` 和 `BONUS_JP_TYPE_PROBABILITY`，按 MINI、MINOR、MAJOR、GRAND 顺序对应。
 - pot 不再抽取具体档位。
 
-金币倍数为 0.2/0.5/1/2/3/4/5/10/15/20/25/50/100/250/500，当前金币权重为 1560/1240/1030/860/720/545/415/320/228/165/110/62/31/10/3。四叶草倍数为 2/3/4/5/10/20，当前权重为 40/28/16/10/5/1。
+金币倍数为 0.2/0.5/1/2/3/4/5/10/15/20/25/50/100/250/500。TYPE 0 金币权重为 170000/20000/10000/5000/2000/1000/500/200/100/50/25/10/5/2/1；其他 TYPE 沿用 `[GENERAL]` 的 1560/1240/1030/860/720/545/415/320/228/165/110/62/31/10/3。四叶草倍数为 2/3/4/5/10/20，TYPE 0 继续继承 `[GENERAL]` 权重 40/28/16/10/5/1。
 
 金币显示类型由 `coin_multi_1` 和 `coin_multi_2` 分档：
 
@@ -156,10 +168,12 @@ JP 倍数应配置为 MINI 10x、MINOR 25x、MAJOR 100x、GRAND 5000x，四档�
 
 1. 为本轮需要生成的全部金色位置抽取类型和具体档位。
 2. 先结算全部四叶草。四叶草放大中心九宫格内当前金币和已结算聚宝盆；多个四叶草效果累乘，JP 不受影响。
-3. 再按从上到下、从左到右结算聚宝盆。每个聚宝盆收集当前全部金币和此前已结算聚宝盆；后结算的聚宝盆包含先结算聚宝盆的结果，JP 不参与收集。
+3. 再按 `(Col 升序, Row 降序)` 结算聚宝盆，即先列 0 的 Row 4、3、2、1、0，再列 1 的 Row 4、3、2、1、0，依次到列 5。展平下标顺序为服务器 `g_iPotScan` 的 `4,3,2,1,0,9,8,7,6,5,...`。每个聚宝盆收集当前全部金币和此前已结算聚宝盆；后结算的聚宝盆包含先结算聚宝盆的结果，JP 不参与收集。
 4. 所有已结算聚宝盆位置保留，其余位置重新执行“类型 → 具体档位”抽取。
 5. 如果重翻再次出现聚宝盆，重复四叶草、聚宝盆和重翻流程，直到没有新聚宝盆。
 6. 每次出现 JP 时立即累计对应奖励。玩法结束时，再结算当前金币与聚宝盆金额之和。
+
+聚宝盆的收集顺序按服务器实现执行。翻牌位置、四叶草处理顺序及输出 `cells` 继续使用 `(Row, Col)` 升序；类型及档位权重不变。
 
 `bonus_max_round=5` 表示一整轮金色玩法最多生成 5 个聚宝盆。聚宝盆计数跨全部重翻轮次累计；达到 5 个后，后续类型抽取排除 pot，并按 coin、clover、jackpot 的原相对权重重新抽取。外部指定结果若包含超过 5 个聚宝盆，视为无效结果。
 
@@ -179,7 +193,7 @@ JP 倍数应配置为 MINI 10x、MINOR 25x、MAJOR 100x、GRAND 5000x，四档�
 ## 特殊情况处理
 
 - 初始特殊图标候选不足：按 Scatter、Bonus 顺序使用全部可用位置，超出数量丢弃。
-- 掉落抽中特殊图标但没有可用候选：本轮不放置。
+- 本轮新补入图标没有可用候选：不读取掉落权重，也不放置。
 - Base 或 Free 已有 Bonus，或 Scatter 达到上限：本轮不再读取掉落特殊图标权重。
 - Free Bonus 保底没有候选：本次不放置，不替换中奖位置，也不追加额外 Free Spin。
 - Base 同一 Spin 的 Super Scatter 数量上限为 1；Free 中 Super Scatter 数量固定为 0。

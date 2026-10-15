@@ -2,6 +2,16 @@
 
 本文只描述配置参数、脚本参数与功能实现之间的对应关系。玩法规则见 `LOGIC.md`。
 
+本次仅校准 TYPE 0，目标分项如下，均以付费 Base Spin 的累计下注为分母，Free 不增加下注分母。这些是配置目标，实测结果需另行验证。
+
+| 分项 | RTP 目标 |
+| --- | ---: |
+| Base Cluster | 55% |
+| Base Bonus | 10% |
+| Free Cluster | 13% |
+| Free Bonus | 20% |
+| 合计 | 98% |
+
 ## 1. 盘面与图标
 
 `special/yngg_game_config.conf` 提供基础盘面和赔付参数：
@@ -23,29 +33,31 @@
 - 使用 `coin_multi_1=5`、`coin_multi_2=25` 将金币倍数划分为铜币、银币和金币。
 - 使用 `bonus_max_round=5` 限制整轮 Bonus 累计最多生成 5 个聚宝盆；达到上限后排除 pot 并按其他类型权重重抽。
 
-Base 初始特殊图标生成后执行一次转化判断；Base 后续掉落生成 Scatter 且盘面没有 Super Scatter 时，对该 Scatter 单独执行转化判断。Free 不生成 Super Scatter。
+Base 初始特殊图标生成后执行一次转化判断；Base 后续掉落生成 Scatter 且盘面没有 Super Scatter 时，也执行一次转化判断，成功后从全盘现存普通 Scatter 中随机选择 1 个，不限于本次掉落的 Scatter。Free 不生成 Super Scatter。
 
 转化不会修改盘面 Symbol ID。消除掉落时同步更新 `super_scatter_positions` 中的位置，最终通过 `spin_info.super_scatter_positions` 返回给调用方。
 
-各 TYPE 段还提供初始特殊图标及掉落替换权重；下面是当前各段相同的初始值，尚未分别完成数值校准：
+各 TYPE 段还提供初始特殊图标及掉落替换权重；本次仅调整 TYPE 0，其他 TYPE 保留原值：
 
-- `ScatterCountProbability=10000,1000,500,57`：下标 0–3 分别表示生成 0–3 个 Scatter。
-- `FreeScatterCountProbability=10000,1000,500,57`：Free 下标 0–3 分别表示生成 0–3 个 Scatter。
-- `BaseNoWinBonusCountProbability=98,2`：Base 中 Scatter 数量为 0–2 且无奖时生成 0/1 个 Bonus 的权重。
-- `BaseWinBonusCountProbability=92,8`：Base 中 Scatter 数量为 0–2 且有奖时生成 0/1 个 Bonus 的权重。
-- `FreeGoldenBonusCountProbability=60,40`：Free 已有金框时生成 0/1 个 Bonus 的权重。
-- `FreeNoGoldenBonusCountProbability=30,70`：Free 没有金框时生成 0/1 个 Bonus 的权重。
-- `DropSpecialSymbolProbability=998,1,1`：每个掉落图标对应“不替换/Scatter/Bonus”的权重。
-- `FreeDropSpecialSymbolProbability=998,1,1`：Free 每个掉落图标对应“不替换/Scatter/Bonus”的权重。
+| 字段 | TYPE 0 | TYPE 4、8、12、17 | 含义 |
+| --- | --- | --- | --- |
+| `ScatterCountProbability` | 10000,1000,500,107 | 10000,1000,500,57 | Base 下标 0–3 对应生成 0–3 个 Scatter |
+| `FreeScatterCountProbability` | 10000,1000,500,57 | 10000,1000,500,57 | Free 下标 0–3 对应生成 0–3 个 Scatter |
+| `BaseNoWinBonusCountProbability` | 98,2 | 98,2 | Base Scatter 不超过 2 个且无奖时生成 0/1 个 Bonus |
+| `BaseWinBonusCountProbability` | 964,36 | 92,8 | Base Scatter 不超过 2 个且有奖时生成 0/1 个 Bonus |
+| `FreeGoldenBonusCountProbability` | 60,40 | 60,40 | Free 开始时已有金框，生成 0/1 个 Bonus |
+| `FreeNoGoldenBonusCountProbability` | 30,70 | 30,70 | Free 开始时没有金框，生成 0/1 个 Bonus |
+| `DropSpecialSymbolProbability` | 998,1,1 | 998,1,1 | Base 每个合格新格的“不替换/Scatter/Bonus”权重 |
+| `FreeDropSpecialSymbolProbability` | 998,1,1 | 998,1,1 | Free 每个合格新格的“不替换/Scatter/Bonus”权重 |
 
-`ThemeMath.place_special_symbols()` 先计算当前中奖位置，再从不参与中奖的候选位置中随机选择并替换，因此不会破坏已有 Cluster。
+`ThemeMath.place_special_symbols()` 先计算当前中奖位置与同 ID 扩展消除位置，再从排除这两类位置的 ID 3–12 普通图标中随机选择并替换。Wild、Scatter、Bonus 均不作为候选，因此不会破坏已有 Cluster 或规避扩展消除。
 
 Base 初始 Scatter 数量达到 3 个时跳过 Bonus 抽取。Base 和 Free 每轮掉落最多放置 1 个特殊图标，并在放置前检查：
 
 - 盘面存在 Bonus 时，本轮不读取对应模式的掉落权重。
 - Scatter 与 Super Scatter 总数达到 3 个时，本轮不读取对应模式的掉落权重。
-- 其余情况按新掉落图标数量逐个抽取，首次抽中 Scatter 或 Bonus 后停止。
-- 候选位置仅限本轮新掉落且不参与中奖的普通图标。
+- 其余情况仅对符合条件的新补入普通图标逐格抽取，按列、列内下标顺序扫描；首次抽中 Scatter 或 Bonus 后直接替换当前格并停止。
+- 候选位置仅限本轮新补入、ID 3–12、且不属于补牌后新盘面中奖或扩展消除位置的普通图标。Wild 不作为候选，无候选时不读取掉落权重。
 
 ## 2. 普通轴与免费轴
 
@@ -68,9 +80,11 @@ Base 初始 Scatter 数量达到 3 个时跳过 Bonus 抽取。Base 和 Free 每
 - 使用 `ZERO_NUM=10` 和 `ZERO_RESULT_1` 至 `ZERO_RESULT_10` 提供 10 个可触发 Bonus 的盘面；零盘并不表示零奖励。
 - 结果数组从最左列起，列内由下到上填写，每条包含 6 × 5 = 30 个图标。当前 ZERO 结果的前五列底部组成 5 连 Cluster，并保留一个 Bonus ID 2。
 - `FIX_NUM`、`ZERO_NUM` 决定只从对应前 n 条结果中等概率抽取；`FIX_DISORDER`、`ZERO_DISORDER` 为 `1` 时随机打乱每列内部顺序。当前两个乱序开关均为 `0`。
-- 固定结果发生消除后，从该 GENERAL 的 `NORMAL_ROLL` 各列随机位置补牌。
+- 固定结果发生消除后，从该 GENERAL 的 `NORMAL_ROLL` 各列随机入口沿轴正方向连续补牌。
 
 `ThemeMath.ng_spin()` 使用普通轴，`ThemeMath.fg_spin()` 使用免费轴。
+
+本次 TYPE 0 普通轴与免费轴配置版本均为 `VERSION=102`，两者 `BASE_RATE=100,0,0,0`；通过各自正常轴生成盘面，其他 TYPE 的轴文件保持原值。
 
 正常轴、特殊轴均限制为每条最多 200 个物件、轴值的 UTF-8 编码长度小于 400 字节（不含字段名与 `=`）。生成脚本按原始图标占比分配保留数量，在同类图标的出现位置中均匀删减，保留相对顺序和每种已有图标；超限时继续减少长度。当前所有 TYPE 的轴值最长为 399 字节。缩短轴带会改变停轴和相邻图标分布，需重新仿真确认 RTP 与触发率。
 
@@ -85,8 +99,11 @@ Base 初始 Scatter 数量达到 3 个时跳过 Bonus 抽取。Base 和 Free 每
 
 每次中奖后：
 
-- 使用中奖位置删除实际参与赔付的图标。
-- 使用本次停轴的 `top_indexes` 从各列上方继续补牌。
+- 删除实际中奖位置，以及全盘与中奖普通图标同 ID 的扩展消除位置。未中奖 Wild 不扩展消除；扩展位置不增加赔付和金框。
+- 幸存图标保持原相对顺序，放在列数组低下标；新图标从同轴当前窗口后方沿正方向取出，放在高下标，结果为 `Survivors + NewItems`。
+- 使用新增 `NextReelIndexes` 保存每列下一次正向取牌游标；正常盘、特殊轴盘的初始游标为窗口起点加行数后对轴长取模，FIX、ZERO 使用正常轴随机入口。显式注入初始盘只替换盘面，延续原停轴状态的轴与游标。每补入一个图标，游标沿正方向推进一个位置。
+- 原有状态字段 `top_indexes` 保留初始停轴语义、不再随补牌推进。结果字段 `final_top_indexes` 与明细字段 `refill_items.top_index_before`、`refill_items.top_index_after` 保留旧名称，但值改为正向 `NextReelIndexes` 的最终游标及每次补牌前后游标。Scatter 和 Super Scatter 位置随幸存图标同步移动。
+- 明细 `remove_positions` 返回中奖与扩展位置的并集，新增 `ExtendedRemovePositions` 仅返回扩展消除位置，便于核对额外消除未增加赔付和金框。
 - 使用补牌后的盘面继续判断下一轮 Cluster。
 - 直到盘面不再中奖或达到 `max_cascades`。
 
@@ -112,7 +129,9 @@ Base 初始 Scatter 数量达到 3 个时跳过 Bonus 抽取。Base 和 Free 每
 
 ## 5. Bonus 类型选择
 
-`special/yngg_bonus.conf` 的 `[GENERAL]` 段负责 Bonus 结果生成。
+`special/yngg_bonus.conf` 的 `[GENERAL]` 提供默认 Bonus 参数；当前 TYPE 对应的数字节逐字段覆盖默认值。例如 TYPE 0 先读取 `[GENERAL]`，再覆盖 `[0]` 中存在的字段；未覆盖字段继续继承 `[GENERAL]`。TYPE 4、8、12、17 没有独立 Bonus 节，继续使用原 `[GENERAL]`，不受 TYPE 0 调参影响。
+
+`ActiveBonusTypeIndex` 记录当前已加载的 Bonus TYPE，切换 TYPE 时重新合并和校验，连续使用同一 TYPE 不重复解析。TYPE 专属字段存在但非法时直接报错，不回退到默认值；TYPE 0 → 4 → 0 必须分别恢复各自参数。主游戏、免费游戏及重翻均使用本次选定 TYPE 的合并结果。
 
 每个金色位置分两步抽取：
 
@@ -121,10 +140,12 @@ Base 初始 Scatter 数量达到 3 个时跳过 Bonus 抽取。Base 和 Free 每
 
 类型与 `BONUS_SYMBOL_TYPE` 按相同下标对应：
 
-- `coin` 使用权重 1000。
-- `clover` 使用权重 80。
-- `pot` 使用权重 6。
-- `jackpot` 使用权重 2。
+| 类型 | TYPE 0 的 `[0]` | `[GENERAL]`，其他 TYPE 沿用 |
+| --- | ---: | ---: |
+| `coin` | 10000 | 1000 |
+| `clover` | 80 | 80 |
+| `pot` | 6 | 6 |
+| `jackpot` | 2 | 2 |
 
 权重为相对权重，不要求合计为 10000。
 
@@ -135,7 +156,11 @@ Base 初始 Scatter 数量达到 3 个时跳过 Bonus 抽取。Base 和 Free 每
 - `BONUS_COIN_MULTIPLE` 提供金币倍数档位。
 - `BONUS_COIN_MULTIPLE_PROBABILITY` 提供每个档位的抽取权重。
 
-先按权重抽取下标，再从同一下标读取金币倍数。当前金币权重为 `1560,1240,1030,860,720,545,415,320,228,165,110,62,31,10,3`。
+先按权重抽取下标，再从同一下标读取金币倍数。各 TYPE 均保留 0.2、0.5、1、2、3、4、5、10、15、20、25、50、100、250、500 共 15 档。
+
+- TYPE 0 的 `[0]` 金币权重为 `170000,20000,10000,5000,2000,1000,500,200,100,50,25,10,5,2,1`，总权重 208893，条件平均倍数约 0.400325x。
+- `[GENERAL]` 金币权重保留 `1560,1240,1030,860,720,545,415,320,228,165,110,62,31,10,3`，其他 TYPE 继续沿用。
+- 所有金币档位保留正权重；TYPE 0 仅调整类型和金币档位权重，未删除高倍档位或改变金额单位。
 
 ## 7. 四叶草档位
 
@@ -144,7 +169,7 @@ Base 初始 Scatter 数量达到 3 个时跳过 Bonus 抽取。Base 和 Free 每
 - `BONUS_CLOVER_MULTIPLE` 提供四叶草倍数档位。
 - `BONUS_CLOVER_MULTIPLE_PROBABILITY` 提供每个档位的抽取权重。
 
-先按权重抽取下标，再从同一下标读取四叶草倍数。当前权重为 `40,28,16,10,5,1`。
+先按权重抽取下标，再从同一下标读取四叶草倍数。当前 `[GENERAL]` 权重为 `40,28,16,10,5,1`；TYPE 0 未覆盖该项，继续继承。
 
 ## 8. JP 档位
 
@@ -153,9 +178,13 @@ JP 使用两个按下标对应的数组：
 - `BONUS_JP_MULTIPLE` 按 MINI、MINOR、MAJOR、GRAND 顺序提供固定倍数。
 - `BONUS_JP_TYPE_PROBABILITY` 提供四个 JP 档位的抽取权重。
 
-先按权重抽取 JP 下标，再从同一下标读取 JP 倍数。当前四档权重为 `80,25,8,1`。
+先按权重抽取 JP 下标，再从同一下标读取 JP 倍数。当前 `[GENERAL]` 四档权重为 `80,25,8,1`；TYPE 0 未覆盖该项，继续继承，四档均保留正权重。
 
 ## 9. 聚宝盆重翻
+
+`resolve_golden_feature()` 对本轮新增聚宝盆按 `(Col 升序, Row 降序)` 逐个结算：先列 0 的 Row 4 至 0，再列 1 的 Row 4 至 0，依次到列 5，与服务器 `g_iPotScan=4,3,2,1,0,9,8,7,6,5,...` 一致。后结算的盆会收集先结算盆的金额。
+
+此排序只控制聚宝盆收集。翻牌、四叶草及输出 `cells` 的顺序仍为 `(Row, Col)` 升序；类型及档位继续按现有权重抽取。
 
 当某个位置抽到 `pot`：
 
@@ -178,14 +207,36 @@ JP 使用两个按下标对应的数组：
 
 ## 11. 配置生成
 
-运行以下命令可依据参考轴重新生成 yngg 配置：
+运行以下命令可依据参考数据初始化缺失资源，并维护已有 yngg 配置：
 
 ```powershell
 python -B ThemeMath\yngg\build_from_demo.py --demo-dir <参考数据目录>
 ```
 
-生成内容包括游戏配置、Bonus 配置、普通轴、免费轴以及 FIX/ZERO 固定结果。脚本为 TYPE 0 重新生成普通轴和免费轴；已有的 TYPE 4、8、12、17 轴文件仅压缩达到或超过 400 字节的轴值，其他内容及服务器参数段保留。新目录中缺少这些 TYPE 资源时，脚本以 TYPE 0 的内容创建待校准模板，不能将模板视为独立数值成果。
+生成内容包括游戏配置、Bonus 配置、普通轴、免费轴以及 FIX/ZERO 固定结果。Bonus 配置仅在文件缺失时初始化，已有文件整体保留，包括 `[GENERAL]` 与 TYPE 专属覆盖。TYPE 0 已有普通轴和免费轴文件保留当前校准内容，TYPE 4、8、12、17 的已有轴文件也保留；仅对超限轴值执行长度压缩，不用参考轴覆盖已有校准盘面或固定结果。缺少 TYPE 0 轴文件时，脚本才依据参考轴创建；其他 TYPE 轴文件缺失时，以 TYPE 0 内容创建待校准模板，不能将模板视为独立数值成果。
+
+`source_math.json` 的 TYPE 0 特殊图标概率和 Bonus 权重从保留后的实际配置读取：Bonus 先读取 `[GENERAL]`，再合并 `[0]` 覆盖，确保元数据反映当前生效值。文件中的四项 RTP 仍为上述校准目标，不代表实测结果。
 
 生成脚本同时维护控制组配置、五个 TYPE 参数段和回放金币门槛。当前控制组为 GROUP 0、4、8、12、17，控制值分别为 `1`、`401`、`801`、`1201`、`1701`，按 `control_type * 100 + control_num` 编码。两组砍分数组按 GROUP 0–17 排列，GROUP 0/4/8/12/17 的阈值分别为 5000/12000/1000/20/1000；没有配置的 GROUP 下标为 `0`。GROUP 13、14 仍缺少对应控制组，本次未补齐。
 
-`special/yngg_control.conf` 中原为 `80000` 的控制押注已调整为当前最低有效押注 `100000`。TYPE 4、8、12、17 的数值和轴带目前仍与 TYPE 0 相同，需分别校准并验证 RTP；Python 仿真尚不执行 GROUP 选择和服务器砍分。GROUP 17 的免费道具卡还缺少各道具的押注索引与品质，按本次要求暂不修改 `special/slot_prop_config.conf`。`replay_min_win_money` 按金币单位设置为 `3000000000`，回放开关仍由全局配置控制。
+`special/yngg_control.conf` 中原为 `80000` 的控制押注已调整为当前最低有效押注 `100000`。本次只调整 TYPE 0 的普通轴、免费轴、专属特殊图标参数和 Bonus 覆盖权重；TYPE 4、8、12、17 保留原配置，需另行校准并验证 RTP。Python 仿真尚不执行 GROUP 选择和服务器砍分。GROUP 17 的免费道具卡还缺少各道具的押注索引与品质，按本次要求暂不修改 `special/slot_prop_config.conf`。`replay_min_win_money` 按金币单位设置为 `3000000000`，回放开关仍由全局配置控制。
+
+## 12. TYPE 0 RTP 校准结果（2026-10-15）
+
+本次仅调整 GROUP 0 对应的 TYPE 0；GENERAL 1，正常盘权重 `100,0,0,0`。从已保存的实际配置启动四个独立仿真，每个随机种子运行25万次付费 Base，共100万次；每次包含其触发的全部 Free 和重触发结算。四项 RTP 均以付费 Base 的累计下注为分母。
+
+| 分项 | 大致目标 | 百万局实测 |
+| --- | ---: | ---: |
+| Base 消除 | 55.00% | 55.20% |
+| Base Bonus | 10.00% | 10.10% |
+| Free 消除 | 13.00% | 12.93% |
+| Free Bonus | 20.00% | 20.75% |
+| 合计 | 98.00% | 98.98% |
+
+Free 合计为 33.69%，接近33%的目标。Free 触发率为 0.9302%，Base Bonus 触发率为 2.2838%。样本中包含 GRAND 等低概率大奖，实测结果会随种子波动；本次保留所有奖励档位及其正权重。
+
+校准通过 TYPE 0 主盘及免费轴调整消除占比，通过 `[0]` 的 Scatter / Base 有奖 Bonus 生成权重调整触发，并以 Bonus `[0]` 的类型、金币档位权重控制奖励期望。其他 TYPE 的轴、服务器参数、Bonus 默认段及公共赔率均保留。
+
+随机种子为20261015、20261016、20261017、20261018，使用 `simulation.simulation(spin_times=250000, index=0, general_index=1, report_interval=0, seed=Seed)` 逐组复现。分组明细、标准误、35份配置指纹及运行代码指纹见 [`rtp_calibration.json`](rtp_calibration.json)。56项测试通过，31份非目标配置文件完整哈希不变，TYPE 往返切换验证无权重串用。
+
+数据为 Python 自然概率仿真，未执行服务器 GROUP 选择及砍分。服务器工具需完成《yngg_服务器逻辑修改说明》中的两个 P0 项，并按当前 TYPE 合并 Bonus 配置，才能使用本次权重。

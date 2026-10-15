@@ -6,9 +6,13 @@
     "program_name": "yngg"
   },
   "math_targets": {
-    "total_rtp": 0.985,
-    "free_trigger_rate": 0.005,
-    "base_bonus_trigger_interval": 75
+    "total_rtp": 0.98,
+    "free_trigger_rate": 0.0095,
+    "base_bonus_trigger_interval": 50,
+    "BaseClusterRtp": 0.55,
+    "BaseBonusRtp": 0.1,
+    "FreeClusterRtp": 0.13,
+    "FreeBonusRtp": 0.2
   },
   "layout": {
     "reels": 6,
@@ -132,20 +136,20 @@
     "super_scatter_distinction": "position_state"
   },
   "super_scatter_conversion": {
-    "probability": "1/50",
+    "probability": "0.02",
     "probability_per_10000": 200,
     "maximum_conversions_per_spin": 1,
     "base_initial_rolls": 1,
     "base_drop_scatter_rolls_when_no_super": true,
-    "free_initial_rolls": 1,
-    "free_drop_scatter_rolls_when_no_super": true
+    "free_initial_rolls": 0,
+    "free_drop_scatter_rolls_when_no_super": false
   },
   "special_symbol_generation": {
     "scatter_count_weights": [
       10000,
       1000,
       500,
-      57
+      107
     ],
     "free_scatter_count_weights": [
       10000,
@@ -158,8 +162,8 @@
       2
     ],
     "base_win_bonus_count_weights": [
-      92,
-      8
+      964,
+      36
     ],
     "base_bonus_max_scatter_count": 2,
     "base_bonus_blocks_future_drop_specials": true,
@@ -227,27 +231,27 @@
       "jackpot"
     ],
     "symbol_type_weights": [
-      1000,
+      10000,
       80,
       6,
       2
     ],
     "coin_value_weights": [
-      1560,
-      1240,
-      1030,
-      860,
-      720,
-      545,
-      415,
-      320,
-      228,
-      165,
-      110,
-      62,
-      31,
+      170000,
+      20000,
+      10000,
+      5000,
+      2000,
+      1000,
+      500,
+      200,
+      100,
+      50,
+      25,
       10,
-      3
+      5,
+      2,
+      1
     ],
     "coin_tier_thresholds": [
       5,
@@ -268,7 +272,12 @@
       1
     ],
     "maximum_pot_count": 5,
-    "pot_overflow": "redraw_without_pot"
+    "pot_overflow": "redraw_without_pot",
+    "TypeIndex": 0,
+    "ConfigSectionOrder": [
+      "GENERAL",
+      "0"
+    ]
   },
   "free_games": {
     "free": {
