@@ -1,6 +1,12 @@
 """恐龙世界结算、图标生成和免费倍数的场景测试。"""
 
 from configparser import ConfigParser
+import ast
+from contextlib import redirect_stderr, redirect_stdout
+import csv
+import io
+import json
+import os
 import random
 import shutil
 import tempfile
@@ -20,16 +26,88 @@ class ThemeMathTests(unittest.TestCase):
 
     def test_three_column_ways_uses_total_bet_paytable(self):
         board = [
-            [Cell(2), Cell(8)],
-            [Cell(2), Cell(9)],
-            [Cell(2), Cell(10)],
-            [Cell(3), Cell(11)],
-            [Cell(4), Cell(12)],
-            [Cell(5), Cell(7)],
+            [Cell(2, 0, 3), Cell(8, 0, 3)],
+            [Cell(2, 0, 3), Cell(9, 0, 3)],
+            [Cell(2, 0, 3), Cell(10, 0, 3)],
+            [Cell(3, 0, 3), Cell(11, 0, 3)],
+            [Cell(4, 0, 3), Cell(12, 0, 3)],
+            [Cell(5, 0, 3), Cell(7, 0, 3)],
         ]
         win, positions, _ = self.game._evaluate_paths(board)
         self.assertEqual(win, 3 * self.game.base_bet)
         self.assertEqual(positions, {(0, 0), (1, 0), (2, 0)})
+
+    def test_each_height_one_to_four_counts_as_one_ordinary_or_wild_object(self):
+        def PayingColumn(SymbolId, Height):
+            Column = [Cell(SymbolId, 0, Height)]
+            Remaining = 6 - Height
+            while Remaining:
+                Size = min(2, Remaining)
+                Column.append(Cell(0, 0, Size))
+                Remaining -= Size
+            return Column
+
+        for SymbolId in (2, self.game.WildId):
+            for Height in (1, 2, 3, 4):
+                with self.subTest(SymbolId=SymbolId, Height=Height):
+                    Board = [PayingColumn(2, Height)] + [PayingColumn(SymbolId, Height) for _ in range(2)]
+                    Board += [[Cell(0, 0, 2) for _ in range(3)] for _ in range(3)]
+                    Win, Positions, Items = self.game._evaluate_paths(Board)
+                    self.assertEqual(Win, 3 * self.game.base_bet)
+                    self.assertEqual(Positions, {(0, 0), (1, 0), (2, 0)})
+                    self.assertEqual(len(Items), 1)
+                    self.assertEqual(Items[0]["HitCount"], 3)
+                    self.assertTrue(all(sum(Item.Height for Item in Column) == 6 for Column in Board))
+
+    def test_four_two_and_three_three_are_two_ways_objects_while_six_ones_are_six(self):
+        for Layout, Ways in (((4, 2), 8), ((3, 3), 8), ((1, 1, 1, 1, 1, 1), 216)):
+            with self.subTest(Layout=Layout):
+                Board = [[Cell(2, 0, Height) for Height in Layout] for _ in range(3)]
+                Board += [[Cell(0, 0, 2) for _ in range(3)] for _ in range(3)]
+                Win, Positions, Items = self.game._evaluate_paths(Board)
+                self.assertEqual(Win, Ways * 3 * self.game.base_bet)
+                self.assertEqual(len(Items), Ways)
+                self.assertEqual(len(Positions), 3 * len(Layout))
+                self.assertTrue(all(sum(Item.Height for Item in Column) == 6 for Column in Board))
+
+    def test_fixed_six_height_layouts_keep_two_or_six_symbols_in_initial_and_refill_boards(self):
+        def FakeSpin(**kwargs):
+            Columns = [[2, 3, 4, 5, 6, 7] for _ in range(6)]
+            self.game.last_spin_state = {
+                "source_type": "rolls", "columns": Columns,
+                "top_indexes": [0] * 6, "row": 6, "col": 6,
+            }
+            return Columns
+
+        for FreeMode in (False, True):
+            for Layout in ((4, 2), (3, 3), (1, 1, 1, 1, 1, 1)):
+                with self.subTest(FreeMode=FreeMode, Layout=Layout):
+                    with (
+                        patch.object(self.game, "spin", side_effect=FakeSpin),
+                        patch.object(self.game, "_select_layout", return_value=Layout),
+                        patch.object(self.game, "_evaluate_paths", return_value=(0, set(), [])),
+                    ):
+                        Result = self.game.fg_spin() if FreeMode else self.game.ng_spin()
+                    self.assertEqual(Result["ReelHeights"], [6] * 6)
+                    self.assertEqual(Result["ReelLayouts"], [list(Layout) for _ in range(6)])
+                    self.assertEqual(Result["ReelCellCounts"], [len(Layout)] * 6)
+                    self.assertEqual([[Item["SymbolId"] for Item in Column]
+                                      for Column in Result["InitialBoard"]],
+                                     [[2, 3, 4, 5, 6, 7][:len(Layout)] for _ in range(6)])
+                    Board = [[Cell(8, 0, 3), Cell(9, 0, 3)] for _ in range(6)]
+                    State = {
+                        "source_type": "rolls", "columns": [[2, 3, 4, 5, 6, 7] for _ in range(6)],
+                        "top_indexes": [0] * 6, "row": 6, "col": 6,
+                    }
+                    with patch.object(self.game, "_select_layout", return_value=Layout):
+                        NextBoard, NewScatterCount = self.game._advance_board(
+                            Board, {(Col, Row) for Col in range(6) for Row in (0, 1)}, State,
+                        )
+                    self.assertEqual(NewScatterCount, 0)
+                    for Column in NextBoard:
+                        self.assertEqual([Item.Height for Item in Column], list(Layout))
+                        self.assertEqual(sum(Item.Height for Item in Column), 6)
+                        self.assertEqual(len(Column), len(Layout))
 
     def test_numeric_controls_are_loaded_from_game_server(self):
         source_dir = Path(__file__).resolve().parent
@@ -143,6 +221,9 @@ class ThemeMathTests(unittest.TestCase):
         self.assertEqual(len(self.game.MainHeightWeights), 6)
         self.assertEqual(len(self.game.MainHeightWeights[0]), 9)
         self.assertEqual(len(self.game.MainEliminationHeightWeights[0][6]), 9)
+        self.assertEqual(self.game.FreeHeightPatterns, self.game.MainHeightPatterns)
+        self.assertTrue(all(sum(Layout) == 6 and 2 <= len(Layout) <= 6
+                            for Layout in self.game.MainHeightPatterns))
         self.assertEqual(self.game._canonical_patterns(5), [(1, 1, 1, 1, 1), (1, 1, 1, 2), (1, 1, 3), (1, 2, 2), (1, 4), (2, 3)])
 
     def _server_config(self):
@@ -201,10 +282,8 @@ class ThemeMathTests(unittest.TestCase):
                                 patterns[index],
                             )
                             if height < 6:
-                                self.assertEqual(
-                                    tuple(sorted(game._select_layout(height, column, free_mode, True))),
-                                    patterns[index],
-                                )
+                                with self.assertRaises(ValueError):
+                                    game._select_layout(height, column, free_mode, True)
 
     def test_yjzr_layouts_shuffle_after_selecting_partition(self):
         def ReverseLayout(layout):
@@ -222,6 +301,8 @@ class ThemeMathTests(unittest.TestCase):
                         )
                     shuffle.assert_called_once()
         self.assertEqual(self.game._select_layout(0, 0, False, False), ())
+        with self.assertRaises(ValueError):
+            self.game._select_layout(0, 0, False, True)
 
     def test_yjzr_layout_configuration_rejects_missing_old_and_bad_index_fields(self):
         changes = (
@@ -254,21 +335,15 @@ class ThemeMathTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "free_elim_height_weight_2_2"):
                     self.game._parse_elimination_column_weights(info, "free_elim_height_weight")
 
-    def test_physical_height_weights_use_per_column_csv_fields(self):
-        info = self._server_config()["Game Info"]
-        for column in range(1, 7):
-            info[f"ReelHeightWeights{column}"] = f"{column},0,0,0,1"
-        self.assertEqual(
-            self.game._parse_height_weights(info),
-            [[column, 0, 0, 0, 1] for column in range(1, 7)],
-        )
-        info["ReelHeightWeights"] = "1,1,1,1,1|1,1,1,1,1"
-        with self.assertRaisesRegex(ValueError, "per-column"):
-            self.game._parse_height_weights(info)
-        del info["ReelHeightWeights"]
-        del info["ReelHeightWeights6"]
-        with self.assertRaisesRegex(ValueError, "ReelHeightWeights6"):
-            self.game._parse_height_weights(info)
+    def test_legacy_physical_height_fields_are_rejected(self):
+        self.assertFalse(any(Key.startswith("ReelHeightWeights")
+                             for Key in self._server_config()["Game Info"]))
+        for Field in ("ReelHeightWeights", *(f"ReelHeightWeights{Col}" for Col in range(1, 7))):
+            with self.subTest(Field=Field):
+                Info = self._server_config()["Game Info"]
+                Info[Field] = "1,0,0,0,0"
+                with self.assertRaisesRegex(ValueError, Field):
+                    self.game._validate_layout_keys(Info)
 
     def test_server_values_are_flat_csv_and_have_reference_layout_fields(self):
         info = self._server_config()["Game Info"]
@@ -325,7 +400,6 @@ class ThemeMathTests(unittest.TestCase):
 
     def test_initial_silver_frames_use_symbol_height_in_both_modes(self):
         self.game.SilverFrameChance = self.game.ChanceBase
-        self.game.ReelHeightWeights = [[0, 0, 0, 0, 1] for _ in range(6)]
         Layouts = [(3, 3), (1, 2, 3), (1, 1, 2, 2), (1, 1, 1, 1, 2), (1,) * 6]
 
         def FakeSpin(**kwargs):
@@ -370,7 +444,6 @@ class ThemeMathTests(unittest.TestCase):
                             self.assertEqual(Item["FrameStage"], ExpectedFrame)
 
     def test_initial_tall_scatter_splits_only_its_slot_in_both_modes(self):
-        self.game.ReelHeightWeights = [[0, 0, 0, 0, 1] for _ in range(6)]
 
         def FakeSpin(**kwargs):
             Columns = [[0, 2, 3, 4, 5, 6] for _ in range(6)]
@@ -475,7 +548,6 @@ class ThemeMathTests(unittest.TestCase):
                             ConfigPath.write_text(OriginalText, encoding="utf-8")
 
     def test_real_source_results_keep_special_symbols_and_physical_height_valid(self):
-        self.game.ReelHeightWeights = [[0, 0, 0, 0, 1] for _ in range(6)]
         RefillCount = 0
         for FreeMode in (False, True):
             for SpinType in ("normal", "special", "fix", "zero"):
@@ -487,6 +559,12 @@ class ThemeMathTests(unittest.TestCase):
                             )
                             if FreeMode else self.game.ng_spin(return_detail=True)
                         )
+                    self.assertEqual(Result["ReelHeights"], [6] * 6)
+                    self.assertEqual(Result["ReelLayouts"],
+                                     [[Item["Height"] for Item in Column]
+                                      for Column in Result["InitialBoard"]])
+                    self.assertEqual(Result["ReelCellCounts"],
+                                     [len(Column) for Column in Result["InitialBoard"]])
                     Boards = [Result["InitialBoard"], Result["FinalBoard"]]
                     for Round in Result["Rounds"]:
                         Boards.extend((Round["Board"], Round["NextBoard"]))
@@ -494,7 +572,9 @@ class ThemeMathTests(unittest.TestCase):
                     for Board in Boards:
                         for Col, Column in enumerate(Board):
                             self.assertEqual(sum(Item["Height"] for Item in Column), 6)
+                            self.assertIn(len(Column), range(2, 7))
                             for Item in Column:
+                                self.assertIn(Item["Height"], (1, 2, 3, 4))
                                 if Item["SymbolId"] == self.game.WildId:
                                     self.assertIn(Col, (1, 2, 3, 4))
                                 if Item["SymbolId"] == self.game.ScatterId:
@@ -511,10 +591,10 @@ class ThemeMathTests(unittest.TestCase):
         self.game.SilverFrameChance = self.game.ChanceBase
         for FreeMode in (False, True):
             self.game._CurrentFreeGame = FreeMode
-            for RefillLayout in ((1, 2, 3), (1, 4, 1)):
+            for RefillLayout in ((1, 1, 3), (1, 4)):
                 with self.subTest(FreeMode=FreeMode, RefillLayout=RefillLayout):
                     Survivors = [Cell(8)]
-                    Board = [[Cell(2, 0, sum(RefillLayout))] + Survivors for _ in range(6)]
+                    Board = [[Cell(2, 0, 3), Cell(3, 0, 2)] + Survivors for _ in range(6)]
                     State = {
                         "source_type": "rolls",
                         "columns": [[3, 4, 5] for _ in range(6)],
@@ -522,7 +602,7 @@ class ThemeMathTests(unittest.TestCase):
                         "row": 6,
                         "col": 6,
                     }
-                    Wins = {(Col, 0) for Col in range(6)}
+                    Wins = {(Col, Row) for Col in range(6) for Row in (0, 1)}
                     with patch.object(
                         self.game,
                         "_select_layout",
@@ -539,15 +619,17 @@ class ThemeMathTests(unittest.TestCase):
                             ExpectedFrames,
                         )
                         self.assertEqual(Column[-1:], Survivors)
+                        self.assertEqual(sum(Item.Height for Item in Column), 6)
+                        self.assertIn(len(Column), range(2, 7))
 
     def test_wild_path_pays_only_the_highest_symbol(self):
         board = [
-            [Cell(1), Cell(0)],
-            [Cell(1), Cell(0)],
-            [Cell(1), Cell(0)],
-            [Cell(11), Cell(12)],
-            [Cell(2), Cell(3)],
-            [Cell(4), Cell(5)],
+            [Cell(1, 0, 4), Cell(0, 0, 2)],
+            [Cell(1, 0, 4), Cell(0, 0, 2)],
+            [Cell(1, 0, 4), Cell(0, 0, 2)],
+            [Cell(11, 0, 3), Cell(12, 0, 3)],
+            [Cell(2, 0, 3), Cell(3, 0, 3)],
+            [Cell(4, 0, 3), Cell(5, 0, 3)],
         ]
         win, _, items = self.game._evaluate_paths(board)
         self.assertEqual(win, 3 * self.game.base_bet)
@@ -557,23 +639,25 @@ class ThemeMathTests(unittest.TestCase):
         self.assertEqual(self.game.cal_item_list(plain_board), win)
 
     def test_frame_moves_with_replacement_then_becomes_wild(self):
-        board = [[Cell(8), Cell(9)] for _ in range(6)]
-        board[1][0] = Cell(2, 1)
+        board = [[Cell(8, 0, 3), Cell(9, 0, 3)] for _ in range(6)]
+        board[1][0] = Cell(2, 1, 3)
         state = {
             "source_type": "rolls",
             "columns": [[8, 9, 10] for _ in range(6)],
             "top_indexes": [1] * 6,
-            "row": 2,
+            "row": 6,
             "col": 6,
         }
         board, _ = self.game._advance_board(board, {(1, 0), (1, 1)}, state)
-        self.assertEqual(board[1][1].FrameStage, 2)
-        self.assertIn(board[1][1].SymbolId, self.game.OrdinaryIds)
-        board, _ = self.game._advance_board(board, {(1, 1)}, state)
-        self.assertEqual(board[1][1], Cell(1))
+        self.assertEqual(board[1][-1].FrameStage, 2)
+        self.assertIn(board[1][-1].SymbolId, self.game.OrdinaryIds)
+        self.assertEqual(board[1][-1].Height, 3)
+        self.assertTrue(all(sum(Item.Height for Item in Column) == 6 for Column in board))
+        board, _ = self.game._advance_board(board, {(1, len(board[1]) - 1)}, state)
+        self.assertEqual(board[1][-1], Cell(1, 0, 3))
+        self.assertTrue(all(sum(Item.Height for Item in Column) == 6 for Column in board))
 
     def test_scatter_counts_initial_and_refill_in_both_modes(self):
-        self.game.ReelHeightWeights = [[1, 0, 0, 0, 0] for _ in range(6)]
         raw_board = [
             [2, 0, 8, 9, 10, 11],
             [2, 0, 8, 9, 10, 11],
@@ -597,16 +681,21 @@ class ThemeMathTests(unittest.TestCase):
             return raw_board
 
         self.game.spin = fake_spin
-        main = self.game.ng_spin(return_detail=True)
+        def LayoutForHeight(total_height, col, free_game, initial):
+            if initial:
+                return (4, 2)
+            return (total_height,) if total_height else ()
+
+        with patch.object(self.game, "_select_layout", side_effect=LayoutForHeight):
+            main = self.game.ng_spin(return_detail=True)
+            free = self.game.fg_spin(FreeSpinNumber=3, FreeStartMultiplier=3, return_detail=True)
         self.assertEqual(main["ScatterCount"], 4)
         self.assertEqual(main["FreeSpinsAwarded"], 8)
-        free = self.game.fg_spin(FreeSpinNumber=3, FreeStartMultiplier=3, return_detail=True)
         self.assertEqual(free["ScatterCount"], 4)
         self.assertEqual(free["ExtraFreeSpins"], 4)
         self.assertEqual(free["Rounds"][0]["Multiplier"], 3)
 
     def test_main_multiplier_caps_at_five_and_free_caps_only_each_spins_increment(self):
-        self.game.ReelHeightWeights = [[1, 0, 0, 0, 0] for _ in range(6)]
 
         def fake_spin(**kwargs):
             self.game.last_spin_state = {
@@ -774,7 +863,6 @@ class ThemeMathTests(unittest.TestCase):
 
     def test_initial_scatter_generation_keeps_the_complete_award_within_fifty(self):
         self.assertEqual(self.game.FreeMaxTimes, 50)
-        self.game.ReelHeightWeights = [[0, 0, 0, 0, 1] for _ in range(6)]
 
         with (
             patch.object(self.game, "spin", side_effect=self._scatter_candidate_spin),
@@ -788,7 +876,6 @@ class ThemeMathTests(unittest.TestCase):
         self.assertEqual(Result["TotalWin"], 0)
 
     def test_main_scatter_budget_uses_configured_base_and_complete_extra_awards(self):
-        self.game.ReelHeightWeights = [[0, 0, 0, 0, 1] for _ in range(6)]
         for Maximum, Base, Extra, Trigger, ExpectedScatters, ExpectedAward in (
             (50, 46, 3, 4, 5, 49),
             (37, 10, 3, 5, 14, 37),
@@ -823,7 +910,6 @@ class ThemeMathTests(unittest.TestCase):
                 ThemeMath(project_dir=ProjectDir)
 
     def test_extra_free_spins_reserve_the_existing_queue_near_the_cap(self):
-        self.game.ReelHeightWeights = [[0, 0, 0, 0, 1] for _ in range(6)]
         for Number, Remaining, ExpectedExtra in (
             (48, 0, 2), (48, 1, 1), (49, 0, 1), (49, 1, 0), (50, 0, 0),
         ):
@@ -845,7 +931,6 @@ class ThemeMathTests(unittest.TestCase):
                 self.assertLessEqual(Number + Remaining + Result["ExtraFreeSpins"], 50)
 
     def test_initial_and_all_refills_share_scatter_budget_without_recounting_survivors(self):
-        self.game.ReelHeightWeights = [[1, 0, 0, 0, 0] for _ in range(6)]
 
         def FakeSpin(**kwargs):
             self._scatter_candidate_spin(**kwargs)
@@ -913,7 +998,6 @@ class ThemeMathTests(unittest.TestCase):
 
     def test_overflow_uses_each_actual_source_columns_ordinary_frequency(self):
         Pools = [[8] + [9] * (Col + 1) for Col in range(6)]
-        self.game.ReelHeightWeights = [[0, 0, 0, 0, 1] for _ in range(6)]
 
         def FakeSpin(**kwargs):
             self._scatter_candidate_spin(**kwargs)
@@ -1031,12 +1115,12 @@ class ThemeMathTests(unittest.TestCase):
 
     def test_each_ways_path_pays_once_when_multiple_symbols_match_wild(self):
         board = [
-            [Cell(1), Cell(1)],
-            [Cell(1)],
-            [Cell(1)],
-            [Cell(0)],
-            [Cell(0)],
-            [Cell(0)],
+            [Cell(1, 0, 3), Cell(1, 0, 3)],
+            [Cell(1, 0, 4), Cell(0, 0, 2)],
+            [Cell(1, 0, 4), Cell(0, 0, 2)],
+            [Cell(0, 0, 2) for _ in range(3)],
+            [Cell(0, 0, 2) for _ in range(3)],
+            [Cell(0, 0, 2) for _ in range(3)],
         ]
         win, positions, items = self.game._evaluate_paths(board)
         self.assertEqual(win, 6 * self.game.base_bet)
@@ -1045,7 +1129,8 @@ class ThemeMathTests(unittest.TestCase):
         self.assertEqual(positions, {(0, 0), (0, 1), (1, 0), (2, 0)})
 
     def test_shared_wild_prefix_pays_only_the_highest_award(self):
-        board = [[Cell(1)] for _ in range(4)] + [[Cell(8)], [Cell(0)]]
+        board = [[Cell(1, 0, 4), Cell(0, 0, 2)] for _ in range(4)]
+        board += [[Cell(8, 0, 4), Cell(0, 0, 2)], [Cell(0, 0, 2) for _ in range(3)]]
         win, _, items = self.game._evaluate_paths(board)
         self.assertEqual(win, 4 * self.game.base_bet)
         self.assertEqual([(item["ItemId"], item["HitCount"]) for item in items], [(2, 4)])
@@ -1194,7 +1279,6 @@ class ThemeMathTests(unittest.TestCase):
                         simulation.simulate(1)
 
     def test_sample_special_fixed_and_zero_results_load_in_both_modes(self):
-        self.game.ReelHeightWeights = [[1, 0, 0, 0, 0] for _ in range(6)]
         for FreeMode in (False, True):
             for SpinType in ("special", "fix", "zero"):
                 with self.subTest(FreeMode=FreeMode, SpinType=SpinType):
@@ -1204,7 +1288,7 @@ class ThemeMathTests(unittest.TestCase):
                             if FreeMode else self.game.ng_spin(return_detail=True)
                         )
                     self.assertEqual(self.game.last_spin_info["spin_type"], SpinType)
-                    self.assertEqual(Result["ReelHeights"], [2] * 6)
+                    self.assertEqual(Result["ReelHeights"], [6] * 6)
                     if SpinType == "fix":
                         self.assertEqual(
                             [Column[0]["SymbolId"] for Column in Result["InitialBoard"][:3]],
@@ -1215,6 +1299,315 @@ class ThemeMathTests(unittest.TestCase):
                         self.assertEqual(Result["TotalWin"], 0)
                         self.assertEqual(Result["CascadeCount"], 0)
                         self.assertEqual(Result["ScatterCount"], 0)
+
+
+class SimulationTests(unittest.TestCase):
+    @staticmethod
+    def _precise_game():
+        class FakeGame:
+            FreeMaxTimes = 50
+            FreeCalls = []
+            SourceCalls = []
+
+            def __init__(self, base_bet):
+                self.BaseBet = base_bet
+                self.PaidSpinNumber = 0
+
+            def ng_spin(self, **kwargs):
+                self.PaidSpinNumber += 1
+                Number = self.PaidSpinNumber
+                return {
+                    "TotalWin": [0, 1000, 2001, 0][Number - 1],
+                    "FreeSpinsAwarded": 2 if Number == 1 else 0,
+                    "CascadeCount": [0, 1, 10, 0][Number - 1],
+                }
+
+            def fg_spin(self, FreeSpinNumber, FreeStartMultiplier, FreeSpinsRemaining, **kwargs):
+                self.FreeCalls.append((FreeSpinNumber, FreeStartMultiplier, FreeSpinsRemaining))
+                self.SourceCalls.append((kwargs.get("index"), kwargs.get("general_index")))
+                return {
+                    "TotalWin": [200, 0, 300][FreeSpinNumber - 1],
+                    "ExtraFreeSpins": 1 if FreeSpinNumber == 1 else 0,
+                    "FreeEndMultiplier": FreeStartMultiplier + (4 if FreeSpinNumber == 1 else 0),
+                }
+
+        return FakeGame
+
+    def test_precise_round_and_feature_statistics_do_not_count_cascade_buckets_as_money(self):
+        Game = self._precise_game()
+        with patch.object(simulation, "ThemeMath", Game):
+            Rows = simulation.simulation(
+                spin_times=4, index=2, general_index=3, free_general_index=4,
+                base_bet=100, report_interval=0, seed=17,
+            )
+        self.assertEqual(len(Rows), 1)
+        Row = Rows[-1]
+        for Field, Expected in {
+            "SPIN": 4, "总押注": 400, "总赢钱": 3501, "Ways赢钱": 3501,
+            "BaseWays": 3001, "FreeWays": 500, "Hit": 3, "main_win_times": 2,
+            "free_win_times": 2, ">5x": 2, ">10x": 1, ">20x": 1,
+            ">50x": 0, ">100x": 0, ">1000x": 0, "触发Free": 1,
+            "Free次数": 3, "FreeSpin": 3, "Free重触发": 1,
+            "Free平均次数": 3, "Free平均倍": 5,
+            "连消0次": 2, "连消1次": 1, "连消10+次": 1,
+            "INDEX": 2, "GENERAL": 3, "FREE_GENERAL": 4,
+        }.items():
+            with self.subTest(Field=Field):
+                self.assertEqual(Row[Field], Expected)
+        for Field, Expected in {
+            "rtp": 3501 / 400, "rtp_check": 3501 / 400,
+            "base_rtp": 3001 / 400, "base_ways_rtp": 3001 / 400,
+            "free_rtp": 500 / 400, "free_ways_rtp": 500 / 400,
+            "Hit率": 3 / 4, "main_win_rate": 2 / 4,
+            "free_win_rate": 2 / 3, "Free频率": 1 / 4,
+        }.items():
+            with self.subTest(Field=Field):
+                self.assertAlmostEqual(Row[Field], Expected)
+        self.assertEqual(Game.FreeCalls, [(1, 1, 1), (2, 6, 1), (3, 7, 0)])
+        self.assertEqual(Game.SourceCalls, [(2, 4)] * 3)
+        self.assertTrue(Row["ok"])
+        self.assertEqual(Row["Seed"], 17)
+        self.assertTrue(Row["ProvisionalConfig"])
+        self.assertIsInstance(Row["status"], dict)
+        self.assertFalse(any("cascade" in Key.lower() and Key.endswith("_rtp") for Key in Row))
+
+    def test_unspecified_free_general_uses_the_current_main_general(self):
+        Game = self._precise_game()
+        with patch.object(simulation, "ThemeMath", Game):
+            Row = simulation.simulation(
+                spin_times=4, index=2, general_index=3, report_interval=0, base_bet=100,
+            )[-1]
+        self.assertEqual(Row["FREE_GENERAL"], 3)
+        self.assertEqual(Game.SourceCalls, [(2, 3)] * 3)
+
+    def test_all_main_cascade_buckets_are_counts_separate_from_rtp(self):
+        class FakeGame:
+            FreeMaxTimes = 50
+
+            def __init__(self, base_bet):
+                self.Number = 0
+
+            def ng_spin(self, **kwargs):
+                CascadeCount = self.Number
+                self.Number += 1
+                return {"TotalWin": 0, "FreeSpinsAwarded": 0, "CascadeCount": CascadeCount}
+
+        with patch.object(simulation, "ThemeMath", FakeGame):
+            Row = simulation.simulation(spin_times=12, base_bet=100, report_interval=0)[-1]
+        for Count in range(10):
+            self.assertEqual(Row[f"连消{Count}次"], 1)
+        self.assertEqual(Row["连消10+次"], 2)
+        self.assertEqual(Row["rtp"], 0)
+        self.assertEqual(Row["rtp_check"], 0)
+        self.assertEqual(Row["base_rtp"], 0)
+
+    def test_checkpoint_rows_are_cumulative_and_final_is_not_duplicated(self):
+        class FakeGame:
+            FreeMaxTimes = 50
+
+            def __init__(self, base_bet):
+                self.BaseBet = base_bet
+                self.Number = 0
+
+            def ng_spin(self, **kwargs):
+                self.Number += 1
+                return {"TotalWin": self.Number * self.BaseBet, "FreeSpinsAwarded": 0}
+
+        for Spins, Interval, ExpectedSpins in ((4, 2, [2, 4]), (5, 2, [2, 4, 5]), (4, 0, [4])):
+            with self.subTest(Spins=Spins, Interval=Interval):
+                with patch.object(simulation, "ThemeMath", FakeGame):
+                    Rows = simulation.simulation(spin_times=Spins, base_bet=100, report_interval=Interval)
+                self.assertEqual([Row["SPIN"] for Row in Rows], ExpectedSpins)
+                self.assertEqual([Row["总押注"] for Row in Rows], [Number * 100 for Number in ExpectedSpins])
+                self.assertEqual([Row["总赢钱"] for Row in Rows],
+                                 [sum(range(1, Number + 1)) * 100 for Number in ExpectedSpins])
+                self.assertIsInstance(Rows[-1]["status"], dict)
+
+    def test_batch_combination_failure_is_reported_without_stopping_other_combinations(self):
+        Calls = []
+
+        def RunCombination(spin_times, index, general_index, free_general_index, **kwargs):
+            Key = (index, general_index, free_general_index)
+            Calls.append(Key)
+            if Key == (1, 1, 3):
+                raise ValueError("broken test combination")
+            return [{"SPIN": 1}, {"SPIN": spin_times, "ok": True, "INDEX": index,
+                                   "GENERAL": general_index, "FREE_GENERAL": free_general_index}]
+
+        with patch.object(simulation, "simulation", side_effect=RunCombination):
+            Rows = simulation.simulation_all(
+                spin_times=2, indexes=[0, 1], general_indexes=[1, 2], free_general_indexes=[3, 4],
+                report_interval=0, print_updates=False, base_bet=100, seed=17,
+            )
+        self.assertEqual(Calls, [(Index, General, FreeGeneral)
+                                 for Index in (0, 1) for General in (1, 2) for FreeGeneral in (3, 4)])
+        self.assertEqual(len(Rows), 8)
+        Failed = [Row for Row in Rows if not Row["ok"]]
+        self.assertEqual(len(Failed), 1)
+        self.assertEqual((Failed[0]["INDEX"], Failed[0]["GENERAL"], Failed[0]["FREE_GENERAL"]), (1, 1, 3))
+        self.assertEqual(Failed[0]["SPIN"], 0)
+        self.assertEqual(Failed[0]["RequestedSpins"], 2)
+        self.assertIn("broken test combination", Failed[0]["错误"])
+        self.assertTrue(all(Row["SPIN"] == 2 for Row in Rows if Row["ok"]))
+
+    def test_seed_restarts_the_random_stream_for_each_simulation(self):
+        Draws = []
+
+        class FakeGame:
+            FreeMaxTimes = 50
+
+            def __init__(self, base_bet):
+                pass
+
+            def ng_spin(self, **kwargs):
+                Win = random.randrange(1000000)
+                Draws.append(Win)
+                return {"TotalWin": Win, "FreeSpinsAwarded": 0}
+
+        for Seed in (17, 18, 17):
+            Draws.clear()
+            ExpectedRandom = random.Random(Seed)
+            Expected = [ExpectedRandom.randrange(1000000) for _ in range(4)]
+            with patch.object(simulation, "ThemeMath", FakeGame):
+                Row = simulation.simulation(spin_times=4, report_interval=0, seed=Seed)[-1]
+            self.assertEqual(Draws, Expected)
+            self.assertEqual(Row["总赢钱"], sum(Expected))
+        Draws.clear()
+        ExpectedRandom = random.Random(17)
+        Expected = [ExpectedRandom.randrange(1000000) for _ in range(4)]
+        with patch.object(simulation, "ThemeMath", FakeGame):
+            Rows = simulation.simulation_all(
+                spin_times=4, indexes=[0, 1], general_indexes=[1], free_general_indexes=[1],
+                report_interval=0, print_updates=False, seed=17,
+            )
+        self.assertEqual(Draws, Expected * 2)
+        self.assertEqual([Row["总赢钱"] for Row in Rows], [sum(Expected)] * 2)
+
+    def test_csv_standard_field_prefix_matches_mjwl_without_choose(self):
+        Reference = Path(__file__).resolve().parent.parent / "mjwl/simulation.py"
+        Tree = ast.parse(Reference.read_text(encoding="utf-8"))
+        ReferenceFields = next(ast.literal_eval(Node.value) for Node in Tree.body
+                               if isinstance(Node, ast.Assign)
+                               and any(isinstance(Target, ast.Name) and Target.id == "RESULT_CSV_FIELDS"
+                                       for Target in Node.targets))
+        Expected = [Field for Field in ReferenceFields if Field != "CHOOSE"]
+        self.assertEqual(simulation.RESULT_CSV_FIELDS[:len(Expected)], Expected)
+        self.assertNotIn("CHOOSE", simulation.RESULT_CSV_FIELDS)
+        self.assertTrue({"RequestedSpins", "Seed", "ProvisionalConfig", "ActualGeneral",
+                         "ActualFreeGeneral", "ReelConfigFile", "FreeReelConfigFile"}
+                        .issubset(simulation.RESULT_CSV_FIELDS))
+
+    def test_csv_append_has_one_bom_preserves_rows_and_extends_the_header(self):
+        with tempfile.TemporaryDirectory() as TempDir:
+            Target = Path(TempDir) / "results.csv"
+            First = {"INDEX": 0, "SPIN": 2, "总赢钱": 123, "status": {"Base": [1, 123]}}
+            simulation.append_simulation_results([First], Target)
+            simulation.append_simulation_results(
+                [{"INDEX": 1, "SPIN": 3, "总赢钱": 456, "ExtraMetric": 7,
+                  "status": {"Base": [2, 456]}}], Target,
+            )
+            Content = Target.read_bytes()
+            self.assertTrue(Content.startswith(b"\xef\xbb\xbf"))
+            self.assertEqual(Content.count(b"\xef\xbb\xbf"), 1)
+            with Target.open(encoding="utf-8-sig", newline="") as Input:
+                Reader = csv.DictReader(Input)
+                Rows = list(Reader)
+                self.assertEqual(Reader.fieldnames[:len(simulation.RESULT_CSV_FIELDS)], simulation.RESULT_CSV_FIELDS)
+                self.assertEqual(Reader.fieldnames[-1], "ExtraMetric")
+            self.assertEqual(len(Rows), 2)
+            self.assertEqual((Rows[0]["INDEX"], Rows[0]["总赢钱"], Rows[0]["ExtraMetric"]), ("0", "123", ""))
+            self.assertEqual((Rows[1]["INDEX"], Rows[1]["总赢钱"], Rows[1]["ExtraMetric"]), ("1", "456", "7"))
+            self.assertEqual(json.loads(Rows[0]["status"]), First["status"])
+
+    def test_csv_expansion_preserves_an_existing_custom_header_and_legacy_data(self):
+        with tempfile.TemporaryDirectory() as TempDir:
+            Target = Path(TempDir) / "legacy.csv"
+            Target.write_text("INDEX,SPIN,LegacyNote\n0,2,旧记录\n", encoding="utf-8-sig")
+            simulation.append_simulation_results([{"INDEX": 1, "SPIN": 3, "ExtraMetric": 9}], Target)
+            with Target.open(encoding="utf-8-sig", newline="") as Input:
+                Reader = csv.DictReader(Input)
+                Rows = list(Reader)
+                self.assertEqual(Reader.fieldnames[:3], ["INDEX", "SPIN", "LegacyNote"])
+                self.assertEqual(len(Reader.fieldnames), len(set(Reader.fieldnames)))
+            self.assertEqual(len(Rows), 2)
+            self.assertEqual((Rows[0]["INDEX"], Rows[0]["SPIN"], Rows[0]["LegacyNote"]), ("0", "2", "旧记录"))
+            self.assertEqual(Rows[0]["ExtraMetric"], "")
+            self.assertEqual((Rows[1]["INDEX"], Rows[1]["ExtraMetric"]), ("1", "9"))
+
+    def test_cli_supports_scalar_aliases_and_batch_lists_with_relative_csv_output(self):
+        Cases = (
+            (["--index", "2", "--general-index", "3"], [2], [3]),
+            (["--index", "2", "--general", "3"], [2], [3]),
+            (["--indexes", "0,2", "--generals", "1,3"], [0, 2], [1, 3]),
+        )
+        for Selectors, Indexes, Generals in Cases:
+            with self.subTest(Selectors=Selectors), tempfile.TemporaryDirectory() as TempDir:
+                Rows = [{"SPIN": 4, "ok": True}]
+                OriginalDir = Path.cwd()
+                try:
+                    os.chdir(TempDir)
+                    with (
+                        patch.object(simulation, "simulation_all", return_value=Rows) as Run,
+                        patch.object(simulation, "print_table") as Print,
+                        patch.object(simulation, "append_simulation_results") as Append,
+                        redirect_stdout(io.StringIO()) as Output,
+                    ):
+                        Result = simulation.main(
+                            ["--spins", "4", *Selectors, "--free-generals", "4,5", "--base-bet", "100",
+                             "--seed", "17", "--report-interval", "0", "--no-print-updates", "--output", "report.csv"]
+                        )
+                    self.assertIsNone(Result)
+                    self.assertEqual(Run.call_args.kwargs["spin_times"], 4)
+                    self.assertEqual(Run.call_args.kwargs["indexes"], Indexes)
+                    self.assertEqual(Run.call_args.kwargs["general_indexes"], Generals)
+                    self.assertEqual(Run.call_args.kwargs["free_general_indexes"], [4, 5])
+                    self.assertEqual(Run.call_args.kwargs["base_bet"], 100)
+                    self.assertEqual(Run.call_args.kwargs["seed"], 17)
+                    self.assertEqual(Run.call_args.kwargs["report_interval"], 0)
+                    self.assertFalse(Run.call_args.kwargs["print_updates"])
+                    Print.assert_called_once_with(Rows)
+                    self.assertEqual(Append.call_args.args[0], Rows)
+                    CsvPath = (Append.call_args.args[1] if len(Append.call_args.args) > 1
+                               else Append.call_args.kwargs["path"])
+                    self.assertEqual(Path(CsvPath).resolve(), Path(TempDir).resolve() / "report.csv")
+                    self.assertNotIn('"SPIN"', Output.getvalue())
+                finally:
+                    os.chdir(OriginalDir)
+
+    def test_cli_rejects_conflicting_scalar_and_list_selectors(self):
+        for Arguments in (["--index", "1", "--indexes", "1,2"],
+                          ["--general-index", "1", "--generals", "1,2"]):
+            with self.subTest(Arguments=Arguments), redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit):
+                    simulation.parse_args(Arguments)
+
+    def test_cli_saves_and_prints_success_and_failure_rows_before_returning_failure(self):
+        Rows = [{"SPIN": 1, "ok": True}, {"SPIN": 0, "ok": False, "错误": "broken combination"}]
+        with tempfile.TemporaryDirectory() as TempDir:
+            Target = Path(TempDir) / "results.csv"
+            with (
+                patch.object(simulation, "simulation_all", return_value=Rows),
+                patch.object(simulation, "print_table") as Print,
+                patch.object(simulation, "append_simulation_results") as Append,
+            ):
+                with self.assertRaises(SystemExit) as Exit:
+                    simulation.main(["--spins", "1", "--indexes", "0,1", "--generals", "1",
+                                     "--no-print-updates", "--output", str(Target)])
+            self.assertEqual(Exit.exception.code, 1)
+            Print.assert_called_once_with(Rows)
+            self.assertEqual(Append.call_count, 1)
+            self.assertEqual(Append.call_args.args[0], Rows)
+
+    def test_real_index_and_general_fallback_reports_actual_source_metadata(self):
+        Row = simulation.simulation(
+            spin_times=1, index=999, general_index=999, free_general_index=999,
+            report_interval=0, seed=20261022,
+        )[-1]
+        self.assertEqual((Row["INDEX"], Row["GENERAL"], Row["FREE_GENERAL"]), (999, 999, 999))
+        self.assertEqual(str(Row["ActualGeneral"]), "1")
+        self.assertEqual(Path(str(Row["ReelConfigFile"])).name, "klsj_rand_ex_0.conf")
+        self.assertEqual(Row["RequestedSpins"], 1)
+        self.assertTrue(Row["ok"])
 
 
 if __name__ == "__main__":

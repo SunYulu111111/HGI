@@ -2,14 +2,14 @@
 
 本项目位于 `ThemeMath/klsj` 目录，目录内机台文件和配置前缀统一使用 `klsj`。项目对应游戏 ID 353，展示名称为《恐龙世界》（Jurassic World）。
 
-项目按 `model_waysgame` 的目录组织，包含数学入口、仿真入口、主游戏及免费游戏轴带、游戏配置、服务器配置、控制配置和通用配置。玩法规则依据用户提供的《恐龙世界》策划案 1.03 版整理；当前轴带、可变高度、高图标布局和边框权重仍是流程验证用临时样本。
+盘面为六列，每列物理高度固定为 6 格，包含 2～6 个逻辑图标；普通图标和 Wild 占 1～4 格，Scatter 占 1～2 格，高图标按一个物件参与中奖计算。初始盘面及每轮完整补牌后，各列均保持 6 格。项目包含数学入口、仿真入口、主／免费轴带及平台配置；当前轴带、高图标布局和边框权重仍是流程验证用临时样本。
 
 ## 文件入口
 
 - [玩法介绍](klsj_玩法描述.md)：玩家可见的 Megaways、消除、边框、倍数和免费游戏规则。
 - [数值逻辑](klsj_数值逻辑.md)：服务端处理顺序、赔付、边框状态、免费次数及配置参数。
-- [数学入口](theme_math.py)：六列可变高度 Ways、边框升级、Wild 转换、Scatter 累计与免费次数。
-- [仿真入口](simulation.py)：按付费 Spin 运行主游戏和免费游戏，输出结构化统计。
+- [数学入口](theme_math.py)：六列固定 6 格、每列 2～6 个逻辑图标的 Ways、边框升级、Wild 转换、Scatter 累计与免费次数。
+- [仿真入口](simulation.py)：按配置组合运行主／免费游戏，输出累计统计表格，并自动追加各组合的最终汇总到 CSV。
 - [关键规则测试](test_theme_math.py)：覆盖赔付、Wild 去重与列限制、边框移动、Scatter 尺寸与累计、物理高度及消除倍数。
 
 ## 文档与注释写法
@@ -19,14 +19,14 @@
 ## 配置文件
 
 - `special/klsj_game_config.conf`：六列 Ways 盘面、图标 ID、赔付表和 Scatter/Wild 协议配置。
-- `special/klsj_game_server.conf`：物理列高、沿用 yjzr 字段名和逐列数组形式的高图标布局／消除补牌权重、银框出现率、银框转化权重、主游戏倍数上限、免费单手内倍数增量上限、每轮免费次数上限和免费奖励次数等数值参数。
+- `special/klsj_game_server.conf`：逐列高图标布局与消除补牌权重、银框出现率、银框转化权重、主游戏倍数上限、免费单手内倍数增量上限、每轮免费次数上限和免费奖励次数等数值参数。
 - `reel_config/klsj_rand_main.conf`、`reel_config/klsj_rand_ex_0.conf`：主游戏轴带。
 - `free_reel_config/klsj_free_rand_main.conf`、`free_reel_config/klsj_free_rand_ex_0.conf`：免费游戏轴带。
 - `special/klsj_control.conf`：玩家控制分组的版本占位，当前没有已定义的玩家控制规则。
 - `special/slot_prop_config.conf`：沿用 yjzr 的 `[System Base Info]` 道具元信息，当前没有已定义道具卡。
 - `general_config/slot_activity.conf`：沿用 yjzr 的 `[Act_Info]` 活动启停段，掉落参数统一放在 `game_act_coin.conf` 的对应活动 ID 段。
 
-当前临时轴带和权重用于检查流程，不代表正式 RTP 或上线配置。正式接入前需要替换主/免费轴带、物理列高权重、`base_height_weight_1`～`base_height_weight_6` / `free_height_weight_1`～`free_height_weight_6`、消除补牌布局权重、银框出现率及银框转化权重，并重新校验目标 RTP、免费游戏触发率和第 2～5 列 Wild 限制。已确认的倍数规则、免费次数规则和 9 档押注继续按本文执行。
+当前临时轴带和权重用于检查流程，不代表正式 RTP 或上线配置。正式接入前需要替换主／免费轴带、`base_height_weight_1`～`base_height_weight_6`／`free_height_weight_1`～`free_height_weight_6`、消除补牌布局权重、银框出现率及银框转化权重，并重新校验目标 RTP、免费游戏触发率和第 2～5 列 Wild 限制。固定 6 格盘面、倍数规则、免费次数规则和 9 档押注按本文执行。
 
 ## yjzr 字段对齐
 
@@ -42,9 +42,9 @@
 | 免费游戏最大消除次数 | `Free_Max_EliTimes` |
 | 每轮免费次数上限 | `Free_Max_Times`（50），内部属性 `FreeMaxTimes` |
 
-`Col` 为 1～6，对应 klsj 实际第 1～6 列；yjzr 的 1～3 对应其第 2～4 列，因为它只有这三列使用高图标。`Height` 为 2～6；1 格空缺固定补一个 1 格图标，不配置权重。各数组按照参考文件的固定模式顺序排列，抽中后随机打乱图标高度顺序。初始物理列高不足 6 格时，沿用现有逻辑读取同高度的补牌权重。
+`Col` 为实际列号 1～6，`Height` 为消除后的空缺物理高度 2～6；1 格空缺固定补一个 1 格图标，不配置权重。初始布局权重依次对应 `111111`、`11112`、`1113`、`1122`、`114`、`123`、`222`、`24`、`33`；每种布局合计 6 格，包含 2～6 个逻辑图标，抽中后随机打乱高度顺序。补牌使用对应空缺高度的权重，补足后每列恢复为 6 格。
 
-布局字段必须完整提供；缺项、错误索引、数组长度不符、负权重或全零权重均报错。配置不再读取旧的自定义布局字段和 `高度:权重|…` 格式。`ReelHeightWeights1`～`ReelHeightWeights6` 是 klsj 独有的物理列高配置，也改为逐列逗号数组；银框、倍数与免费次数继续使用 klsj 自身规则和参数。
+布局字段必须完整提供；缺项、错误索引、数组长度不符、负权重或全零权重均报错。初始盘面始终使用各列的 6 格初始布局权重，完整补牌后每列仍为 6 格、2～6 个逻辑图标。银框、倍数与免费次数使用本机台规则和参数。
 
 `Free_Max_Times=50` 用于计算新 Scatter 的生成额度，使每轮初始奖励和追加次数合计不超过 50；Scatter 触发的奖励足额发放，已发放次数全部正常玩完。超额度 Scatter 候选从本次实际来源轴带的同列普通图标池按频次抽取，保留原高度并按普通规则抽银框。未启用独立 Wild 生成替换、免费赢额封顶及保底机制。参考原文件的 `free_elim_height_weight_2_2` 写了 9 个权重，与 2 格的两个布局不符；klsj 按两个布局校验。布局随机打乱会改变同一种拆分的图标位置，仿真需使用实际配置重新生成。
 
@@ -82,7 +82,6 @@
 
 | klsj 字段／配置 | 保留依据 |
 |---|---|
-| `ReelHeightWeights1`～`ReelHeightWeights6` | 物理列高 2～6 的权重；yjzr 的 `base_height_weight_N`／`free_height_weight_N` 是 6 格内的图标拆分权重，两者同时使用。 |
 | `SilverFrameChance`、`SilverUpgradeSymbolWeights` | 银框生成与银框转金框的机制；yjzr 的 `base_wild_transfer`／`base_elim_wild_transfer` 及免费对应项直接替换 1 格图标为 Wild，含义不同。 |
 | `MainMultiplierCap` | 主游戏连消倍数上限；yjzr 的 `BaseMaxEliTimes` 是消除轮数上限。 |
 | `FreeSpinMultiplierIncrementCap` | 免费单手内相对起始倍数的增量上限，当前为 4；没有 yjzr 同义字段，名称使用 PascalCase。免费手数由 `Free_Max_Times` 限制，倍数不另设独立上限。 |
@@ -98,24 +97,67 @@
 
 未启用 `Free_Max_Win`、`Gua_Last_Spins`、大赢预判及独立 Wild 生成替换机制。通用活动、玩家控制、道具卡和登录等文件由平台服务读取，当前 `theme_math.py`／`simulation.py` 仅读取本机台的数学配置及轴带，不把这些平台配置计入仿真结论。
 
-## 策划案复核与实现更新
+## 玩法与次数规则
 
 盘面、图标、银框转换和金色底板的最终规则见 [盘面与图标](klsj_数值逻辑.md#盘面与图标)，完整奖表见 [判奖与赔付](klsj_数值逻辑.md#判奖与赔付)。
 
 首手免费起始倍数 `FreeStartMultiplier=1`，下一手从上一手最终实际结算倍数 `FreeEndMultiplier+1` 开始；无中奖时最终倍数等于起始倍数。`FreeSpinNumber` 记录本轮手数并参与 Scatter 额度计算，不决定起始倍数。手内按 `FreeStartMultiplier + min(CascadeIndex - 1, FreeSpinMultiplierIncrementCap)` 结算，`FreeSpinMultiplierIncrementCap=4`；达到手内增量上限后后续中奖照常结算，累计倍数不另设独立上限。例如本手从 x3 连消至 x7，下一手从 x8 开始。每轮初始奖励及追加次数合计最多 50，由新 Scatter 生成额度保证；免费每个新 Scatter 固定追加 1 次，所有已发放次数正常玩完，第 50 手完整结算。新 Scatter 额度为 0 时，其候选生成普通图标；已有 Scatter 正常保留且不重计，免费次数自然耗尽后结束。押注共 9 档，最高 25,000,000。大奖条件仅作为数值目标，展示使用 `BigWinGrade`／`NewBigWinGrade` 分档，不增加独立触发逻辑。详见 [免费游戏流程](klsj_数值逻辑.md#免费游戏流程)。
 
-2026/10/13 已修复并验证两项生成约束：清理临时轴带第 1／6 列的非法 Wild，并校验所有普通／特殊轴、固定盘、零奖盘及生成结果；3／4 格 Scatter 保留为 2 格，多余高度在其上方按原补牌权重生成新图标，保留其他原配对图标和每列物理总高度。`ReelLayouts`／`ReelCellCounts` 记录实际初盘结果。33 项测试全部通过，覆盖生成约束、手内倍数封顶后继续派奖、上一手最终倍数加 1 的跨手传递，以及新一轮免费游戏从 1 重启。
+## 验证记录
 
-该局部修复改变了临时分布和随机序列，已用种子 `20261013` 重跑 10,000 次付费 Spin，完成 47 次免费触发和 446 次免费 Spin。结果仅用于流程验证，不作为正式数值结论；详见 [图标生成规则](klsj_数值逻辑.md#盘面与图标)。
+2026/10/22：52 项测试全部通过，覆盖初盘及每轮补牌后每列固定 6 格、2～6 个逻辑图标，普通图标／Wild 高度 1～4、Scatter 高度 1～2，以及高图标按一个物件判奖。每列 `24`／`33` 布局均计两个图标，`111111` 计六个图标；Scatter、框转换、倍数和每轮免费最多 50 次的检查同时通过。
 
-2026/10/13 免费次数生成控制验证：49 项测试全部通过，覆盖初盘与多轮补牌共享额度、同列普通图标频次替换、高度与银框、完整奖励次数、第 50 手完整派奖及新一轮重置。此前使用种子 `20261013` 的 1,000 次付费 Spin 仿真完成 5 次免费触发、59 次免费 Spin；该次结果仅用于流程验证。
+种子 `20261022` 的 1,000 次付费 Spin 仿真完成 13 次免费触发和 127 次免费 Spin，用于本次流程验证。
+
+仿真报表重写后，65 项测试全部通过，覆盖累计检查点、主／免费统计、整轮命中与高倍、连消分桶、批量配置、随机种子、CSV 追加及命令行。相同种子的 1,000 手实跑中，RTP 与金额校验一致，连消桶合计 1,000 手，累计发放的 127 次免费 Spin 全部执行。
+
+## 此前验证记录
+
+此前 2026/10/13 的 33 项测试全部通过，覆盖 Wild 列限制、Scatter 尺寸、边框、物理高度、手内倍数封顶后继续派奖、上一手最终倍数加 1 的跨手传递，以及新一轮免费游戏从 1 重启。`ReelLayouts`／`ReelCellCounts` 记录实际初盘结果。
+
+此前使用种子 `20261013` 的 10,000 次付费 Spin 仿真完成 47 次免费触发和 446 次免费 Spin，结果仅用于该次流程验证，不作为当前配置或正式数值结论。
+
+此前 2026/10/13 免费次数生成控制验证的 49 项测试全部通过，覆盖初盘与多轮补牌共享额度、同列普通图标频次替换、高度与银框、完整奖励次数、第 50 手完整派奖及新一轮重置。同次种子 `20261013` 的 1,000 次付费 Spin 仿真完成 5 次免费触发、59 次免费 Spin；该次结果仅用于流程验证。
 
 ## 运行
 
-在仓库根目录运行：
+在仓库根目录运行单组仿真：
 
 ```bash
-python3 ThemeMath/klsj/simulation.py --spins 10000 --seed 20261013
+python3 ThemeMath/klsj/simulation.py --spins 10000 --index 0 --general-index 1 --seed 20261022
+```
+
+默认参数为 `SPIN_TIMES=10000000`、`INDEX=[0]`、`GENERAL_INDEX=[1]`、`REPORT_INTERVAL=5000`。`--spins` 是每个配置组合的付费 Spin 数，每手触发的免费游戏全部执行完后计入统计。
+
+| 参数 | 说明 |
+|---|---|
+| `--spins` | 每组付费 Spin 数 |
+| `--base-bet` | 每手总投注 |
+| `--index`／`--indexes` | 单个轴带索引／逗号分隔的索引列表，两者互斥 |
+| `--general-index`（别名 `--general`）／`--generals` | 单个主游戏 GENERAL／逗号分隔的列表，两者互斥 |
+| `--free-generals` | 逗号分隔的免费 GENERAL 列表；未指定时跟随主游戏 GENERAL |
+| `--seed` | 随机种子；批量运行时每组独立使用相同种子 |
+| `--report-interval` | 每完成多少个付费 Spin 输出累计表格；0 表示仅输出最终表格 |
+| `--no-print-updates` | 关闭中途表格，仍输出最终表格 |
+| `--output` | CSV 路径；相对路径从当前工作目录解析，自动创建父目录 |
+
+列表参数按所选配置组合运行，取值应对应已有轴带及 GENERAL。当前配置可使用 `INDEX=0`、主／免费 `GENERAL=1`。例如，使用列表参数并指定输出路径：
+
+```bash
+python3 ThemeMath/klsj/simulation.py --spins 10000 --indexes 0 --generals 1 --free-generals 1 --no-print-updates --output ThemeMath/klsj/results/run.csv --seed 20261022
+```
+
+表格按基本信息、Base、Free 分组展示累计结果，包含主游戏连消 0～9 次及 10+ 次分布、RTP、Hit 和高倍统计。Hit 与高倍按每个付费 Spin 加其触发的整轮免费游戏总奖励计算，Base／Free 命中分别统计主游戏手和免费手。`Free重触发` 记录有追加次数的免费手数；`Free次数` 为累计发放次数，`FreeSpin` 为实际执行次数，正常完成后两者相等。
+
+命令结束后，每组最终汇总自动追加到本目录的 `simulate_result.csv`；中途检查点不写入 CSV。`--output` 可指定其他路径。
+
+`INDEX`、`GENERAL`、`FREE_GENERAL` 表示请求配置；CSV 的实际 GENERAL 和轴带文件名可用于识别配置回退。失败组合记录 `ok=False` 和错误原因，`SPIN=0` 表示没有可报告的完整结果，`RequestedSpins` 保留请求手数；其他组合继续运行。
+
+程序调用保留 `simulate(...)` 的 PascalCase 汇总结果；`simulation(...)` 返回累计检查点，`simulation_all(...)` 返回各组合最终汇总，三者使用同一套运行流程。
+
+运行测试：
+
+```bash
 python3 -m unittest discover -s ThemeMath/klsj -p 'test_*.py'
 ```
 

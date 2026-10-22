@@ -2,7 +2,7 @@
 
 本文只描述配置参数、脚本参数与功能实现之间的对应关系。玩法规则见 `LOGIC.md`。
 
-本次仅校准 TYPE 0，目标分项如下，均以付费 Base Spin 的累计下注为分母，Free 不增加下注分母。这些是配置目标，实测结果需另行验证。
+TYPE 0 此前设定的目标分项如下，均以付费 Base Spin 的累计下注为分母，Free 不增加下注分母。当前所有 GROUP/TYPE 已改为共用 Bonus `[GENERAL]` 原有权重，下表目标需重新仿真核验，历史实测不代表当前结果。轴带和特殊图标生成参数仍按 TYPE 区分。
 
 | 分项 | RTP 目标 |
 | --- | ---: |
@@ -27,7 +27,7 @@
 
 `ThemeMath.cal_item_list()` 读取以上参数，完成 Cluster 查找、Wild 参与判断和赔付计算。
 
-`special/yngg_game_server.conf` 的 `[Game Info]` 保存通用玩法参数，`[0]`、`[4]`、`[8]`、`[12]`、`[17]` 分别保存对应 TYPE 的特殊图标生成及 Scatter 转化参数。Wild ID 1、主盘 Bonus ID 2、Scatter 与 Super Scatter 共用 ID 0；Super Scatter 通过 `super_scatter_positions` 位置状态区分，不使用专门 ID：
+`special/yngg_game_server.conf` 的 `[Game Info]` 保存通用玩法参数及 TYPE 0 的特殊图标生成、Scatter 转化参数。TYPE 0 只读取该节，不读取该文件的 `[0]`；TYPE 4、8、12、17 则读取各自数字节。此位置规则与服务器一致，初始和掉落特殊图标概率仍按 TYPE 区分；金色玩法内部的奖励参数统一使用 Bonus 文件的 `[GENERAL]`。Wild ID 1、主盘 Bonus ID 2、Scatter 与 Super Scatter 共用 ID 0；Super Scatter 通过 `super_scatter_positions` 位置状态区分，不使用专门 ID：
 
 - 使用 `SuperScatterProbability=200` 设置每个 Spin 的转化概率；概率单位为万分比，200/10000 等于 1/50。
 - 使用 `coin_multi_1=5`、`coin_multi_2=25` 将金币倍数划分为铜币、银币和金币。
@@ -37,7 +37,7 @@ Base 初始特殊图标生成后执行一次转化判断；Base 后续掉落生�
 
 转化不会修改盘面 Symbol ID。消除掉落时同步更新 `super_scatter_positions` 中的位置，最终通过 `spin_info.super_scatter_positions` 返回给调用方。
 
-各 TYPE 段还提供初始特殊图标及掉落替换权重；本次仅调整 TYPE 0，其他 TYPE 保留原值：
+以下初始特殊图标及掉落替换权重，TYPE 0 来自 `[Game Info]`，其他 TYPE 来自对应数字节；本次仅调整 TYPE 0，其他 TYPE 保留原值：
 
 | 字段 | TYPE 0 | TYPE 4、8、12、17 | 含义 |
 | --- | --- | --- | --- |
@@ -45,14 +45,16 @@ Base 初始特殊图标生成后执行一次转化判断；Base 后续掉落生�
 | `FreeScatterCountProbability` | 10000,1000,500,57 | 10000,1000,500,57 | Free 下标 0–3 对应生成 0–3 个 Scatter |
 | `BaseNoWinBonusCountProbability` | 98,2 | 98,2 | Base Scatter 不超过 2 个且无奖时生成 0/1 个 Bonus |
 | `BaseWinBonusCountProbability` | 964,36 | 92,8 | Base Scatter 不超过 2 个且有奖时生成 0/1 个 Bonus |
-| `FreeGoldenBonusCountProbability` | 60,40 | 60,40 | Free 开始时已有金框，生成 0/1 个 Bonus |
-| `FreeNoGoldenBonusCountProbability` | 30,70 | 30,70 | Free 开始时没有金框，生成 0/1 个 Bonus |
+| `FreeGoldenBonusCountProbability` | 60,40 | 60,40 | Free 实际放入不超过 2 个 Scatter 且仍有候选、开始时已有金框，生成 0/1 个 Bonus |
+| `FreeNoGoldenBonusCountProbability` | 30,70 | 30,70 | Free 实际放入不超过 2 个 Scatter 且仍有候选、开始时没有金框，生成 0/1 个 Bonus |
 | `DropSpecialSymbolProbability` | 998,1,1 | 998,1,1 | Base 每个合格新格的“不替换/Scatter/Bonus”权重 |
 | `FreeDropSpecialSymbolProbability` | 998,1,1 | 998,1,1 | Free 每个合格新格的“不替换/Scatter/Bonus”权重 |
 
 `ThemeMath.place_special_symbols()` 先计算当前中奖位置与同 ID 扩展消除位置，再从排除这两类位置的 ID 3–12 普通图标中随机选择并替换。Wild、Scatter、Bonus 均不作为候选，因此不会破坏已有 Cluster 或规避扩展消除。
 
-Base 初始 Scatter 数量达到 3 个时跳过 Bonus 抽取。Base 和 Free 每轮掉落最多放置 1 个特殊图标，并在放置前检查：
+Base 和 Free 初始盘面均先抽取 Scatter 数量，将数量限制为可用候选数量后放置；只有实际放入不超过 2 个 Scatter 且仍有剩余候选时，才读取对应的 Bonus 权重。实际放入 3 个或候选用完时跳过 Bonus 抽样。最后一次 Free Spin 初盘也执行正常概率流程，不强制生成 Bonus。
+
+Base 和 Free 每轮掉落最多放置 1 个特殊图标，并在放置前检查：
 
 - 盘面存在 Bonus 时，本轮不读取对应模式的掉落权重。
 - Scatter 与 Super Scatter 总数达到 3 个时，本轮不读取对应模式的掉落权重。
@@ -92,7 +94,7 @@ Base 初始 Scatter 数量达到 3 个时跳过 Bonus 抽取。Base 和 Free 每
 
 `ng_spin()` 和 `fg_spin()` 的主要参数：
 
-- 使用 `index` 选择 TYPE 0、4、8、12 或 17；同一次玩法的 Base 和 Free 应使用相同的 `index`。仿真读取对应的服务器参数段、普通轴和免费轴；缺少参数段或轴文件时报错，不回退到 TYPE 0。
+- 使用 `index` 选择 TYPE 0、4、8、12 或 17；同一次玩法的 Base 和 Free 应使用相同的 `index`。仿真读取对应的服务器参数段、普通轴和免费轴；TYPE 0 参数段为 `[Game Info]`，其余为对应数字节。缺少参数段或轴文件时报错，不回退到 TYPE 0。
 - 使用 `general_index` 选择配置中的 `GENERAL_<index>`。
 - 使用 `max_cascades` 限制单次 Spin 的最大连续消除次数。
 - 使用 `return_detail` 决定是否返回每轮消除明细。
@@ -125,27 +127,27 @@ Base 初始 Scatter 数量达到 3 个时跳过 Bonus 抽取。Base 和 Free 每
 
 普通免费触发 Bonus 后清空金色格；超级免费保留金色格到玩法结束。
 
-当 `remaining_spins=1` 且 `bonus_seen=False` 时，如果盘面仍没有 Bonus，会在最终无奖盘面随机选择一个非中奖位置强制放置 Bonus。
+当 `remaining_spins=1` 且 `bonus_seen=False` 时，初盘仍正常抽取 Scatter 和 Bonus，不强制生成 Bonus。只有本次正常生成流程结束后仍没有 Bonus，且全部消除已经结束、终盘不再中奖时，才从终盘可替换的 ID 3–12 普通图标中随机选择一个位置补入 Bonus。没有候选时不放置。
 
 ## 5. Bonus 类型选择
 
-`special/yngg_bonus.conf` 的 `[GENERAL]` 提供默认 Bonus 参数；当前 TYPE 对应的数字节逐字段覆盖默认值。例如 TYPE 0 先读取 `[GENERAL]`，再覆盖 `[0]` 中存在的字段；未覆盖字段继续继承 `[GENERAL]`。TYPE 4、8、12、17 没有独立 Bonus 节，继续使用原 `[GENERAL]`，不受 TYPE 0 调参影响。
+`special/yngg_bonus.conf` 只读取 `[GENERAL]`。所有 GROUP/TYPE 的主游戏、免费游戏及重翻共用其中的结果类型、金币、四叶草和 JP 参数，不读取数字节覆盖，也不再制作 TYPE 专属 Bonus 版本。切换 TYPE 不重新选择 Bonus 权重。
 
-`ActiveBonusTypeIndex` 记录当前已加载的 Bonus TYPE，切换 TYPE 时重新合并和校验，连续使用同一 TYPE 不重复解析。TYPE 专属字段存在但非法时直接报错，不回退到默认值；TYPE 0 → 4 → 0 必须分别恢复各自参数。主游戏、免费游戏及重翻均使用本次选定 TYPE 的合并结果。
+本次保留 `[GENERAL]` 原有数值，不将原 TYPE 0 的独立低权重移入公共段。共享范围仅为金色玩法内部的结果类型和奖励档位；普通轴、免费轴、初始特殊图标及掉落替换概率仍按各自 TYPE 配置。
 
 每个金色位置分两步抽取：
 
 1. 使用 `BONUS_SYMBOL_TYPE_PROBABILITY` 抽取类型。
 2. 根据类型读取对应的档位和档位权重。
 
-类型与 `BONUS_SYMBOL_TYPE` 按相同下标对应：
+类型下标固定为 `coin`、`clover`、`pot`、`jackpot`。`BONUS_SYMBOL_TYPE` 为兼容保留的可选文本，不参与类型选择；缺失、注释或改变其内容均不改变以下权重下标映射：
 
-| 类型 | TYPE 0 的 `[0]` | `[GENERAL]`，其他 TYPE 沿用 |
-| --- | ---: | ---: |
-| `coin` | 10000 | 1000 |
-| `clover` | 80 | 80 |
-| `pot` | 6 | 6 |
-| `jackpot` | 2 | 2 |
+| 类型 | 所有 GROUP/TYPE 共用的 `[GENERAL]` 权重 |
+| --- | ---: |
+| `coin` | 1000 |
+| `clover` | 80 |
+| `pot` | 6 |
+| `jackpot` | 2 |
 
 权重为相对权重，不要求合计为 10000。
 
@@ -158,9 +160,8 @@ Base 初始 Scatter 数量达到 3 个时跳过 Bonus 抽取。Base 和 Free 每
 
 先按权重抽取下标，再从同一下标读取金币倍数。各 TYPE 均保留 0.2、0.5、1、2、3、4、5、10、15、20、25、50、100、250、500 共 15 档。
 
-- TYPE 0 的 `[0]` 金币权重为 `170000,20000,10000,5000,2000,1000,500,200,100,50,25,10,5,2,1`，总权重 208893，条件平均倍数约 0.400325x。
-- `[GENERAL]` 金币权重保留 `1560,1240,1030,860,720,545,415,320,228,165,110,62,31,10,3`，其他 TYPE 继续沿用。
-- 所有金币档位保留正权重；TYPE 0 仅调整类型和金币档位权重，未删除高倍档位或改变金额单位。
+- 所有 GROUP/TYPE 共用 `[GENERAL]` 金币权重 `1560,1240,1030,860,720,545,415,320,228,165,110,62,31,10,3`，总权重 7299，抽中金币后的条件平均倍数约 4.516646x。
+- 所有金币档位保留正权重，金币倍数值与金额单位保持不变。
 
 ## 7. 四叶草档位
 
@@ -169,7 +170,7 @@ Base 初始 Scatter 数量达到 3 个时跳过 Bonus 抽取。Base 和 Free 每
 - `BONUS_CLOVER_MULTIPLE` 提供四叶草倍数档位。
 - `BONUS_CLOVER_MULTIPLE_PROBABILITY` 提供每个档位的抽取权重。
 
-先按权重抽取下标，再从同一下标读取四叶草倍数。当前 `[GENERAL]` 权重为 `40,28,16,10,5,1`；TYPE 0 未覆盖该项，继续继承。
+先按权重抽取下标，再从同一下标读取四叶草倍数。所有 GROUP/TYPE 共用 `[GENERAL]` 权重 `40,28,16,10,5,1`。
 
 ## 8. JP 档位
 
@@ -178,7 +179,7 @@ JP 使用两个按下标对应的数组：
 - `BONUS_JP_MULTIPLE` 按 MINI、MINOR、MAJOR、GRAND 顺序提供固定倍数。
 - `BONUS_JP_TYPE_PROBABILITY` 提供四个 JP 档位的抽取权重。
 
-先按权重抽取 JP 下标，再从同一下标读取 JP 倍数。当前 `[GENERAL]` 四档权重为 `80,25,8,1`；TYPE 0 未覆盖该项，继续继承，四档均保留正权重。
+先按权重抽取 JP 下标，再从同一下标读取 JP 倍数。所有 GROUP/TYPE 共用 `[GENERAL]` 四档权重 `80,25,8,1`，四档均保留正权重。
 
 ## 9. 聚宝盆重翻
 
@@ -213,19 +214,21 @@ JP 使用两个按下标对应的数组：
 python -B ThemeMath\yngg\build_from_demo.py --demo-dir <参考数据目录>
 ```
 
-生成内容包括游戏配置、Bonus 配置、普通轴、免费轴以及 FIX/ZERO 固定结果。Bonus 配置仅在文件缺失时初始化，已有文件整体保留，包括 `[GENERAL]` 与 TYPE 专属覆盖。TYPE 0 已有普通轴和免费轴文件保留当前校准内容，TYPE 4、8、12、17 的已有轴文件也保留；仅对超限轴值执行长度压缩，不用参考轴覆盖已有校准盘面或固定结果。缺少 TYPE 0 轴文件时，脚本才依据参考轴创建；其他 TYPE 轴文件缺失时，以 TYPE 0 内容创建待校准模板，不能将模板视为独立数值成果。
+生成内容包括游戏配置、Bonus 配置、普通轴、免费轴以及 FIX/ZERO 固定结果。Bonus 统一使用 `[GENERAL]`，不生成 TYPE 专属版本，并保留现有公共权重。TYPE 0 已有普通轴和免费轴文件保留当前校准内容，TYPE 4、8、12、17 的已有轴文件也保留；仅对超限轴值执行长度压缩，不用参考轴覆盖已有校准盘面或固定结果。缺少 TYPE 0 轴文件时，脚本才依据参考轴创建；其他 TYPE 轴文件缺失时，以 TYPE 0 内容创建待校准模板，不能将模板视为独立数值成果。
 
-`source_math.json` 的 TYPE 0 特殊图标概率和 Bonus 权重从保留后的实际配置读取：Bonus 先读取 `[GENERAL]`，再合并 `[0]` 覆盖，确保元数据反映当前生效值。文件中的四项 RTP 仍为上述校准目标，不代表实测结果。
+`source_math.json` 的 TYPE 0 特殊图标概率和共享 Bonus 权重从保留后的实际配置读取：特殊图标与 Scatter 转化参数读取服务器配置的 `[Game Info]`；Bonus 只读取 `[GENERAL]`，类型顺序固定为 coin、clover、pot、jackpot，确保元数据反映当前生效值。文件中的四项 RTP 仍为上述校准目标，不代表实测结果。
 
-生成脚本同时维护控制组配置、五个 TYPE 参数段和回放金币门槛。当前控制组为 GROUP 0、4、8、12、17，控制值分别为 `1`、`401`、`801`、`1201`、`1701`，按 `control_type * 100 + control_num` 编码。两组砍分数组按 GROUP 0–17 排列，GROUP 0/4/8/12/17 的阈值分别为 5000/12000/1000/20/1000；没有配置的 GROUP 下标为 `0`。GROUP 13、14 仍缺少对应控制组，本次未补齐。
+生成脚本同时维护控制组配置、TYPE 0 的 `[Game Info]` 参数、其他 TYPE 数字段和回放金币门槛。当前控制组为 GROUP 0、4、8、12、17，控制值分别为 `1`、`401`、`801`、`1201`、`1701`，按 `control_type * 100 + control_num` 编码。两组砍分数组按 GROUP 0–17 排列，GROUP 0/4/8/12/17 的阈值分别为 5000/12000/1000/20/1000；没有配置的 GROUP 下标为 `0`。GROUP 13、14 仍缺少对应控制组，本次未补齐。
 
-`special/yngg_control.conf` 中原为 `80000` 的控制押注已调整为当前最低有效押注 `100000`。本次只调整 TYPE 0 的普通轴、免费轴、专属特殊图标参数和 Bonus 覆盖权重；TYPE 4、8、12、17 保留原配置，需另行校准并验证 RTP。Python 仿真尚不执行 GROUP 选择和服务器砍分。GROUP 17 的免费道具卡还缺少各道具的押注索引与品质，按本次要求暂不修改 `special/slot_prop_config.conf`。`replay_min_win_money` 按金币单位设置为 `3000000000`，回放开关仍由全局配置控制。
+`special/yngg_control.conf` 中原为 `80000` 的控制押注已调整为当前最低有效押注 `100000`。此前仅校准 TYPE 0 的普通轴、免费轴和特殊图标参数；TYPE 4、8、12、17 的轴与特殊图标参数保留原值。当前各 GROUP/TYPE 的 Bonus 奖励统一使用 `[GENERAL]`，各 TYPE RTP 需重新仿真确认。Python 仿真尚不执行 GROUP 选择和服务器砍分。GROUP 17 的免费道具卡还缺少各道具的押注索引与品质，按本次要求暂不修改 `special/slot_prop_config.conf`。`replay_min_win_money` 按金币单位设置为 `3000000000`，回放开关仍由全局配置控制。
 
-## 12. TYPE 0 RTP 校准结果（2026-10-15）
+## 12. TYPE 0 RTP 历史校准记录（2026-10-15，服务器逻辑对齐前）
 
-本次仅调整 GROUP 0 对应的 TYPE 0；GENERAL 1，正常盘权重 `100,0,0,0`。从已保存的实际配置启动四个独立仿真，每个随机种子运行25万次付费 Base，共100万次；每次包含其触发的全部 Free 和重触发结算。四项 RTP 均以付费 Base 的累计下注为分母。
+本节保留此前校准使用的旧逻辑与旧 TYPE 0 Bonus `[0]` 覆盖权重记录。此后已按新版服务器修改参数段读取、固定 Bonus 类型顺序以及 Free 初盘和终盘保底流程，并取消所有数字节 Bonus 覆盖、统一使用原 `[GENERAL]`。以下数值不代表修改后逻辑或共享权重的验证结果，当前版本需重新仿真。
 
-| 分项 | 大致目标 | 百万局实测 |
+当时仅调整 GROUP 0 对应的 TYPE 0；GENERAL 1，正常盘权重 `100,0,0,0`。从当时已保存的实际配置启动四个独立仿真，每个随机种子运行25万次付费 Base，共100万次；每次包含其触发的全部 Free 和重触发结算。四项 RTP 均以付费 Base 的累计下注为分母。
+
+| 分项 | 大致目标 | 旧逻辑百万局实测 |
 | --- | ---: | ---: |
 | Base 消除 | 55.00% | 55.20% |
 | Base Bonus | 10.00% | 10.10% |
@@ -233,10 +236,10 @@ python -B ThemeMath\yngg\build_from_demo.py --demo-dir <参考数据目录>
 | Free Bonus | 20.00% | 20.75% |
 | 合计 | 98.00% | 98.98% |
 
-Free 合计为 33.69%，接近33%的目标。Free 触发率为 0.9302%，Base Bonus 触发率为 2.2838%。样本中包含 GRAND 等低概率大奖，实测结果会随种子波动；本次保留所有奖励档位及其正权重。
+旧样本中 Free 合计为 33.69%，接近33%的目标。Free 触发率为 0.9302%，Base Bonus 触发率为 2.2838%。样本中包含 GRAND 等低概率大奖，实测结果会随种子波动；当时保留了所有奖励档位及其正权重。
 
-校准通过 TYPE 0 主盘及免费轴调整消除占比，通过 `[0]` 的 Scatter / Base 有奖 Bonus 生成权重调整触发，并以 Bonus `[0]` 的类型、金币档位权重控制奖励期望。其他 TYPE 的轴、服务器参数、Bonus 默认段及公共赔率均保留。
+当时校准通过 TYPE 0 主盘及免费轴调整消除占比，通过服务器配置 `[0]` 的 Scatter / Base 有奖 Bonus 生成权重调整触发，并以当时的 Bonus `[0]` 类型、金币档位权重控制奖励期望。当前 TYPE 0 特殊图标参数已改为读取 `[Game Info]`，Bonus `[0]` 覆盖已取消；所有 GROUP/TYPE 共用原 `[GENERAL]`。其他 TYPE 的轴、特殊图标参数及公共赔率均保留。
 
-随机种子为20261015、20261016、20261017、20261018，使用 `simulation.simulation(spin_times=250000, index=0, general_index=1, report_interval=0, seed=Seed)` 逐组复现。分组明细、标准误、35份配置指纹及运行代码指纹见 [`rtp_calibration.json`](rtp_calibration.json)。56项测试通过，31份非目标配置文件完整哈希不变，TYPE 往返切换验证无权重串用。
+随机种子为20261015、20261016、20261017、20261018，当时使用 `simulation.simulation(spin_times=250000, index=0, general_index=1, report_interval=0, seed=Seed)` 逐组运行；复现旧结果需使用记录对应的代码和配置版本。分组明细、标准误、35份配置指纹及运行代码指纹见 [`rtp_calibration.json`](rtp_calibration.json)，原始证据未改写。当时56项测试通过，31份非目标配置文件完整哈希不变，TYPE 往返切换验证无权重串用。
 
-数据为 Python 自然概率仿真，未执行服务器 GROUP 选择及砍分。服务器工具需完成《yngg_服务器逻辑修改说明》中的两个 P0 项，并按当前 TYPE 合并 Bonus 配置，才能使用本次权重。
+上述数据为旧逻辑的 Python 自然概率仿真，未执行服务器 GROUP 选择及砍分。新版服务器已修复档位权重抽取和金币字段、单位问题；当前本地与服务器均只读取共享 Bonus `[GENERAL]`，无需按 TYPE 合并 Bonus 权重。

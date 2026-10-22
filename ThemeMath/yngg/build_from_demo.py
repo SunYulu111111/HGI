@@ -309,10 +309,22 @@ def write_game_config(demo_dir: Path) -> None:
 
 
 def write_bonus_config() -> None:
-    """Initialize missing Bonus weights and preserve existing TYPE tuning."""
+    """Preserve shared GENERAL weights and remove legacy TYPE overrides."""
 
     BonusPath = THEME_DIR / "special" / "yngg_bonus.conf"
     if BonusPath.exists():
+        Content = BonusPath.read_bytes().decode("utf-8")
+        SharedLines = []
+        InTypeSection = False
+        for Line in Content.splitlines(keepends=True):
+            Match = re.fullmatch(r"\s*\[([^\]]+)\]\s*(?:[#;].*)?", Line.lstrip("\ufeff").strip())
+            if Match:
+                InTypeSection = Match.group(1).strip().isdecimal()
+            if not InTypeSection:
+                SharedLines.append(Line)
+        SharedContent = "".join(SharedLines)
+        if SharedContent != Content:
+            BonusPath.write_bytes(SharedContent.encode("utf-8"))
         return
 
     lines = [
@@ -329,8 +341,7 @@ def write_bonus_config() -> None:
         "# JP档位权重，与BONUS_JP_MULTIPLE按下标对应。",
         "BONUS_JP_TYPE_PROBABILITY=80,25,8,1",
         "",
-        "# 金色框位置类型及对应权重：金币/四叶草/聚宝盆/JP。",
-        "BONUS_SYMBOL_TYPE=coin,clover,pot,jackpot",
+        "# 金色框位置类型固定按金币/四叶草/聚宝盆/JP排列，权重按该顺序对应。",
         "BONUS_SYMBOL_TYPE_PROBABILITY=1000,80,6,2",
         "",
         "# 金币档位及对应权重，两个数组按下标对应。",
@@ -428,6 +439,49 @@ def write_reel_config(
             fit_existing_reel_file(type_path)
 
 
+def migrate_type_zero_server_config(Content: str) -> str:
+    """Fill missing Game Info fields from legacy TYPE 0 and retain published values."""
+
+    Lines = Content.splitlines(keepends=True)
+    Sections = []
+    for Position, Line in enumerate(Lines):
+        Match = re.fullmatch(r"\s*\[([^\]]+)\]\s*", Line.strip())
+        if Match:
+            Sections.append((Position, Match.group(1)))
+    ZeroStart = next((Position for Position, Name in Sections if Name == "0"), None)
+    if ZeroStart is None:
+        return Content
+    if not any(Name == "Game Info" for _, Name in Sections):
+        raise ValueError("cannot migrate TYPE [0] without [Game Info]")
+    ZeroEnd = next((Position for Position, _ in Sections if Position > ZeroStart), len(Lines))
+    ZeroLines = Lines[ZeroStart + 1:ZeroEnd]
+
+    def AssignmentKey(Line: str) -> str | None:
+        Stripped = Line.lstrip()
+        if Stripped.startswith(("#", ";")) or "=" not in Stripped:
+            return None
+        return Stripped.split("=", 1)[0].strip()
+
+    InfoStart = next(Position for Position, Name in Sections if Name == "Game Info")
+    InfoEnd = next((Position for Position, _ in Sections if Position > InfoStart), len(Lines))
+    InfoKeys = {AssignmentKey(Line) for Line in Lines[InfoStart + 1:InfoEnd]} - {None}
+    MigratedLines = [Line for Line in ZeroLines if AssignmentKey(Line) not in InfoKeys]
+    Result = Lines[:Sections[0][0]]
+    for SectionIndex, (Start, Name) in enumerate(Sections):
+        End = Sections[SectionIndex + 1][0] if SectionIndex + 1 < len(Sections) else len(Lines)
+        if Name == "0":
+            continue
+        Block = Lines[Start:End]
+        if Name == "Game Info":
+            if Block and not Block[-1].endswith(("\r", "\n")):
+                Block[-1] += "\n"
+            Block.extend(MigratedLines)
+            if Block and not Block[-1].endswith(("\r", "\n")):
+                Block[-1] += "\n"
+        Result.extend(Block)
+    return "".join(Result)
+
+
 def update_type_zero_metadata(Metadata: dict) -> None:
     """Read the published TYPE 0 parameters after preserving tuned configs."""
 
@@ -437,8 +491,8 @@ def update_type_zero_metadata(Metadata: dict) -> None:
     Bonus.optionxform = str
     Server.read(THEME_DIR / "special/yngg_game_server.conf", encoding="utf-8-sig")
     Bonus.read(THEME_DIR / "special/yngg_bonus.conf", encoding="utf-8-sig")
-    if Server.has_section("0"):
-        TypeZero = Server["0"]
+    if Server.has_section("Game Info"):
+        TypeZero = Server["Game Info"]
         Fields = (
             ("scatter_count_weights", "ScatterCountProbability"),
             ("free_scatter_count_weights", "FreeScatterCountProbability"),
@@ -456,12 +510,18 @@ def update_type_zero_metadata(Metadata: dict) -> None:
         Probability = int(TypeZero["SuperScatterProbability"])
         Metadata["super_scatter_conversion"]["probability_per_10000"] = Probability
         Metadata["super_scatter_conversion"]["probability"] = str(Probability / 10000)
+        Metadata["special_symbol_generation"]["ConfigSection"] = "Game Info"
     Metadata["super_scatter_conversion"]["free_initial_rolls"] = 0
     Metadata["super_scatter_conversion"]["free_drop_scatter_rolls_when_no_super"] = False
+    Metadata["special_symbol_generation"].update({
+        "FreeInitialBonusMaxScatterCount": 2,
+        "FreeBonusGuaranteeStage": "FinalBoard",
+        "FreeBonusGuaranteeRequiresUnseen": True,
+        "FreeBonusGuaranteeRemainingSpins": 1,
+    })
+    Metadata["bonus_generation"]["SymbolTypeOrderFixed"] = True
     if Bonus.has_section("GENERAL"):
         Effective = dict(Bonus["GENERAL"])
-        if Bonus.has_section("0"):
-            Effective.update(Bonus["0"])
         for Field, Key in (
             ("symbol_type_weights", "BONUS_SYMBOL_TYPE_PROBABILITY"),
             ("coin_value_weights", "BONUS_COIN_MULTIPLE_PROBABILITY"),
@@ -471,8 +531,9 @@ def update_type_zero_metadata(Metadata: dict) -> None:
             Metadata["bonus_generation"][Field] = [
                 int(Value.strip()) for Value in Effective[Key].split(",")
             ]
-        Metadata["bonus_generation"]["TypeIndex"] = 0
-        Metadata["bonus_generation"]["ConfigSectionOrder"] = ["GENERAL", "0"]
+        Metadata["bonus_generation"].pop("TypeIndex", None)
+        Metadata["bonus_generation"]["ConfigSectionOrder"] = ["GENERAL"]
+        Metadata["bonus_generation"]["SharedAcrossTypes"] = True
 
 
 def write_metadata(demo_dir: Path) -> None:
@@ -593,15 +654,6 @@ def write_metadata(demo_dir: Path) -> None:
         encoding="utf-8",
     )
     server_path = THEME_DIR / "special" / "yngg_game_server.conf"
-    existing_type_lines = {}
-    if server_path.exists():
-        old_lines = server_path.read_text(encoding="utf-8-sig").splitlines()
-        for position, line in enumerate(old_lines):
-            match = re.fullmatch(r"\[(\d+)\]", line.strip())
-            if match and int(match.group(1)) in ConfiguredTypes:
-                end = next((offset for offset in range(position + 1, len(old_lines))
-                            if old_lines[offset].strip().startswith("[")), len(old_lines))
-                existing_type_lines[int(match.group(1))] = old_lines[position:end]
     server_lines = [
                 "[System Base Info]",
                 "#相同配置",
@@ -658,7 +710,6 @@ def write_metadata(demo_dir: Path) -> None:
                 "#Grand",
                 "BONUS_10 = 10",
                 "",
-                "[0]",
                 "#TYPE 0的主游戏与免费游戏特殊图标生成参数",
                 "#Base初始及掉落Scatter使用；已有Super时不再转化，Free不生成Super，200/10000=1/50",
                 "SuperScatterProbability=200",
@@ -670,9 +721,9 @@ def write_metadata(demo_dir: Path) -> None:
                 "BaseNoWinBonusCountProbability=98,2",
                 "#Base中Scatter数量小于等于2且有奖时，Bonus数量0/1的权重；配合中奖率使金色玩法约1/75",
                 "BaseWinBonusCountProbability=92,8",
-                "#Free已有金框时，Bonus数量0/1的权重",
+                "#Free Scatter数量不超过2且已有金框时，Bonus数量0/1的权重",
                 "FreeGoldenBonusCountProbability=60,40",
-                "#Free没有金框时，Bonus数量0/1的权重",
+                "#Free Scatter数量不超过2且没有金框时，Bonus数量0/1的权重",
                 "FreeNoGoldenBonusCountProbability=30,70",
                 "#掉落图标替换结果权重：不替换/Scatter/Bonus；Base每轮掉落至多放置1个",
                 "DropSpecialSymbolProbability=998,1,1",
@@ -680,20 +731,28 @@ def write_metadata(demo_dir: Path) -> None:
                 "FreeDropSpecialSymbolProbability=998,1,1",
                 "",
             ]
-    type_start = server_lines.index("[0]")
+    type_start = server_lines.index("#TYPE 0的主游戏与免费游戏特殊图标生成参数")
     type_template = server_lines[type_start:]
-    server_lines = server_lines[:type_start]
+    if server_path.exists():
+        Original = server_path.read_text(encoding="utf-8-sig")
+        Content = migrate_type_zero_server_config(Original)
+        Existing = ConfigParser(interpolation=None)
+        Existing.read_string(Content)
+    else:
+        Original = None
+        Content = "\n".join(server_lines).rstrip() + "\n"
+        Existing = ConfigParser(interpolation=None)
+        Existing.read_string(Content)
     for type_index in ConfiguredTypes:
-        if type_index in existing_type_lines:
-            server_lines.extend(existing_type_lines[type_index])
-        else:
-            server_lines.extend(
+        if type_index != 0 and not Existing.has_section(str(type_index)):
+            Content = Content.rstrip() + "\n\n" + "\n".join(
                 [f"[{type_index}]"] + [
                     line.replace("#TYPE 0的", f"#TYPE {type_index}的")
-                    for line in type_template[1:]
+                    for line in type_template
                 ]
-            )
-    server_path.write_text("\n".join(server_lines).rstrip() + "\n", encoding="utf-8")
+            ).rstrip() + "\n"
+    if Content != Original:
+        server_path.write_text(Content, encoding="utf-8")
     update_type_zero_metadata(metadata)
     (THEME_DIR / "source_math.json").write_text(
         json.dumps(metadata, ensure_ascii=False, indent=2) + "\n",

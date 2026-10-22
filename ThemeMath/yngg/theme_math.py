@@ -69,12 +69,10 @@ class ThemeMath(CountGame):
         if not self.game_server_config.has_section("Game Info"):
             raise ValueError(f"{self.game_server_config_file} missing [Game Info]")
         game_info = self.game_server_config["Game Info"]
-        self.ConfiguredTypes = tuple(
+        self.ConfiguredTypes = (0,) + tuple(
             sorted(int(section) for section in self.game_server_config.sections()
-                   if section.isdecimal())
+                   if section.isdecimal() and int(section) != 0)
         )
-        if 0 not in self.ConfiguredTypes:
-            raise ValueError(f"{self.game_server_config_file} missing TYPE [0]")
         self.FreeSpinCounts = tuple(self._parse_int_list(game_info.get("FreeSpinCounts", "")))
         self.FreeSpinRetrigger = tuple(self._parse_int_list(game_info.get("FreeSpinRetrigger", "")))
         if len(self.FreeSpinCounts) != 2 or any(value <= 0 for value in self.FreeSpinCounts):
@@ -168,7 +166,7 @@ class ThemeMath(CountGame):
     def _activate_type(self, index: int) -> None:
         if index not in self.ConfiguredTypes:
             raise ValueError(f"unsupported yngg TYPE {index}: missing [{index}] in game server config")
-        type_info = self.game_server_config[str(index)]
+        type_info = self.game_server_config["Game Info" if index == 0 else str(index)]
         self.SUPER_SCATTER_PROBABILITY = int(type_info["SuperScatterProbability"])
         if not 0 <= self.SUPER_SCATTER_PROBABILITY <= self.PROBABILITY_DENOMINATOR:
             raise ValueError(f"TYPE {index} SuperScatterProbability must be between 0 and 10000")
@@ -177,25 +175,16 @@ class ThemeMath(CountGame):
             self._validate_weighted_options(key, tuple(range(expected_length)), weights)
             setattr(self, attribute, weights)
         self.ActiveTypeIndex = index
-        if (
-            hasattr(self, "bonus_config")
-            and getattr(self, "ActiveBonusTypeIndex", None) != index
-        ):
-            self._load_bonus_config()
 
     def _load_bonus_config(self) -> None:
+        """Load the shared GENERAL Bonus parameters for every TYPE."""
+
         if not self.bonus_config.has_section("GENERAL"):
             raise ValueError(f"{self.bonus_config_file} missing [GENERAL]")
         BonusValues = dict(self.bonus_config["GENERAL"])
-        TypeSection = str(self.ActiveTypeIndex)
-        if self.bonus_config.has_section(TypeSection):
-            BonusValues.update(self.bonus_config[TypeSection])
 
-        SymbolTypes = tuple(
-            value.strip().lower()
-            for value in BonusValues.get("BONUS_SYMBOL_TYPE", "").split(",")
-            if value.strip()
-        )
+        # The server fixes these four indexes; the optional name list is ignored.
+        SymbolTypes = self.ALLOWED_BONUS_TYPES
         SymbolWeights = tuple(
             self._parse_int_list(BonusValues.get("BONUS_SYMBOL_TYPE_PROBABILITY", ""))
         )
@@ -220,13 +209,6 @@ class ThemeMath(CountGame):
 
         if len(JackpotValues) != len(self.JACKPOT_TIERS):
             raise ValueError("BONUS_JP_MULTIPLE must configure four JP tiers")
-        if (
-            len(SymbolTypes) != len(set(SymbolTypes))
-            or set(SymbolTypes) != set(self.ALLOWED_BONUS_TYPES)
-        ):
-            raise ValueError(
-                "BONUS_SYMBOL_TYPE must contain coin, clover, pot and jackpot once"
-            )
         self._validate_weighted_options(
             "BONUS_SYMBOL_TYPE",
             SymbolTypes,
@@ -262,7 +244,6 @@ class ThemeMath(CountGame):
         self.CLOVER_MULTIPLIER_WEIGHTS = CloverWeights
         self.JACKPOT_TYPE_WEIGHTS = JackpotWeights
         self.JACKPOT_MULTIPLIERS = dict(zip(self.JACKPOT_TIERS, JackpotValues))
-        self.ActiveBonusTypeIndex = self.ActiveTypeIndex
 
     def apply_super_scatter_conversion(
         self,
@@ -384,16 +365,20 @@ class ThemeMath(CountGame):
         remaining_spins: int | None = None,
         bonus_seen: bool = False,
     ) -> list[int]:
-        """Choose initial Scatter and Bonus counts from server-configured weights."""
+        """Choose counts using actual Scatter placements and remaining slots."""
 
         scatter_weights = (
             self.FREE_SCATTER_COUNT_WEIGHTS
             if free_game
             else self.SCATTER_COUNT_WEIGHTS
         )
-        scatter_count = self.weighted_random_index(scatter_weights)
+        CandidateCount = len(self.get_nonwinning_symbol_positions(
+            item_list, free_game=free_game,
+        ))
+        scatter_count = min(self.weighted_random_index(scatter_weights), CandidateCount)
         special_symbol_ids = [self.FREE_SPIN_ID] * scatter_count
-        bonus_count = 0
+        if scatter_count > 2 or scatter_count >= CandidateCount:
+            return special_symbol_ids
 
         if free_game:
             bonus_weights = (
@@ -401,10 +386,7 @@ class ThemeMath(CountGame):
                 if golden_squares
                 else self.FREE_NO_GOLDEN_BONUS_COUNT_WEIGHTS
             )
-            bonus_count = self.weighted_random_index(bonus_weights)
-            if remaining_spins == 1 and not bonus_seen:
-                bonus_count = max(bonus_count, 1)
-        elif scatter_count <= 2:
+        else:
             win_result = self.cal_item_list(
                 item_list,
                 return_detail=True,
@@ -417,8 +399,7 @@ class ThemeMath(CountGame):
                 if win_result["total_win"] > 0
                 else self.BASE_NO_WIN_BONUS_COUNT_WEIGHTS
             )
-            bonus_count = self.weighted_random_index(bonus_weights)
-
+        bonus_count = self.weighted_random_index(bonus_weights)
         special_symbol_ids.extend([self.FEATURE_ID] * bonus_count)
         return special_symbol_ids
 

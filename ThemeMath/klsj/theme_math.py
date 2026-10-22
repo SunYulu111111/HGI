@@ -1,4 +1,4 @@
-"""恐龙世界数值结算：六列变高 Ways、框转换、连消和免费游戏。"""
+"""恐龙世界数值结算：六列固定高度 Ways、框转换、连消和免费游戏。"""
 
 from __future__ import annotations
 
@@ -36,7 +36,6 @@ class ThemeMath(WaysGame):
     FrameColumns = (1, 2, 3, 4)  # 列索引从 0 开始，对应第 2～5 列
     SilverFrameHeights = (2, 3, 4)
     ChanceBase = 10000
-    MinimumReelHeight = 2
     MainMultiplierCap = 5
     FreeSpinMultiplierIncrementCap = 4
     FreeTriggerScatterCount = 4
@@ -58,7 +57,7 @@ class ThemeMath(WaysGame):
             **kwargs,
         )
         if self.config.col_count != 6 or self.config.row_count != 6 or self.config.item_count != 13:
-            raise ValueError("klsj requires 6 columns, maximum height 6, and 13 symbols")
+            raise ValueError("klsj requires 6 columns of fixed height 6, and 13 symbols")
         self._validate_game_protocol(self.project_dir / game_config_file)
         server_path = self.project_dir / game_server_config_file
         server = ConfigParser(inline_comment_prefixes=("#", ";"))
@@ -66,7 +65,6 @@ class ThemeMath(WaysGame):
         if not server.read(server_path, encoding="utf-8-sig") or not server.has_section("Game Info"):
             raise ValueError(f"missing [Game Info]: {server_path}")
         info = server["Game Info"]
-        self.ReelHeightWeights = self._parse_height_weights(info)
         # 各列权重与固定顺序的图标高度拆分一一对应。
         self.MainHeightPatterns = self._canonical_patterns(6)
         self.FreeHeightPatterns = self._canonical_patterns(6)
@@ -222,21 +220,6 @@ class ThemeMath(WaysGame):
         return weights
 
     @classmethod
-    def _parse_height_weights(cls, info) -> list[list[int]]:
-        if "ReelHeightWeights" in info:
-            raise ValueError("use per-column ReelHeightWeights1..6 fields")
-        groups = []
-        for column in range(1, 7):
-            key = f"ReelHeightWeights{column}"
-            if key not in info:
-                raise ValueError(f"missing physical height field: {key}")
-            try:
-                groups.append(cls._parse_weights(info[key], 5))
-            except ValueError as exc:
-                raise ValueError(f"{key}: {exc}") from exc
-        return groups
-
-    @classmethod
     def _canonical_patterns(cls, total_height: int) -> list[tuple[int, ...]]:
         """按固定顺序列出总高度的拆分，每个图标高度为 1～4。"""
 
@@ -262,6 +245,8 @@ class ThemeMath(WaysGame):
                 for height in range(2, 7):
                     expected.add(f"{mode}_elim_height_weight_{column}_{height}")
         for key in info:
+            if key.startswith("ReelHeightWeights"):
+                raise ValueError(f"{key} is unsupported: each column has fixed physical height 6")
             legacy = key.startswith((
                 "MainHeight", "FreeHeight", "MainEliminationHeight", "FreeEliminationHeight"
             )) or key in ("MainMaxEliminationTimes", "FreeMaxEliminationTimes")
@@ -335,9 +320,11 @@ class ThemeMath(WaysGame):
     def _select_layout(
         self, total_height: int, col: int, free_game: bool, initial: bool
     ) -> tuple[int, ...]:
+        if initial and total_height != self.config.row_count:
+            raise ValueError("initial column physical height must be 6")
         if total_height <= 0:
             return ()
-        if initial and total_height == 6:
+        if initial:
             patterns = self.FreeHeightPatterns if free_game else self.MainHeightPatterns
             weights = (self.FreeHeightWeights if free_game else self.MainHeightWeights)[col]
         else:
@@ -494,10 +481,7 @@ class ThemeMath(WaysGame):
             max_cascades,
             self.FreeMaxEliTimes if free_game else self.BaseMaxEliTimes,
         )
-        heights = [
-            self.MinimumReelHeight + self._weighted_index(weights)
-            for weights in self.ReelHeightWeights
-        ]
+        heights = [self.config.row_count] * self.config.col_count
         raw_board = self.spin(
             index=index,
             general_index=general_index,

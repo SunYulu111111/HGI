@@ -68,59 +68,60 @@ class ThemeMathTest(unittest.TestCase):
         self.assertEqual(self.math.COIN_MULTI_2, 25)
         self.assertEqual(self.math.BONUS_MAX_ROUND, 5)
 
-    def test_type_bonus_overrides_inherit_and_switch_without_leaking(self):
+    def test_all_types_share_general_bonus_despite_conflicting_legacy_sections(self):
         General = self.math.bonus_config["GENERAL"]
         Text = "[GENERAL]\n" + "\n".join(
             f"{Key}={Value}" for Key, Value in General.items()
         )
-        TypeWeights = (10000, 80, 6, 2)
-        CoinWeights = (1,) * len(self.math.COIN_VALUES)
         Text += (
             "\n[0]\nBONUS_SYMBOL_TYPE_PROBABILITY=10000,80,6,2\n"
             "BONUS_COIN_MULTIPLE_PROBABILITY="
-            + ",".join(map(str, CoinWeights)) + "\n"
+            + ",".join(["1"] * len(self.math.COIN_VALUES)) + "\n"
+            "[4]\nBONUS_JP_TYPE_PROBABILITY=0,0,0,0\n"
+            "BONUS_COIN_MULTIPLE=invalid\n"
         )
+        Attributes = (
+            "BONUS_SYMBOL_TYPES", "BONUS_SYMBOL_TYPE_WEIGHTS", "COIN_VALUES",
+            "COIN_VALUE_WEIGHTS", "GREEN_CLOVER_MULTIPLIERS",
+            "CLOVER_MULTIPLIER_WEIGHTS", "JACKPOT_MULTIPLIERS", "JACKPOT_TYPE_WEIGHTS",
+        )
+        Expected = tuple(getattr(self.math, Attribute) for Attribute in Attributes)
         with TemporaryDirectory() as Directory:
             ConfigPath = Path(Directory) / "bonus.conf"
             ConfigPath.write_text(Text, encoding="utf-8")
             Game = ThemeMath(bonus_config_file=str(ConfigPath))
-            self.assertEqual(Game.ActiveBonusTypeIndex, 0)
-            self.assertEqual(Game.BONUS_SYMBOL_TYPE_WEIGHTS, TypeWeights)
-            self.assertEqual(Game.COIN_VALUE_WEIGHTS, CoinWeights)
-            self.assertEqual(Game.COIN_VALUES, self.math.COIN_VALUES)
-            self.assertEqual(
-                Game.CLOVER_MULTIPLIER_WEIGHTS,
-                tuple(Game._parse_int_list(General["BONUS_CLOVER_MULTIPLE_PROBABILITY"])),
-            )
-            with patch.object(
-                Game, "_load_bonus_config", wraps=Game._load_bonus_config
-            ) as Loader:
-                Game._activate_type(0)
-                Game._activate_type(0)
+            self.assertEqual(tuple(getattr(Game, Attribute) for Attribute in Attributes), Expected)
+            self.assertFalse(hasattr(Game, "ActiveBonusTypeIndex"))
+            with patch.object(Game, "_load_bonus_config", wraps=Game._load_bonus_config) as Loader:
+                for TypeIndex in (0, 4, 8, 12, 17, 0):
+                    with self.subTest(TypeIndex=TypeIndex):
+                        Game._load_reel_config(TypeIndex, 1)
+                        self.assertEqual(Game.ActiveTypeIndex, TypeIndex)
+                        self.assertEqual(tuple(getattr(Game, Attribute) for Attribute in Attributes), Expected)
+                        Game._load_reel_config(
+                            TypeIndex, 1, "free_reel_config", "yngg_free_rand_ex_{index}.conf"
+                        )
+                        self.assertEqual(Game.ActiveTypeIndex, TypeIndex)
+                        self.assertEqual(tuple(getattr(Game, Attribute) for Attribute in Attributes), Expected)
                 Loader.assert_not_called()
-                Game._activate_type(4)
-                Game._activate_type(4)
-                self.assertEqual(Loader.call_count, 1)
-                self.assertEqual(Game.ActiveBonusTypeIndex, 4)
-                self.assertEqual(
-                    Game.BONUS_SYMBOL_TYPE_WEIGHTS,
-                    tuple(Game._parse_int_list(General["BONUS_SYMBOL_TYPE_PROBABILITY"])),
-                )
-                self.assertEqual(
-                    Game.COIN_VALUE_WEIGHTS,
-                    tuple(Game._parse_int_list(General["BONUS_COIN_MULTIPLE_PROBABILITY"])),
-                )
-                Game._activate_type(0)
-                self.assertEqual(Loader.call_count, 2)
-                self.assertEqual(Game.ActiveBonusTypeIndex, 0)
-                self.assertEqual(Game.BONUS_SYMBOL_TYPE_WEIGHTS, TypeWeights)
-                self.assertEqual(Game.COIN_VALUE_WEIGHTS, CoinWeights)
 
-    def test_invalid_type_bonus_overrides_fail_validation(self):
-        GeneralText = "[GENERAL]\n" + "\n".join(
-            f"{Key}={Value}"
-            for Key, Value in self.math.bonus_config["GENERAL"].items()
-        )
+    def test_bonus_symbol_type_order_is_fixed_when_legacy_field_is_missing_or_changed(self):
+        General = self.math.bonus_config["GENERAL"]
+        General.pop("BONUS_SYMBOL_TYPE", None)
+        ExpectedTypes = ("coin", "clover", "pot", "jackpot")
+        self.math._load_bonus_config()
+        self.assertEqual(self.math.BONUS_SYMBOL_TYPES, ExpectedTypes)
+        for LegacyTypes in ("jackpot,pot,clover,coin", "rainbow", ""):
+            with self.subTest(LegacyTypes=LegacyTypes):
+                General["BONUS_SYMBOL_TYPE"] = LegacyTypes
+                self.math._load_bonus_config()
+                self.assertEqual(self.math.BONUS_SYMBOL_TYPES, ExpectedTypes)
+                with patch.object(self.math, "weighted_random_index", side_effect=[0, 0]):
+                    Reveals = self.math.generate_golden_round({(0, 0)})
+                self.assertEqual(Reveals[0]["type"], "coin")
+                self.assertEqual(Reveals[0]["value"], self.math.COIN_VALUES[0])
+
+    def test_invalid_general_bonus_values_fail_validation(self):
         Cases = (
             ("BONUS_SYMBOL_TYPE_PROBABILITY", "0,0,0,0", "BONUS_SYMBOL_TYPE"),
             ("BONUS_COIN_MULTIPLE_PROBABILITY", "1,2", "BONUS_COIN_MULTIPLE"),
@@ -132,31 +133,26 @@ class ThemeMathTest(unittest.TestCase):
             ConfigPath = Path(Directory) / "bonus.conf"
             for Key, Value, Error in Cases:
                 with self.subTest(Field=Key, Value=Value):
-                    ConfigPath.write_text(
-                        GeneralText + f"\n[0]\n{Key}={Value}\n", encoding="utf-8"
+                    General = dict(self.math.bonus_config["GENERAL"])
+                    OriginalValue = General[Key]
+                    General[Key] = Value
+                    Text = "[GENERAL]\n" + "\n".join(
+                        f"{Field}={Option}" for Field, Option in General.items()
                     )
+                    Text += f"\n[0]\n{Key}={OriginalValue}\n[4]\n{Key}={OriginalValue}\n"
+                    ConfigPath.write_text(Text, encoding="utf-8")
                     with self.assertRaisesRegex(ValueError, Error):
                         ThemeMath(bonus_config_file=str(ConfigPath))
 
-    def test_invalid_type_bonus_does_not_replace_active_values(self):
-        GeneralText = "[GENERAL]\n" + "\n".join(
-            f"{Key}={Value}"
-            for Key, Value in self.math.bonus_config["GENERAL"].items()
-        )
-        with TemporaryDirectory() as Directory:
-            ConfigPath = Path(Directory) / "bonus.conf"
-            ConfigPath.write_text(
-                GeneralText + "\n[4]\nBONUS_JP_TYPE_PROBABILITY=0,0,0,0\n",
-                encoding="utf-8",
-            )
-            Game = ThemeMath(bonus_config_file=str(ConfigPath))
-            OriginalWeights = Game.JACKPOT_TYPE_WEIGHTS
-            with self.assertRaisesRegex(ValueError, "BONUS_JP_MULTIPLE"):
-                Game._activate_type(4)
-            self.assertEqual(Game.ActiveBonusTypeIndex, 0)
-            self.assertEqual(Game.JACKPOT_TYPE_WEIGHTS, OriginalWeights)
-            Game._activate_type(0)
-            self.assertEqual(Game.JACKPOT_TYPE_WEIGHTS, OriginalWeights)
+    def test_invalid_general_bonus_reload_does_not_replace_active_values(self):
+        OriginalWeights = self.math.JACKPOT_TYPE_WEIGHTS
+        self.math.bonus_config["GENERAL"]["BONUS_JP_TYPE_PROBABILITY"] = "0,0,0,0"
+        with self.assertRaisesRegex(ValueError, "BONUS_JP_MULTIPLE"):
+            self.math._load_bonus_config()
+        self.assertEqual(self.math.JACKPOT_TYPE_WEIGHTS, OriginalWeights)
+        self.math._activate_type(4)
+        self.math._activate_type(0)
+        self.assertEqual(self.math.JACKPOT_TYPE_WEIGHTS, OriginalWeights)
 
     def test_coin_tiers_follow_server_thresholds(self):
         self.assertEqual(self.math.get_coin_tier(4), "bronze")
@@ -480,7 +476,7 @@ class ThemeMathTest(unittest.TestCase):
         self.assertEqual(scatter_only, [0, 0, 0])
         self.assertEqual(chooser.call_count, 1)
 
-    def test_free_bonus_count_uses_golden_state_and_last_spin_guarantee(self):
+    def test_free_bonus_count_uses_golden_state_without_initial_last_spin_guarantee(self):
         board = [
             [3, 4, 5, 6, 7],
             [4, 5, 6, 7, 8],
@@ -514,13 +510,67 @@ class ThemeMathTest(unittest.TestCase):
             "weighted_random_index",
             side_effect=[0, 0],
         ):
-            guaranteed = self.math.choose_initial_special_symbol_ids(
+            InitialSymbols = self.math.choose_initial_special_symbol_ids(
                 board,
                 free_game=True,
                 remaining_spins=1,
                 bonus_seen=False,
             )
-        self.assertEqual(guaranteed, [self.math.FEATURE_ID])
+        self.assertEqual(InitialSymbols, [])
+
+    def test_free_initial_three_scatters_skip_bonus_draw(self):
+        Board = [[3 + (Column + Row) % 10 for Row in range(5)] for Column in range(6)]
+        self.assertEqual(self.math.cal_item_list(Board), 0)
+        for RemainingSpins in (1, 5):
+            with self.subTest(RemainingSpins=RemainingSpins), patch.object(
+                self.math, "weighted_random_index", return_value=3
+            ) as Chooser:
+                Symbols = self.math.choose_initial_special_symbol_ids(
+                    Board, free_game=True, remaining_spins=RemainingSpins, bonus_seen=False
+                )
+            self.assertEqual(Symbols, [0, 0, 0])
+            Chooser.assert_called_once_with(self.math.FREE_SCATTER_COUNT_WEIGHTS)
+
+    def test_initial_scatter_count_uses_real_available_positions_before_bonus(self):
+        for FreeGame in (False, True):
+            for CandidateCount in range(5):
+                Board = [[3] * 5 for _ in range(6)]
+                for Offset in range(CandidateCount):
+                    Board[5][4 - Offset] = 4 + Offset
+                Candidates = self.math.get_nonwinning_symbol_positions(Board, free_game=FreeGame)
+                self.assertEqual(len(Candidates), CandidateCount)
+                with self.subTest(FreeGame=FreeGame, CandidateCount=CandidateCount), patch.object(
+                    self.math, "weighted_random_index", return_value=3
+                ) as Chooser:
+                    Symbols = self.math.choose_initial_special_symbol_ids(
+                        Board, free_game=FreeGame, remaining_spins=1, bonus_seen=False
+                    )
+                self.assertEqual(Symbols, [0] * min(3, CandidateCount))
+                Chooser.assert_called_once_with(
+                    self.math.FREE_SCATTER_COUNT_WEIGHTS if FreeGame else self.math.SCATTER_COUNT_WEIGHTS
+                )
+                with patch("theme_math.random.randrange", return_value=0):
+                    PlacedBoard, Placements = self.math.place_special_symbols(
+                        Board, Symbols, free_game=FreeGame
+                    )
+                self.assertEqual(len(Placements), min(3, CandidateCount))
+                self.assertEqual(self.math.cal_item_list(PlacedBoard), self.math.cal_item_list(Board))
+
+    def test_initial_bonus_needs_a_remaining_position_after_scatter_placement(self):
+        Board = [[3] * 5 for _ in range(6)]
+        Board[5][2:] = [4, 5, 6]
+        self.assertEqual(len(self.math.get_nonwinning_symbol_positions(Board)), 3)
+        for FreeGame in (False, True):
+            with self.subTest(FreeGame=FreeGame), patch.object(
+                self.math, "weighted_random_index", side_effect=[2, 1]
+            ) as Chooser:
+                Symbols = self.math.choose_initial_special_symbol_ids(Board, free_game=FreeGame)
+            self.assertEqual(Symbols, [0, 0, 2])
+            self.assertEqual(Chooser.call_count, 2)
+            self.assertEqual(
+                Chooser.call_args_list[1].args[0],
+                self.math.FREE_NO_GOLDEN_BONUS_COUNT_WEIGHTS if FreeGame else self.math.BASE_WIN_BONUS_COUNT_WEIGHTS,
+            )
 
     def test_special_symbols_exclude_winning_and_extended_positions(self):
         board = [
@@ -798,6 +848,48 @@ class ThemeMathTest(unittest.TestCase):
         )
         self.assertEqual(already_seen["bonus_count"], 0)
         self.assertEqual(already_seen["forced_free_bonus_placements"], [])
+
+    def test_last_free_spin_can_drop_scatter_before_final_board_bonus_guarantee(self):
+        Board = [
+            [12, 12, 12, 3, 4],
+            [12, 12, 5, 6, 7],
+            [8, 9, 10, 11, 0],
+            [3, 4, 5, 6, 0],
+            [4, 5, 6, 7, 8],
+            [5, 6, 7, 8, 9],
+        ]
+        State = {
+            "source_type": "normal",
+            "columns": [[5, 6, 7], [8, 9], [3], [4], [5], [6]],
+            "top_indexes": [0] * 6,
+            "NextReelIndexes": [0] * 6,
+            "row": 5,
+            "col": 6,
+        }
+        with (
+            patch.object(self.math, "_choose_spin_type", return_value="normal"),
+            patch.object(self.math, "_spin_from_rolls", return_value=(Board, State)),
+            patch.object(self.math, "weighted_random_index", side_effect=[0, 0]),
+            patch.object(self.math, "choose_drop_special_symbol_id", return_value=0) as Chooser,
+            patch("theme_math.random.randrange", return_value=0),
+        ):
+            Result = self.math.fg_spin(
+                return_detail=True,
+                remaining_spins=1,
+                bonus_seen=False,
+                feature_outcome={"activated": False},
+            )
+        self.assertEqual(Result["spin_info"]["initial_special_placements"], [])
+        self.assertEqual(self.math.count_symbol(Result["item_list"], self.math.FEATURE_ID), 0)
+        self.assertEqual(Result["cascade_count"], 1)
+        Chooser.assert_called_once_with(free_game=True)
+        Placements = Result["rounds"][0]["drop_info"]["special_placements"]
+        self.assertEqual([Placement["symbol_id"] for Placement in Placements], [0])
+        self.assertEqual(Result["scatter_count"], 3)
+        self.assertEqual(Result["retrigger_spins"], 4)
+        self.assertEqual(Result["bonus_count"], 1)
+        self.assertTrue(Result["free_bonus_seen"])
+        self.assertEqual(len(Result["forced_free_bonus_placements"]), 1)
 
     def test_last_free_spin_skips_guarantee_without_candidate(self):
         board = [[self.math.FREE_SPIN_ID] * 5 for _ in range(6)]
@@ -1297,14 +1389,35 @@ class ThemeMathTest(unittest.TestCase):
         for method in (self.math.ng_spin, self.math.fg_spin):
             with self.assertRaisesRegex(ValueError, "TYPE 9"):
                 method(index=9)
-        self.math.game_server_config.remove_section("0")
-        with self.assertRaisesRegex(ValueError, r"TYPE \[0\]"):
+        self.math.game_server_config.remove_section("4")
+        self.math._load_super_scatter_config()
+        with self.assertRaisesRegex(ValueError, "TYPE 4"):
+            self.math._activate_type(4)
+        self.math.game_server_config.remove_section("Game Info")
+        with self.assertRaisesRegex(ValueError, r"\[Game Info\]"):
             self.math._load_super_scatter_config()
+
+    def test_type_zero_reads_game_info_and_ignores_legacy_zero_section(self):
+        ExpectedWeights = tuple(self.math._parse_int_list(
+            self.math.game_server_config["Game Info"]["ScatterCountProbability"]
+        ))
+        self.math.game_server_config.remove_section("0")
+        self.math._load_super_scatter_config()
+        self.assertIn(0, self.math.ConfiguredTypes)
+        self.assertEqual(self.math.SCATTER_COUNT_WEIGHTS, ExpectedWeights)
+        self.math.game_server_config.add_section("0")
+        self.math.game_server_config["0"]["SuperScatterProbability"] = "10001"
+        self.math.game_server_config["0"]["ScatterCountProbability"] = "invalid"
+        self.math._load_super_scatter_config()
+        self.math._activate_type(4)
+        self.math._activate_type(0)
+        self.assertEqual(self.math.SCATTER_COUNT_WEIGHTS, ExpectedWeights)
+        self.assertEqual(self.math.SUPER_SCATTER_PROBABILITY, 200)
 
     def test_type_probabilities_follow_selected_reels(self):
         original = self.math.game_server_config["4"]["ScatterCountProbability"]
         TypeZeroWeights = tuple(self.math._parse_int_list(
-            self.math.game_server_config["0"]["ScatterCountProbability"]
+            self.math.game_server_config["Game Info"]["ScatterCountProbability"]
         ))
         self.math.game_server_config["4"]["ScatterCountProbability"] = "1,2,3,4"
         try:
@@ -1509,10 +1622,11 @@ class ServerConfigTest(unittest.TestCase):
     def check_server_config(self, root):
         read = ThemeMath._read_config_file
         server = read(root / "special/yngg_game_server.conf")
-        for index in (0, 4, 8, 12, 17):
+        self.assertFalse(server.has_section("0"))
+        self.assertIn("ScatterCountProbability", server["Game Info"])
+        for index in (4, 8, 12, 17):
             self.assertTrue(server.has_section(str(index)))
             self.assertIn("ScatterCountProbability", server[str(index)])
-        self.assertNotIn("ScatterCountProbability", server["Game Info"])
         self.assertEqual(server["System Base Info"]["BetScopes"],
                          "10,20,50,100,200,500,1000,2000,2500")
         groups = read(root / "special_config/slot_control_group.conf")
@@ -1530,7 +1644,7 @@ class ServerConfigTest(unittest.TestCase):
             for value in values:
                 type_index, number = divmod(value, 100)
                 self.assertGreater(number, 0)
-                self.assertIn(str(type_index), server)
+                self.assertIn("Game Info" if type_index == 0 else str(type_index), server)
                 for directory, prefix in [("reel_config", "yngg"),
                                           ("free_reel_config", "yngg_free")]:
                     path = root / directory / f"{prefix}_rand_ex_{type_index}.conf"
@@ -1553,6 +1667,54 @@ class ServerConfigTest(unittest.TestCase):
 
     def test_published_configs_meet_server_constraints(self):
         self.check_server_config(Path(__file__).resolve().parent)
+
+    def test_legacy_type_zero_migration_keeps_game_info_values_and_other_types(self):
+        OtherType = "[4]\n# retained TYPE tuning\nScatterCountProbability=4,3,2,1\n"
+        Original = (
+            "# retained header\n[Game Info]\nVersion=101\n"
+            "ScatterCountProbability=1,2,3,4\n"
+            "[0]\n# retained legacy zero comment\n"
+            "ScatterCountProbability=9,8,7,6\n"
+            "FreeScatterCountProbability=10,20,30,40\n" + OtherType
+        )
+        Migrated = build_from_demo.migrate_type_zero_server_config(Original)
+        with TemporaryDirectory() as Directory:
+            ConfigPath = Path(Directory) / "server.conf"
+            ConfigPath.write_text(Migrated, encoding="utf-8")
+            Config = ThemeMath._read_config_file(ConfigPath)
+        self.assertFalse(Config.has_section("0"))
+        self.assertEqual(Config["Game Info"]["ScatterCountProbability"], "1,2,3,4")
+        self.assertEqual(Config["Game Info"]["FreeScatterCountProbability"], "10,20,30,40")
+        self.assertTrue(Migrated.startswith("# retained header\n"))
+        self.assertIn("# retained legacy zero comment", Migrated)
+        self.assertTrue(Migrated.endswith(OtherType))
+        self.assertEqual(build_from_demo.migrate_type_zero_server_config(Migrated), Migrated)
+
+    def test_bonus_regeneration_removes_legacy_type_sections_and_keeps_shared_values(self):
+        General = (
+            "[GENERAL]\n# shared calibration\n"
+            "BONUS_SYMBOL_TYPE_PROBABILITY=9000,70,5,1\n"
+            "BONUS_COIN_MULTIPLE=0.2,0.5\n"
+            "BONUS_COIN_MULTIPLE_PROBABILITY=7,3\n"
+        )
+        Notes = "[NOTES]\n# retained notes\nMemo=keep\n"
+        with TemporaryDirectory() as Directory:
+            Root = Path(Directory)
+            (Root / "special").mkdir()
+            BonusPath = Root / "special/yngg_bonus.conf"
+            BonusPath.write_text(
+                General + "[0]\nBONUS_COIN_MULTIPLE=invalid\n"
+                "[4]\nBONUS_JP_TYPE_PROBABILITY=0,0,0,0\n" + Notes,
+                encoding="utf-8",
+            )
+            with patch.object(build_from_demo, "THEME_DIR", Root):
+                build_from_demo.write_bonus_config()
+                Published = BonusPath.read_text(encoding="utf-8")
+                self.assertTrue(Published.startswith(General))
+                self.assertTrue(Published.endswith(Notes))
+                self.assertEqual(ThemeMath._read_config_file(BonusPath).sections(), ["GENERAL", "NOTES"])
+                build_from_demo.write_bonus_config()
+                self.assertEqual(BonusPath.read_text(encoding="utf-8"), Published)
 
     def test_reel_compaction_preserves_symbols_and_both_limits(self):
         reel = [12] * 220 + [1, 3]
@@ -1606,10 +1768,10 @@ class ServerConfigTest(unittest.TestCase):
                     TypeZeroSnapshots.append((TypeZeroPath, TypeZeroPath.read_bytes()))
                 BonusPath = root / "special/yngg_bonus.conf"
                 BonusPath.write_text(
-                    BonusPath.read_text(encoding="utf-8")
-                    + "\n# retained TYPE Bonus calibration\n"
-                    "[0]\nBONUS_SYMBOL_TYPE_PROBABILITY=10000,80,6,2\n"
-                    "[4]\nBONUS_JP_TYPE_PROBABILITY=1,2,3,4\n",
+                    BonusPath.read_text(encoding="utf-8").replace(
+                        "BONUS_SYMBOL_TYPE_PROBABILITY=1000,80,6,2",
+                        "BONUS_SYMBOL_TYPE_PROBABILITY=10000,80,6,2",
+                    ) + "\n# retained shared Bonus calibration\n",
                     encoding="utf-8",
                 )
                 BonusSnapshot = BonusPath.read_bytes()
@@ -1618,6 +1780,7 @@ class ServerConfigTest(unittest.TestCase):
                 server_path.write_text(server_text.replace(
                     "[4]\n", "[4]\n# retained TYPE tuning\n", 1
                 ), encoding="utf-8")
+                ServerSnapshot = server_path.read_bytes()
                 reel_path = root / "reel_config/yngg_rand_ex_4.conf"
                 reel_path.write_text(reel_path.read_text(encoding="utf-8") +
                                      "# retained reel tuning\n", encoding="utf-8")
@@ -1632,14 +1795,28 @@ class ServerConfigTest(unittest.TestCase):
                 for TypeZeroPath, Snapshot in TypeZeroSnapshots:
                     self.assertEqual(TypeZeroPath.read_bytes(), Snapshot)
                 self.assertEqual(BonusPath.read_bytes(), BonusSnapshot)
-                Targets = json.loads((root / "source_math.json").read_text(
+                self.assertEqual(server_path.read_bytes(), ServerSnapshot)
+                Metadata = json.loads((root / "source_math.json").read_text(
                     encoding="utf-8"
-                ))["math_targets"]
+                ))
+                Targets = Metadata["math_targets"]
                 self.assertEqual(Targets["total_rtp"], 0.98)
                 self.assertEqual(Targets["BaseClusterRtp"], 0.55)
                 self.assertEqual(Targets["BaseBonusRtp"], 0.10)
                 self.assertEqual(Targets["FreeClusterRtp"], 0.13)
                 self.assertEqual(Targets["FreeBonusRtp"], 0.20)
+                Special = Metadata["special_symbol_generation"]
+                self.assertEqual(Special["ConfigSection"], "Game Info")
+                self.assertEqual(Special["FreeInitialBonusMaxScatterCount"], 2)
+                self.assertEqual(Special["FreeBonusGuaranteeStage"], "FinalBoard")
+                self.assertTrue(Special["FreeBonusGuaranteeRequiresUnseen"])
+                self.assertEqual(Special["FreeBonusGuaranteeRemainingSpins"], 1)
+                BonusMetadata = Metadata["bonus_generation"]
+                self.assertTrue(BonusMetadata["SymbolTypeOrderFixed"])
+                self.assertTrue(BonusMetadata["SharedAcrossTypes"])
+                self.assertEqual(BonusMetadata["ConfigSectionOrder"], ["GENERAL"])
+                self.assertNotIn("TypeIndex", BonusMetadata)
+                self.assertEqual(BonusMetadata["symbol_type_weights"], [10000, 80, 6, 2])
                 self.assertIn("# retained TYPE tuning", server_path.read_text(encoding="utf-8"))
                 self.assertIn("# retained reel tuning", reel_path.read_text(encoding="utf-8"))
                 self.assertIn("# retained prop config", prop_path.read_text(encoding="utf-8"))
