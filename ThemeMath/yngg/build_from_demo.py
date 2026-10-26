@@ -309,7 +309,7 @@ def write_game_config(demo_dir: Path) -> None:
 
 
 def write_bonus_config() -> None:
-    """Preserve shared GENERAL weights and remove legacy TYPE overrides."""
+    """Preserve GENERAL and named Type0 tuning; remove legacy numeric sections."""
 
     BonusPath = THEME_DIR / "special" / "yngg_bonus.conf"
     if BonusPath.exists():
@@ -329,7 +329,7 @@ def write_bonus_config() -> None:
 
     lines = [
         "[GENERAL]",
-        "# 通用Bonus配置。每个金色位置先按类型权重抽取类型，再按该类型的档位权重抽取具体结果。",
+        "# 通用Bonus配置。先应用Game Info共享上限与coin保底，非强制coin时先抽类型再抽档位。",
         "# 档位数组与权重数组按相同下标一一对应；权重为相对权重，不要求总和为10000。",
         "",
         "# JP固定倍数，顺序为MINI、MINOR、MAJOR、GRAND。",
@@ -482,9 +482,39 @@ def migrate_type_zero_server_config(Content: str) -> str:
     return "".join(Result)
 
 
+def ensure_bonus_rule_fields(Content: str) -> str:
+    """Add shared reveal limits without replacing explicit published values."""
+
+    Config = ConfigParser(interpolation=None)
+    Config.optionxform = str
+    Config.read_string(Content)
+    if not Config.has_section("Game Info"):
+        raise ValueError("cannot add Bonus reveal limits without [Game Info]")
+    General = Config["Game Info"]
+    Defaults = {
+        "BonusMaxPotCount": General.get("bonus_max_round", "5"),
+        "BonusMaxCloverCount": "3",
+        "BonusRevealMinCoinCount": "1",
+    }
+    Missing = [f"{Key}={Value}\n" for Key, Value in Defaults.items() if Key not in General]
+    if not Missing:
+        return Content
+    Lines = Content.splitlines(keepends=True)
+    InfoStart = next(Index for Index, Line in enumerate(Lines)
+                     if re.fullmatch(r"\s*\[Game Info\]\s*", Line.strip()))
+    InfoEnd = next((Index for Index in range(InfoStart + 1, len(Lines))
+                    if re.fullmatch(r"\s*\[[^\]]+\]\s*", Lines[Index].strip())), len(Lines))
+    if InfoEnd > 0 and not Lines[InfoEnd - 1].endswith(("\r", "\n")):
+        Lines[InfoEnd - 1] += "\n"
+    Lines[InfoEnd:InfoEnd] = ["#所有TYPE共用：整轮Pot/Clover上限及每批新翻格的最少coin数\n", *Missing]
+    return "".join(Lines)
+
+
 def update_type_zero_metadata(Metadata: dict) -> None:
     """Read the published TYPE 0 parameters after preserving tuned configs."""
 
+    Metadata["math_targets"]["CalibrationStatus"] = "HistoricalFullTargetsNotRetuned"
+    Metadata["bonus_generation"]["CurrentCalibrationReport"] = "bonus_type_calibration.json"
     Server = ConfigParser(interpolation=None)
     Bonus = ConfigParser(interpolation=None)
     Server.optionxform = str
@@ -511,29 +541,82 @@ def update_type_zero_metadata(Metadata: dict) -> None:
         Metadata["super_scatter_conversion"]["probability_per_10000"] = Probability
         Metadata["super_scatter_conversion"]["probability"] = str(Probability / 10000)
         Metadata["special_symbol_generation"]["ConfigSection"] = "Game Info"
+        MaxPotCount = int(TypeZero.get("BonusMaxPotCount", TypeZero.get("bonus_max_round", "5")))
+        Metadata["bonus_generation"].update({
+            "maximum_pot_count": MaxPotCount,
+            "BonusMaxPotCount": MaxPotCount,
+            "BonusMaxCloverCount": int(TypeZero.get("BonusMaxCloverCount", "3")),
+            "BonusRevealMinCoinCount": int(TypeZero.get("BonusRevealMinCoinCount", "1")),
+            "RuleConfigSection": "Game Info",
+            "RulesSharedAcrossTypes": True,
+            "LimitCountScope": "EntireFeature",
+            "LimitResetScope": "EachGoldenFeatureTrigger",
+            "SuperFreeGoldenPersistenceCarriesCounts": False,
+            "RevealMinCoinScope": "EachNewRevealBatch",
+            "RetainedPotsCountAsCoin": False,
+            "RevealScanOrder": "RowAscendingThenColAscending",
+            "TypeLimitEnforcement": "BeforeEachSymbolDraw",
+            "CoinGuaranteeMode": "ForceCoinWhenCoinMinimumDueOrAllowedTypeWeightsZero",
+            "ForcedCoinTypeDrawSkipped": True,
+            "ForcedCoinTierDrawPreserved": True,
+        })
     Metadata["super_scatter_conversion"]["free_initial_rolls"] = 0
     Metadata["super_scatter_conversion"]["free_drop_scatter_rolls_when_no_super"] = False
     Metadata["special_symbol_generation"].update({
+        "BaseBonusRequiresBaseCascade": True,
+        "BaseNoWinBonusIsDisplayOnly": True,
+        "BaseBonusTriggerDenominator": "PaidBaseSpins",
         "FreeInitialBonusMaxScatterCount": 2,
         "FreeBonusGuaranteeStage": "FinalBoard",
         "FreeBonusGuaranteeRequiresUnseen": True,
         "FreeBonusGuaranteeRemainingSpins": 1,
     })
+    MainReelPath = THEME_DIR / "reel_config/yngg_rand_ex_0.conf"
+    if MainReelPath.exists():
+        MainReel = ConfigParser(interpolation=None)
+        MainReel.optionxform = str
+        MainReel.read(MainReelPath, encoding="utf-8-sig")
+        BaseSourceWeights = [
+            int(Value.strip()) for Value in MainReel["GENERAL_1"]["BASE_RATE"].split(",")
+        ]
+        Metadata["special_symbol_generation"]["BaseSourceWeights"] = BaseSourceWeights
+        Metadata["special_symbol_generation"]["BaseBonusEntrance"] = (
+            "ZeroPreset" if BaseSourceWeights[3] > 0 else "SpecialSymbolGeneration"
+        )
+        FirstPreset = MainReel["GENERAL_1"].get("ZERO_RESULT_1", "")
+        PresetCounts = Counter(int(Value.strip()) for Value in FirstPreset.split(",") if Value.strip())
+        Metadata["special_symbol_generation"]["BaseBonusPresetGoldenCount"] = max(
+            (Count for Symbol, Count in PresetCounts.items() if 3 <= Symbol < ITEM_COUNT),
+            default=0,
+        )
     Metadata["bonus_generation"]["SymbolTypeOrderFixed"] = True
     if Bonus.has_section("GENERAL"):
-        Effective = dict(Bonus["GENERAL"])
-        for Field, Key in (
-            ("symbol_type_weights", "BONUS_SYMBOL_TYPE_PROBABILITY"),
-            ("coin_value_weights", "BONUS_COIN_MULTIPLE_PROBABILITY"),
-            ("clover_multiplier_weights", "BONUS_CLOVER_MULTIPLE_PROBABILITY"),
-            ("jackpot_type_weights", "BONUS_JP_TYPE_PROBABILITY"),
+        General = Bonus["GENERAL"]
+        TypeZero = Bonus["Type0"] if Bonus.has_section("Type0") else {}
+        GeneralSharedWeights = {}
+        for Field, GeneralKey, TypeKey in (
+            ("symbol_type_weights", "BONUS_SYMBOL_TYPE_PROBABILITY", "BonusSymbolTypeProbability"),
+            ("coin_value_weights", "BONUS_COIN_MULTIPLE_PROBABILITY", "BonusCoinMultipleProbability"),
+            ("clover_multiplier_weights", "BONUS_CLOVER_MULTIPLE_PROBABILITY", "BonusCloverMultipleProbability"),
+            ("jackpot_type_weights", "BONUS_JP_TYPE_PROBABILITY", "BonusJpTypeProbability"),
         ):
-            Metadata["bonus_generation"][Field] = [
-                int(Value.strip()) for Value in Effective[Key].split(",")
+            GeneralSharedWeights[TypeKey] = [
+                int(Value.strip()) for Value in General[GeneralKey].split(",")
             ]
-        Metadata["bonus_generation"].pop("TypeIndex", None)
-        Metadata["bonus_generation"]["ConfigSectionOrder"] = ["GENERAL"]
-        Metadata["bonus_generation"]["SharedAcrossTypes"] = True
+            EffectiveValue = TypeZero.get(TypeKey, General[GeneralKey])
+            Metadata["bonus_generation"][Field] = [
+                int(Value.strip()) for Value in EffectiveValue.split(",")
+            ]
+        Metadata["bonus_generation"]["GeneralSharedWeights"] = GeneralSharedWeights
+        HasTypeZero = Bonus.has_section("Type0")
+        if HasTypeZero:
+            Metadata["bonus_generation"]["TypeIndex"] = 0
+        else:
+            Metadata["bonus_generation"].pop("TypeIndex", None)
+        Metadata["bonus_generation"]["ConfigSectionOrder"] = (
+            ["GENERAL", "Type0"] if HasTypeZero else ["GENERAL"]
+        )
+        Metadata["bonus_generation"]["SharedAcrossTypes"] = not HasTypeZero
 
 
 def write_metadata(demo_dir: Path) -> None:
@@ -553,13 +636,24 @@ def write_metadata(demo_dir: Path) -> None:
             "program_name": "yngg",
         },
         "math_targets": {
-            "total_rtp": 0.98,
-            "BaseClusterRtp": 0.55,
-            "BaseBonusRtp": 0.10,
-            "FreeClusterRtp": 0.13,
-            "FreeBonusRtp": 0.20,
-            "free_trigger_rate": 0.0095,
-            "base_bonus_trigger_interval": 50,
+            "total_rtp": 0.95,
+            "BaseClusterRtp": 0.45,
+            "BaseBonusRtp": 0.20,
+            "FreeClusterRtp": 0.073,
+            "FreeBonusRtp": 0.18,
+            "SuperFreeClusterRtp": 0.007,
+            "SuperFreeBonusRtp": 0.04,
+            "NormalFreeTriggerRate": 0.005,
+            "SuperFreeTriggerRate": 0.0005,
+            "BaseBonusTriggerRate": 0.0125,
+            "free_trigger_rate": 0.0055,
+            "base_bonus_trigger_interval": 80,
+            "NormalFreeRtp": 0.253,
+            "SuperFreeRtp": 0.047,
+            "RtpDenominator": "PaidBaseBet",
+            "FreeModesReportedSeparately": True,
+            "CalibrationStatus": "HistoricalFullTargetsNotRetuned",
+            "HistoricalCalibrationDate": "2026-10-22",
         },
         "layout": {
             "reels": 6,
@@ -621,7 +715,7 @@ def write_metadata(demo_dir: Path) -> None:
             "clover_multiplier_weights": [40, 28, 16, 10, 5, 1],
             "jackpot_type_weights": [80, 25, 8, 1],
             "maximum_pot_count": 5,
-            "pot_overflow": "redraw_without_pot",
+            "pot_overflow": "exclude_before_type_draw",
         },
         "free_games": {
             "free": {"trigger": "3 scatters", "spins": 10},
@@ -677,7 +771,7 @@ def write_metadata(demo_dir: Path) -> None:
                 "",
                 "[Game Info]",
                 "#配置文件版本",
-                "Version=101",
+                "Version=104",
                 "#Super Scatter沿用Scatter ID 0，通过位置状态区分，不配置专门ID",
                 "#普通免费、超级免费初始次数",
                 "FreeSpinCounts=10,10",
@@ -686,8 +780,13 @@ def write_metadata(demo_dir: Path) -> None:
                 "#金币颜色分档：小于5为铜币，小于25为银币，其余为金币",
                 "coin_multi_1=5",
                 "coin_multi_2=25",
-                "#整轮Bonus最多出现的聚宝盆数量；达到上限后排除聚宝盆重抽类型",
+                "#兼容旧字段；仅BonusMaxPotCount缺失时作为聚宝盆上限fallback",
                 "bonus_max_round=5",
+                "#所有TYPE共用；整轮金色玩法累计Pot/Clover上限",
+                "BonusMaxPotCount=5",
+                "BonusMaxCloverCount=3",
+                "#每批首次翻牌或重翻的新symbols至少包含的coin数；保留Pot不计入",
+                "BonusRevealMinCoinCount=1",
                 "",
                 "#彩虹",
                 "BONUS_1 = 1",
@@ -743,6 +842,7 @@ def write_metadata(demo_dir: Path) -> None:
         Content = "\n".join(server_lines).rstrip() + "\n"
         Existing = ConfigParser(interpolation=None)
         Existing.read_string(Content)
+    Content = ensure_bonus_rule_fields(Content)
     for type_index in ConfiguredTypes:
         if type_index != 0 and not Existing.has_section(str(type_index)):
             Content = Content.rstrip() + "\n\n" + "\n".join(

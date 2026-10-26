@@ -1,310 +1,828 @@
 {
-  "Date": "2026-10-15",
+  "CurrentRuleValidity": {
+    "Status": "HistoricalBeforeBonusRuleChange",
+    "RuleChangeDate": "2026-10-23",
+    "GameServerVersion": 104,
+    "BonusMaxPotCount": 5,
+    "BonusMaxCloverCount": 3,
+    "BonusRevealMinCoinCount": 1,
+    "AppliesToCurrentRules": false,
+    "Reason": "Whole-feature clover cap and per-reveal coin guarantee change the random path and Bonus distribution. Measurements below describe the 2026-10-22 rules; current rules have not been recalibrated or rebenchmarked."
+  },
+  "Date": "2026-10-22",
+  "CalibrationRevision": "NaturalGroupsExpanded",
   "TypeIndex": 0,
   "GeneralIndex": 1,
-  "BaseSpinCount": 1000000,
+  "BaseSpinCount": 100000000,
   "BaseBet": 100000,
-  "Denominator": "Total paid Base bets, including all triggered Free spins and retriggers in the wins",
-  "SimulationEntryPoint": "simulation.simulation(spin_times=250000, index=0, general_index=1, report_interval=0, seed=Seed)",
-  "Seeds": [
-    20261015,
-    20261016,
-    20261017,
-    20261018
-  ],
+  "RtpDenominator": "PaidBaseBet",
+  "FreeModesReportedSeparately": true,
+  "Scope": "Historical 2026-10-22 local yngg rules before the 2026-10-23 Bonus rule change; TYPE 0 only; grouped reward tiers and compensating parameters",
+  "SamplerKind": "LocalRulesNativeSampler",
+  "BinaryServerExecuted": false,
   "Targets": {
-    "BaseClusterRtp": 0.55,
-    "BaseBonusRtp": 0.1,
-    "FreeClusterRtp": 0.13,
-    "FreeBonusRtp": 0.2,
-    "Rtp": 0.98
+    "BaseClusterRtp": 0.45,
+    "BaseBonusRtp": 0.2,
+    "NormalFreeClusterRtp": 0.073,
+    "NormalFreeBonusRtp": 0.18,
+    "SuperFreeClusterRtp": 0.007,
+    "SuperFreeBonusRtp": 0.04,
+    "BaseRtp": 0.65,
+    "NormalFreeRtp": 0.253,
+    "SuperFreeRtp": 0.047,
+    "Rtp": 0.95,
+    "BaseBonusFrequency": 0.0125,
+    "NormalFreeFrequency": 0.005,
+    "SuperFreeFrequency": 0.0005
+  },
+  "OriginalFreeTargets": {
+    "NormalFreeClusterRtp": 0.07,
+    "NormalFreeBonusRtp": 0.18,
+    "NormalFreeRtp": 0.25,
+    "SuperFreeClusterRtp": 0.01,
+    "SuperFreeBonusRtp": 0.04,
+    "SuperFreeRtp": 0.05
+  },
+  "AcceptedAdjustment": {
+    "NormalFreeInitialSpins": 10,
+    "SuperFreeInitialSpins": 10,
+    "NormalFreeClusterRtp": 0.073,
+    "SuperFreeClusterRtp": 0.007,
+    "Reason": "User accepted shared free reels and 10/10 spins with approximate 0.073/0.007 cluster split",
+    "BaseBonusHighVolatilityPreserved": true,
+    "Type0BonusOverridesAuthorized": true,
+    "ExpandedLowRewardGroupsAuthorized": true,
+    "CompensatingParameterAdjustmentsAuthorized": true,
+    "BonusProbabilityGroups": [
+      {
+        "SymbolKind": "Coin",
+        "Group": "Low",
+        "Multiples": [
+          0.2,
+          0.5,
+          1
+        ],
+        "WeightPerTier": 333137,
+        "ProbabilityPerTier": 0.333137
+      },
+      {
+        "SymbolKind": "Coin",
+        "Group": "High",
+        "Multiples": [
+          100,
+          250,
+          500
+        ],
+        "WeightPerTier": 185,
+        "ProbabilityPerTier": 0.000185
+      },
+      {
+        "SymbolKind": "Clover",
+        "Group": "Low",
+        "Multiples": [
+          2,
+          3,
+          4,
+          5
+        ],
+        "WeightPerTier": 23,
+        "ProbabilityPerTier": 0.23
+      },
+      {
+        "SymbolKind": "Clover",
+        "Group": "High",
+        "Multiples": [
+          10,
+          20
+        ],
+        "WeightPerTier": 4,
+        "ProbabilityPerTier": 0.04
+      }
+    ]
   },
   "Measured": {
-    "BaseClusterRtp": 0.5519548,
-    "BaseBonusRtp": 0.1009983,
-    "FreeClusterRtp": 0.1293472,
-    "FreeBonusRtp": 0.2075316,
-    "Rtp": 0.9898319,
-    "BaseRtp": 0.6529531,
-    "FreeRtp": 0.3368788,
-    "FreeFrequency": 0.009302,
-    "BaseBonusFrequency": 0.022838,
-    "FreeSpinCount": 104070,
-    "SuperFreeCount": 176
+    "BaseSpinCount": 100000000,
+    "BaseClusterRtp": 0.44993982798199994,
+    "BaseClusterRtpStandardError": 0.00010691902479156624,
+    "BaseBonusRtp": 0.200000913,
+    "BaseBonusRtpStandardError": 0.0009181445921961826,
+    "NormalFreeClusterRtp": 0.072923735,
+    "NormalFreeClusterRtpStandardError": 0.00012038498709837831,
+    "NormalFreeBonusRtp": 0.18027155,
+    "NormalFreeBonusRtpStandardError": 0.0008188378211971381,
+    "SuperFreeClusterRtp": 0.007240870999999999,
+    "SuperFreeClusterRtpStandardError": 3.791006891635846e-05,
+    "SuperFreeBonusRtp": 0.040121037,
+    "SuperFreeBonusRtpStandardError": 0.00042452961263396476,
+    "Rtp": 0.9504979340085,
+    "RtpStandardError": 0.0013401666159704615,
+    "BaseBonusTriggerCount": 1249523,
+    "BaseBonusFrequency": 0.01249523,
+    "NormalFreeTriggerCount": 496215,
+    "NormalFreeFrequency": 0.00496215,
+    "SuperFreeTriggerCount": 49336,
+    "SuperFreeFrequency": 0.00049336,
+    "NormalFreeSpinCount": 5560062,
+    "SuperFreeSpinCount": 552648,
+    "BaseBonusVolatilityStatisticsAvailable": true,
+    "BaseBonusConditionalMean": 16.006180998654763,
+    "BaseBonusConditionalStdDev": 80.58221733963111,
+    "BaseBonusConditionalMeanStandardError": 0.07208871097911154,
+    "BaseBonusMax": 30118.6,
+    "Verification": {
+      "RtpComponentsMatch": true,
+      "BaseBonusConditionalMeanMatchesRtp": true,
+      "RunQuantilesPooled": false
+    },
+    "BaseRtp": 0.6499407409819999,
+    "NormalFreeRtp": 0.253195285,
+    "SuperFreeRtp": 0.047361907999999994,
+    "FreeRtpCombined": 0.300557193,
+    "BaseBonusCoefficientOfVariation": 5.03444371561234
   },
-  "StandardErrors": {
-    "BaseClusterRtpStandardError": 0.0011704951383136376,
-    "BaseBonusRtpStandardError": 0.0011453063455354358,
-    "FreeClusterRtpStandardError": 0.0015605128506527973,
-    "FreeBonusRtpStandardError": 0.0057309823502747015,
-    "RtpStandardError": 0.006681371438595261
+  "ConfidenceIntervals95": {
+    "BaseClusterRtp": {
+      "Lower": 0.4497302666934085,
+      "Upper": 0.4501493892705914
+    },
+    "BaseBonusRtp": {
+      "Lower": 0.19820134959929547,
+      "Upper": 0.20180047640070453
+    },
+    "NormalFreeClusterRtp": {
+      "Lower": 0.07268778042528719,
+      "Upper": 0.07315968957471282
+    },
+    "NormalFreeBonusRtp": {
+      "Lower": 0.17866662787045362,
+      "Upper": 0.18187647212954638
+    },
+    "SuperFreeClusterRtp": {
+      "Lower": 0.0071665672649239365,
+      "Upper": 0.007315174735076062
+    },
+    "SuperFreeBonusRtp": {
+      "Lower": 0.039288958959237424,
+      "Upper": 0.04095311504076257
+    },
+    "Rtp": {
+      "Lower": 0.9478712074411979,
+      "Upper": 0.9531246605758021
+    },
+    "BaseBonusFrequency": {
+      "Lower": 0.01247345802636613,
+      "Upper": 0.01251700197363387
+    },
+    "NormalFreeFrequency": {
+      "Lower": 0.0049483775623137966,
+      "Upper": 0.004975922437686204
+    },
+    "SuperFreeFrequency": {
+      "Lower": 0.0004890075791622944,
+      "Upper": 0.0004977124208377056
+    }
+  },
+  "ExpectationCheck": {
+    "RewardSampling": "ConditionalExpectation",
+    "ExpectedRewardsIntegrated": true,
+    "Measured": {
+      "BaseSpinCount": 50000000,
+      "BaseClusterRtp": 0.449972255999,
+      "BaseClusterRtpStandardError": 0.00015120128671818636,
+      "BaseBonusRtp": 0.1998247312755,
+      "BaseBonusRtpStandardError": 0.0002971244572441031,
+      "NormalFreeClusterRtp": 0.073042306,
+      "NormalFreeClusterRtpStandardError": 0.00017047255345035278,
+      "NormalFreeBonusRtp": 0.18002918856300001,
+      "NormalFreeBonusRtpStandardError": 0.00041701057255851486,
+      "SuperFreeClusterRtp": 0.007275504,
+      "SuperFreeClusterRtpStandardError": 5.3785480556476496e-05,
+      "SuperFreeBonusRtp": 0.040476251406,
+      "SuperFreeBonusRtpStandardError": 0.0003080235372197061,
+      "Rtp": 0.95062023722475,
+      "RtpStandardError": 0.0007495549168757553,
+      "BaseBonusTriggerCount": 624772,
+      "BaseBonusFrequency": 0.01249544,
+      "NormalFreeTriggerCount": 248200,
+      "NormalFreeFrequency": 0.004964,
+      "SuperFreeTriggerCount": 24671,
+      "SuperFreeFrequency": 0.00049342,
+      "NormalFreeSpinCount": 2782022,
+      "SuperFreeSpinCount": 276476,
+      "BaseBonusVolatilityStatisticsAvailable": false,
+      "BaseBonusConditionalMean": 15.991812315170419,
+      "Verification": {
+        "RtpComponentsMatch": true,
+        "BaseBonusConditionalMeanMatchesRtp": true,
+        "RunQuantilesPooled": false
+      },
+      "BaseRtp": 0.6497969872745,
+      "NormalFreeRtp": 0.25307149456300004,
+      "SuperFreeRtp": 0.047751755406000004,
+      "FreeRtpCombined": 0.30082324996900006
+    },
+    "ConfidenceIntervals95": {
+      "BaseClusterRtp": {
+        "Lower": 0.44967590147703235,
+        "Upper": 0.4502686105209676
+      },
+      "BaseBonusRtp": {
+        "Lower": 0.19924236733930153,
+        "Upper": 0.20040709521169844
+      },
+      "NormalFreeClusterRtp": {
+        "Lower": 0.0727081797952373,
+        "Upper": 0.0733764322047627
+      },
+      "NormalFreeBonusRtp": {
+        "Lower": 0.17921184784078534,
+        "Upper": 0.1808465292852147
+      },
+      "SuperFreeClusterRtp": {
+        "Lower": 0.007170084458109307,
+        "Upper": 0.007380923541890694
+      },
+      "SuperFreeBonusRtp": {
+        "Lower": 0.03987252527304938,
+        "Upper": 0.041079977538950624
+      },
+      "Rtp": {
+        "Lower": 0.9491511095876735,
+        "Upper": 0.9520893648618265
+      },
+      "BaseBonusFrequency": {
+        "Lower": 0.012464649524145763,
+        "Upper": 0.012526230475854237
+      },
+      "NormalFreeFrequency": {
+        "Lower": 0.004944519219524214,
+        "Upper": 0.004983480780475785
+      },
+      "SuperFreeFrequency": {
+        "Lower": 0.000487264373332632,
+        "Upper": 0.0004995756266673679
+      }
+    },
+    "Method": "Integrate independent coin, clover, and JP reward tiers conditional on each sampled feature trajectory; preserve all random draws, type/position/pot trajectories and local settlement rules",
+    "RoundingErrorBoundPerFeature": 5e-06,
+    "RoundingErrorBoundUnit": "PaidBaseBetMultiple",
+    "RealRewardVolatilityMeasured": false,
+    "IndependentFromFullRandomBatch": false,
+    "SeedRelationship": "Overlapping seeds and trajectories; an alternative estimator, not an independent replicate",
+    "RoundingNote": "Bound is for the current reward tiers and BaseBet=100000 in exact real arithmetic; floating-point numerical error also applies. This is a conditional Monte Carlo estimate, not a closed-form exact RTP."
+  },
+  "EffectiveParameters": {
+    "BaseSourceWeights": [
+      7945,
+      0,
+      1930,
+      125
+    ],
+    "BaseSourceOrder": [
+      "Normal",
+      "Special",
+      "Fix",
+      "Zero"
+    ],
+    "BaseBonusEntrance": "ZeroPreset",
+    "BaseBonusPresetGoldenCount": 17,
+    "MainReelVersion": 104,
+    "FreeReelVersion": 103,
+    "GameServerVersion": 103,
+    "Type0BonusWeights": {
+      "BonusSymbolTypeProbability": [
+        5000,
+        58,
+        6,
+        2
+      ],
+      "BonusCoinMultipleProbability": [
+        333137,
+        333137,
+        333137,
+        9,
+        7,
+        5,
+        4,
+        3,
+        2,
+        2,
+        1,
+        1,
+        185,
+        185,
+        185
+      ],
+      "BonusCloverMultipleProbability": [
+        23,
+        23,
+        23,
+        23,
+        4,
+        4
+      ],
+      "BonusJpTypeProbability": [
+        80,
+        25,
+        8,
+        1
+      ]
+    },
+    "Type0SpecialSymbolParameters": {
+      "ScatterCountProbability": [
+        10000,
+        1000,
+        500,
+        77
+      ],
+      "BaseNoWinBonusCountProbability": [
+        100,
+        0
+      ],
+      "BaseWinBonusCountProbability": [
+        100,
+        0
+      ],
+      "FreeGoldenBonusCountProbability": [
+        57,
+        43
+      ],
+      "FreeNoGoldenBonusCountProbability": [
+        97,
+        3
+      ],
+      "DropSpecialSymbolProbability": [
+        999,
+        1,
+        0
+      ]
+    },
+    "SuperScatterProbability": 880,
+    "NormalFreeInitialSpins": 10,
+    "SuperFreeInitialSpins": 10,
+    "BonusPotLimit": 5,
+    "HighestCoinMultiple": 500,
+    "HighestCloverMultiple": 20,
+    "GrandMultiple": 5000
+  },
+  "Distribution": {
+    "BonusProbabilityGroups": [
+      {
+        "SymbolKind": "Coin",
+        "Group": "Low",
+        "Multiples": [
+          0.2,
+          0.5,
+          1
+        ],
+        "WeightPerTier": 333137,
+        "ProbabilityPerTier": 0.333137
+      },
+      {
+        "SymbolKind": "Coin",
+        "Group": "High",
+        "Multiples": [
+          100,
+          250,
+          500
+        ],
+        "WeightPerTier": 185,
+        "ProbabilityPerTier": 0.000185
+      },
+      {
+        "SymbolKind": "Clover",
+        "Group": "Low",
+        "Multiples": [
+          2,
+          3,
+          4,
+          5
+        ],
+        "WeightPerTier": 23,
+        "ProbabilityPerTier": 0.23
+      },
+      {
+        "SymbolKind": "Clover",
+        "Group": "High",
+        "Multiples": [
+          10,
+          20
+        ],
+        "WeightPerTier": 4,
+        "ProbabilityPerTier": 0.04
+      }
+    ],
+    "CoinMoments": {
+      "Mean": 0.7238369,
+      "StandardDeviation": 7.7183716464159975,
+      "TotalWeight": 1000000
+    },
+    "CloverMoments": {
+      "Mean": 4.42,
+      "StandardDeviation": 3.589373204335264,
+      "TotalWeight": 100
+    },
+    "Grouping": "Coin low .2/.5/1, high 100/250/500; Clover low 2/3/4/5, high 10/20; equal probability within each group",
+    "MiddleCoinTiers": "2/3/4/5/10/15/20/25/50 retain their positive relative weights",
+    "NaturalModelClaim": "Grouped discrete distribution; no continuous smooth-density assumption"
+  },
+  "PreviousCalibration": {
+    "Report": "calibration_history/20261022_endpoint_weights/rtp_calibration.json",
+    "Runs": "calibration_history/20261022_endpoint_weights/rtp_calibration_runs.json",
+    "BaseBonusConditionalMean": 15.993334282814242,
+    "BaseBonusConditionalStdDev": 197.1276102684612,
+    "BaseBonusCoefficientOfVariation": 12.325610581421172,
+    "VolatilityReduced": true,
+    "CurrentBonusStillHighVolatility": true
   },
   "Verification": {
     "PublishedConfigsLoaded": true,
     "InMemoryOverridesUsed": false,
-    "UnitTestsPassed": 56,
-    "UnchangedConfigFileCount": 31,
+    "UnitTestsPassed": 71,
+    "PythonExactReplay": {
+      "SamplerKind": "LocalRulesNativeSampler",
+      "BinaryServerExecuted": false,
+      "Project": "/Users/sunyulu/Desktop/github/HGI/ThemeMath/yngg",
+      "BaseBet": 100000,
+      "Seed": 2026102250,
+      "SpinsMatched": 20000,
+      "RandomCallsMatched": 306419,
+      "AllMetricsExactlyMatched": true,
+      "BaseBonusCount": 231,
+      "FreeSessionCount": 97,
+      "SuperFreeSessionCount": 13,
+      "FreeSpinCount": 1080,
+      "SuperFreeSpinCount": 140
+    },
+    "InputSnapshotUsed": true,
+    "PostSamplingConfigChangesCommentOnly": true,
+    "PostSamplingCommentFiles": [
+      "reel_config/yngg_rand_ex_0.conf"
+    ],
+    "PublishedParametersMatchSampledParameters": true,
+    "RuntimeSourceFilesUnchanged": true,
+    "ComparisonBaseline": "Previous endpoint-weight calibration, 2026-10-22",
+    "OtherTypeReelsUnchanged": true,
     "BonusGeneralUnchanged": true,
     "OtherServerTypeSectionsUnchanged": true,
+    "UnchangedConfigFileCount": 32,
+    "ChangedConfigFiles": [
+      "reel_config/yngg_rand_ex_0.conf",
+      "special/yngg_bonus.conf",
+      "special/yngg_game_server.conf"
+    ],
     "ServerGroupControlApplied": false,
-    "ServerWinCutoffApplied": false
+    "ServerWinCutoffApplied": false,
+    "MaxCascades": 100,
+    "TotalRtpEqualsSixComponents": true,
+    "OrdinaryAndSuperFreeDisjoint": true,
+    "RunQuantilesPooled": false
   },
-  "ConfigFiles": [
-    {
-      "Path": "free_reel_config/yngg_free_rand_ex_0.conf",
-      "Sha256": "10984b093057e5e53ec6685fd96eb63f17c147a0a67a1037e992e487ac402351"
-    },
-    {
-      "Path": "free_reel_config/yngg_free_rand_ex_12.conf",
-      "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
-    },
-    {
-      "Path": "free_reel_config/yngg_free_rand_ex_17.conf",
-      "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
-    },
-    {
-      "Path": "free_reel_config/yngg_free_rand_ex_4.conf",
-      "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
-    },
-    {
-      "Path": "free_reel_config/yngg_free_rand_ex_8.conf",
-      "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
-    },
-    {
-      "Path": "free_reel_config/yngg_free_rand_main.conf",
-      "Sha256": "5856b541e65b8d3d3d330c715b90ae23ce24d44e3208057d4bdc910c0e6d3248"
-    },
-    {
-      "Path": "general_config/base_bull.conf",
-      "Sha256": "cfab5c53fc9d74fc1c92cb171b0331e6608c1283d77009e966aaf12d21518289"
-    },
-    {
-      "Path": "general_config/base_comm.conf",
-      "Sha256": "c3355d0e8039f1c64f70efa35515cb6c2cfc8edbd7dfe50100006e6a6503547b"
-    },
-    {
-      "Path": "general_config/base_level.conf",
-      "Sha256": "f95c816ba008337646b3a69dcaaf37b952831a6caccb5fde26966988ad210274"
-    },
-    {
-      "Path": "general_config/base_text.conf",
-      "Sha256": "2bfae39ffd1af4e09b421b265a5f7a58772ea746d4e251dc29b626a86bf28be8"
-    },
-    {
-      "Path": "general_config/game_achievement.conf",
-      "Sha256": "5e461465770909107d33196396bc41e62650d235604a6806a735fa773d42a099"
-    },
-    {
-      "Path": "general_config/game_act_coin.conf",
-      "Sha256": "5fe3275245d3f656a270dbcf3e911134e8f36eb4de69ad737ecd1ba087e5dfad"
-    },
-    {
-      "Path": "general_config/game_activity.conf",
-      "Sha256": "2a3ea1dd68928934afff681741f02e08f10c36e9567cf20c09f31fa5e92510fd"
-    },
-    {
-      "Path": "general_config/game_card.conf",
-      "Sha256": "39909f62203d79074bb5010af7d880bd28171a799ae588b2197ccb78fbec5d7a"
-    },
-    {
-      "Path": "general_config/game_get_level_exp.conf",
-      "Sha256": "9b41c1f9e96cce935b56708549d126f2b802e4cee575b114d0d3ddb62aee0e0f"
-    },
-    {
-      "Path": "general_config/slot_activity.conf",
-      "Sha256": "d5fd74c8eeac3710124405368eccb98c4b4d12330355c9da0180a47faca51cb5"
-    },
-    {
-      "Path": "general_config/slot_game_activity.conf",
-      "Sha256": "6159698bb3243fad9a3f705ef6dbe663e42d661bf527986cd5dbe4b7e07c8059"
-    },
-    {
-      "Path": "general_config/slot_game_activity2.conf",
-      "Sha256": "f1945cd6c19e56b3c1c78943ef5ec18116907a4ca1efc40a57d48ab1db7adfc5"
-    },
-    {
-      "Path": "general_config/spe_user_event.conf",
-      "Sha256": "c78fdfb705152c8fbfe0dda9d4f9c7d076aeae442514d98fa59d093566e70362"
-    },
-    {
-      "Path": "general_config/spreader_task.conf",
-      "Sha256": "b21af502cab8ffe786514e4daca284e7930a8984a826a011b7241292d3f69e5f"
-    },
-    {
-      "Path": "general_config/yb_double.conf",
-      "Sha256": "ef5ac994e2c509d1cadfd35454e9c787fdd76b6a8c3b4a510187fc50d4db2491"
-    },
-    {
-      "Path": "reel_config/yngg_rand_ex_0.conf",
-      "Sha256": "b082f07effbbb078dc7e5070c783ece7642b894ffef0b6883d87c45c52045bfb"
-    },
-    {
-      "Path": "reel_config/yngg_rand_ex_12.conf",
-      "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
-    },
-    {
-      "Path": "reel_config/yngg_rand_ex_17.conf",
-      "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
-    },
-    {
-      "Path": "reel_config/yngg_rand_ex_4.conf",
-      "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
-    },
-    {
-      "Path": "reel_config/yngg_rand_ex_8.conf",
-      "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
-    },
-    {
-      "Path": "reel_config/yngg_rand_main.conf",
-      "Sha256": "5856b541e65b8d3d3d330c715b90ae23ce24d44e3208057d4bdc910c0e6d3248"
-    },
-    {
-      "Path": "special/slot_prop_config.conf",
-      "Sha256": "14900fdcb7ad4b002498e5d9b58b2453850aebccbb84c65eb474813a98d362c2"
-    },
-    {
-      "Path": "special/yngg_bonus.conf",
-      "Sha256": "1631bf024f5645220164f6cc5d03dc9847dbc61333b7e588d1ac396da90c9e5a"
-    },
-    {
-      "Path": "special/yngg_control.conf",
-      "Sha256": "3fa61132912bd661c60192c7aa9fd0e2b793ce7cdf439f48e42a60fc3c920179"
-    },
-    {
-      "Path": "special/yngg_game_config.conf",
-      "Sha256": "a7e57d64349479bbf63ecf64104dd5e64d2591fe78ace0c8d231096eb3cc0ae3"
-    },
-    {
-      "Path": "special/yngg_game_server.conf",
-      "Sha256": "0f504edfb367b67a1a3e459af31c1595f847eabcdb91cc92a439fa0d05950885"
-    },
-    {
-      "Path": "special_config/base_game_name.conf",
-      "Sha256": "7dbf33f0706ddf6a6ffb1ada750607083d010e710e11575b2ecca5044e4d4f12"
-    },
-    {
-      "Path": "special_config/game_server.conf",
-      "Sha256": "0ff9035802784faf6e11ae451b28a0769b0697302980ac5c36ff3e3c55549906"
-    },
-    {
-      "Path": "special_config/slot_control_group.conf",
-      "Sha256": "24cc160cc157d05a36299891665cca8c3193025687f012c1414022407e64f927"
-    }
-  ],
-  "RuntimeFiles": [
-    {
-      "Path": "theme_math.py",
-      "Sha256": "32b56645d02935f70ece9a9cf94ed4ab592bb07c6daae5dce9a90827e3c5fb6f"
-    },
-    {
-      "Path": "simulation.py",
-      "Sha256": "76213f9fd478de6611c82cb9ff41f27b3fcee72b0ec381fc4e93c9063b29130f"
-    }
-  ],
-  "Runs": [
-    {
-      "Name": "Type0Tuned",
-      "Seed": 20261015,
-      "BaseSpinCount": 250000,
-      "TypeIndex": 0,
-      "GeneralIndex": 1,
-      "Seconds": 285.99901966600004,
-      "MaximumWinMultiple": 943.1,
-      "BaseClusterRtp": 0.5527904000001902,
-      "BaseClusterRtpStandardError": 0.002340311988370845,
-      "BaseBonusRtp": 0.10106159999999872,
-      "BaseBonusRtpStandardError": 0.0021423776163760596,
-      "FreeClusterRtp": 0.12567079999999992,
-      "FreeClusterRtpStandardError": 0.0030635209776909626,
-      "FreeBonusRtp": 0.20469759999999987,
-      "FreeBonusRtpStandardError": 0.0067848020888139765,
-      "Rtp": 0.9842204000004505,
-      "RtpStandardError": 0.009605618129431663,
-      "FreeFrequency": 0.009184,
-      "BaseBonusFrequency": 0.023192,
-      "FreeSpinCount": 25634,
-      "BaseHitRate": 0.491484,
-      "FreeHitRate": 0.5309354763205119,
-      "AverageFreeSpinCount": 11.164634146341463,
-      "SuperFreeCount": 43
-    },
-    {
-      "Name": "Type0Tuned",
-      "Seed": 20261016,
-      "BaseSpinCount": 250000,
-      "TypeIndex": 0,
-      "GeneralIndex": 1,
-      "Seconds": 293.84222795799997,
-      "MaximumWinMultiple": 332.3,
-      "BaseClusterRtp": 0.551821600000198,
-      "BaseClusterRtpStandardError": 0.0023531491572651637,
-      "BaseBonusRtp": 0.10116239999999899,
-      "BaseBonusRtpStandardError": 0.0021184114959030085,
-      "FreeClusterRtp": 0.13217639999999983,
-      "FreeClusterRtpStandardError": 0.0031521887859563124,
-      "FreeBonusRtp": 0.20210640000000055,
-      "FreeBonusRtpStandardError": 0.005090972261200251,
-      "Rtp": 0.9872668000004562,
-      "RtpStandardError": 0.00852364466601653,
-      "FreeFrequency": 0.009424,
-      "BaseBonusFrequency": 0.022808,
-      "FreeSpinCount": 26256,
-      "BaseHitRate": 0.491392,
-      "FreeHitRate": 0.5363726386349786,
-      "AverageFreeSpinCount": 11.144312393887946,
-      "SuperFreeCount": 48
-    },
-    {
-      "Name": "Type0Tuned",
-      "Seed": 20261017,
-      "BaseSpinCount": 250000,
-      "TypeIndex": 0,
-      "GeneralIndex": 1,
-      "Seconds": 293.51710570800003,
-      "MaximumWinMultiple": 5021.6,
-      "BaseClusterRtp": 0.5513244000001898,
-      "BaseClusterRtpStandardError": 0.002334083335195792,
-      "BaseBonusRtp": 0.09825519999999896,
-      "BaseBonusRtpStandardError": 0.0018951364143142712,
-      "FreeClusterRtp": 0.12957479999999974,
-      "FreeClusterRtpStandardError": 0.0031244755678689743,
-      "FreeBonusRtp": 0.22093199999999935,
-      "FreeBonusRtpStandardError": 0.02066865037146685,
-      "Rtp": 1.000086400000459,
-      "RtpStandardError": 0.02175368896859391,
-      "FreeFrequency": 0.009252,
-      "BaseBonusFrequency": 0.022696,
-      "FreeSpinCount": 25984,
-      "BaseHitRate": 0.49068,
-      "FreeHitRate": 0.5338285098522167,
-      "AverageFreeSpinCount": 11.233895373973194,
-      "SuperFreeCount": 45
-    },
-    {
-      "Name": "Type0Tuned",
-      "Seed": 20261018,
-      "BaseSpinCount": 250000,
-      "TypeIndex": 0,
-      "GeneralIndex": 1,
-      "Seconds": 294.827068625,
-      "MaximumWinMultiple": 404.9,
-      "BaseClusterRtp": 0.5518828000001937,
-      "BaseClusterRtpStandardError": 0.002336383319364537,
-      "BaseBonusRtp": 0.10351399999999897,
-      "BaseBonusRtpStandardError": 0.002884205658718728,
-      "FreeClusterRtp": 0.1299668000000001,
-      "FreeClusterRtpStandardError": 0.0031431564201165932,
-      "FreeBonusRtp": 0.2023904000000003,
-      "FreeBonusRtpStandardError": 0.005134442103474749,
-      "Rtp": 0.987754000000451,
-      "RtpStandardError": 0.008724089615590987,
-      "FreeFrequency": 0.009348,
-      "BaseBonusFrequency": 0.022656,
-      "FreeSpinCount": 26196,
-      "BaseHitRate": 0.4915,
-      "FreeHitRate": 0.5370667277446939,
-      "AverageFreeSpinCount": 11.209242618741976,
-      "SuperFreeCount": 40
-    }
-  ]
+  "ResultFieldSemantics": {
+    "NativeFreeFields": "In raw native runs, FreeClusterRtp/FreeBonusRtp/FreeFrequency mean ordinary Free only",
+    "SimulationLegacyFreeFields": "Existing simulation free_rtp/free_cluster_rtp/free_bonus_rtp include ordinary plus Super Free",
+    "PublicNormalFreeFields": "NormalFree prefixed fields always exclude Super Free",
+    "StandardError": "Pooled per-paid-Base-spin sample standard error, including between-run mean differences",
+    "ConfidenceIntervals": "Approximate normal 95% intervals; high-tail samples do not guarantee exact coverage",
+    "BonusWinUnit": "BaseBonus conditional mean, standard deviation, quantiles and maximum are multiples of a single Base bet"
+  },
+  "Reproduction": {
+    "WorkingDirectory": "ThemeMath/yngg",
+    "FullRandomCommand": "python3 calibrate_rtp.py --spins 25000000 --runs 4 --workers 4 --seed 2026102251 --output /tmp/yngg-natural-full.json",
+    "ExpectationCommand": "python3 calibrate_rtp.py --spins 12500000 --runs 4 --workers 4 --seed 2026102251 --expected-rewards --output /tmp/yngg-natural-expectation.json",
+    "ExactReplayCommand": "python3 verify_calibration_sampler.py --spins 20000 --seed 2026102250",
+    "TestsCommand": "python3 -m unittest discover -s ThemeMath/yngg -p 'test_*.py'",
+    "TestsWorkingDirectory": "RepositoryRoot",
+    "RunsFile": "rtp_calibration_runs.json",
+    "ConfigHashes": [
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_0.conf",
+        "Sha256": "adf2906f4fc9ed93350a84bd7d0516464d5cd094e8d9018382d2093cacd09d8b"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_12.conf",
+        "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_17.conf",
+        "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_4.conf",
+        "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_8.conf",
+        "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_main.conf",
+        "Sha256": "5856b541e65b8d3d3d330c715b90ae23ce24d44e3208057d4bdc910c0e6d3248"
+      },
+      {
+        "Path": "general_config/base_bull.conf",
+        "Sha256": "cfab5c53fc9d74fc1c92cb171b0331e6608c1283d77009e966aaf12d21518289"
+      },
+      {
+        "Path": "general_config/base_comm.conf",
+        "Sha256": "c3355d0e8039f1c64f70efa35515cb6c2cfc8edbd7dfe50100006e6a6503547b"
+      },
+      {
+        "Path": "general_config/base_level.conf",
+        "Sha256": "f95c816ba008337646b3a69dcaaf37b952831a6caccb5fde26966988ad210274"
+      },
+      {
+        "Path": "general_config/base_text.conf",
+        "Sha256": "2bfae39ffd1af4e09b421b265a5f7a58772ea746d4e251dc29b626a86bf28be8"
+      },
+      {
+        "Path": "general_config/game_achievement.conf",
+        "Sha256": "5e461465770909107d33196396bc41e62650d235604a6806a735fa773d42a099"
+      },
+      {
+        "Path": "general_config/game_act_coin.conf",
+        "Sha256": "5fe3275245d3f656a270dbcf3e911134e8f36eb4de69ad737ecd1ba087e5dfad"
+      },
+      {
+        "Path": "general_config/game_activity.conf",
+        "Sha256": "2a3ea1dd68928934afff681741f02e08f10c36e9567cf20c09f31fa5e92510fd"
+      },
+      {
+        "Path": "general_config/game_card.conf",
+        "Sha256": "39909f62203d79074bb5010af7d880bd28171a799ae588b2197ccb78fbec5d7a"
+      },
+      {
+        "Path": "general_config/game_get_level_exp.conf",
+        "Sha256": "9b41c1f9e96cce935b56708549d126f2b802e4cee575b114d0d3ddb62aee0e0f"
+      },
+      {
+        "Path": "general_config/slot_activity.conf",
+        "Sha256": "d5fd74c8eeac3710124405368eccb98c4b4d12330355c9da0180a47faca51cb5"
+      },
+      {
+        "Path": "general_config/slot_game_activity.conf",
+        "Sha256": "6159698bb3243fad9a3f705ef6dbe663e42d661bf527986cd5dbe4b7e07c8059"
+      },
+      {
+        "Path": "general_config/slot_game_activity2.conf",
+        "Sha256": "f1945cd6c19e56b3c1c78943ef5ec18116907a4ca1efc40a57d48ab1db7adfc5"
+      },
+      {
+        "Path": "general_config/spe_user_event.conf",
+        "Sha256": "c78fdfb705152c8fbfe0dda9d4f9c7d076aeae442514d98fa59d093566e70362"
+      },
+      {
+        "Path": "general_config/spreader_task.conf",
+        "Sha256": "b21af502cab8ffe786514e4daca284e7930a8984a826a011b7241292d3f69e5f"
+      },
+      {
+        "Path": "general_config/yb_double.conf",
+        "Sha256": "ef5ac994e2c509d1cadfd35454e9c787fdd76b6a8c3b4a510187fc50d4db2491"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_0.conf",
+        "Sha256": "a398e2b17c3c0f5bdfa87dee058396468666536f5e7beb9970fb6cb0bcd25fd6"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_12.conf",
+        "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_17.conf",
+        "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_4.conf",
+        "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_8.conf",
+        "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+      },
+      {
+        "Path": "reel_config/yngg_rand_main.conf",
+        "Sha256": "5856b541e65b8d3d3d330c715b90ae23ce24d44e3208057d4bdc910c0e6d3248"
+      },
+      {
+        "Path": "special/slot_prop_config.conf",
+        "Sha256": "14900fdcb7ad4b002498e5d9b58b2453850aebccbb84c65eb474813a98d362c2"
+      },
+      {
+        "Path": "special/yngg_bonus.conf",
+        "Sha256": "0b6bce9f8c0e2865d05115e8b57a867b256dfba1663a449d7232674bc080036a"
+      },
+      {
+        "Path": "special/yngg_control.conf",
+        "Sha256": "3fa61132912bd661c60192c7aa9fd0e2b793ce7cdf439f48e42a60fc3c920179"
+      },
+      {
+        "Path": "special/yngg_game_config.conf",
+        "Sha256": "a7e57d64349479bbf63ecf64104dd5e64d2591fe78ace0c8d231096eb3cc0ae3"
+      },
+      {
+        "Path": "special/yngg_game_server.conf",
+        "Sha256": "39b14a27c31d72d4d533859367fdd3610570cd9df2153412d326532d6741a3b6"
+      },
+      {
+        "Path": "special_config/base_game_name.conf",
+        "Sha256": "7dbf33f0706ddf6a6ffb1ada750607083d010e710e11575b2ecca5044e4d4f12"
+      },
+      {
+        "Path": "special_config/game_server.conf",
+        "Sha256": "0ff9035802784faf6e11ae451b28a0769b0697302980ac5c36ff3e3c55549906"
+      },
+      {
+        "Path": "special_config/slot_control_group.conf",
+        "Sha256": "24cc160cc157d05a36299891665cca8c3193025687f012c1414022407e64f927"
+      }
+    ],
+    "SampledConfigHashes": [
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_0.conf",
+        "Sha256": "adf2906f4fc9ed93350a84bd7d0516464d5cd094e8d9018382d2093cacd09d8b"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_12.conf",
+        "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_17.conf",
+        "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_4.conf",
+        "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_8.conf",
+        "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_main.conf",
+        "Sha256": "5856b541e65b8d3d3d330c715b90ae23ce24d44e3208057d4bdc910c0e6d3248"
+      },
+      {
+        "Path": "general_config/base_bull.conf",
+        "Sha256": "cfab5c53fc9d74fc1c92cb171b0331e6608c1283d77009e966aaf12d21518289"
+      },
+      {
+        "Path": "general_config/base_comm.conf",
+        "Sha256": "c3355d0e8039f1c64f70efa35515cb6c2cfc8edbd7dfe50100006e6a6503547b"
+      },
+      {
+        "Path": "general_config/base_level.conf",
+        "Sha256": "f95c816ba008337646b3a69dcaaf37b952831a6caccb5fde26966988ad210274"
+      },
+      {
+        "Path": "general_config/base_text.conf",
+        "Sha256": "2bfae39ffd1af4e09b421b265a5f7a58772ea746d4e251dc29b626a86bf28be8"
+      },
+      {
+        "Path": "general_config/game_achievement.conf",
+        "Sha256": "5e461465770909107d33196396bc41e62650d235604a6806a735fa773d42a099"
+      },
+      {
+        "Path": "general_config/game_act_coin.conf",
+        "Sha256": "5fe3275245d3f656a270dbcf3e911134e8f36eb4de69ad737ecd1ba087e5dfad"
+      },
+      {
+        "Path": "general_config/game_activity.conf",
+        "Sha256": "2a3ea1dd68928934afff681741f02e08f10c36e9567cf20c09f31fa5e92510fd"
+      },
+      {
+        "Path": "general_config/game_card.conf",
+        "Sha256": "39909f62203d79074bb5010af7d880bd28171a799ae588b2197ccb78fbec5d7a"
+      },
+      {
+        "Path": "general_config/game_get_level_exp.conf",
+        "Sha256": "9b41c1f9e96cce935b56708549d126f2b802e4cee575b114d0d3ddb62aee0e0f"
+      },
+      {
+        "Path": "general_config/slot_activity.conf",
+        "Sha256": "d5fd74c8eeac3710124405368eccb98c4b4d12330355c9da0180a47faca51cb5"
+      },
+      {
+        "Path": "general_config/slot_game_activity.conf",
+        "Sha256": "6159698bb3243fad9a3f705ef6dbe663e42d661bf527986cd5dbe4b7e07c8059"
+      },
+      {
+        "Path": "general_config/slot_game_activity2.conf",
+        "Sha256": "f1945cd6c19e56b3c1c78943ef5ec18116907a4ca1efc40a57d48ab1db7adfc5"
+      },
+      {
+        "Path": "general_config/spe_user_event.conf",
+        "Sha256": "c78fdfb705152c8fbfe0dda9d4f9c7d076aeae442514d98fa59d093566e70362"
+      },
+      {
+        "Path": "general_config/spreader_task.conf",
+        "Sha256": "b21af502cab8ffe786514e4daca284e7930a8984a826a011b7241292d3f69e5f"
+      },
+      {
+        "Path": "general_config/yb_double.conf",
+        "Sha256": "ef5ac994e2c509d1cadfd35454e9c787fdd76b6a8c3b4a510187fc50d4db2491"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_0.conf",
+        "Sha256": "c05e7a9ba667e8831e11451c6da7492510dee77c1cce7331b1dfc27ed1b58760"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_12.conf",
+        "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_17.conf",
+        "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_4.conf",
+        "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_8.conf",
+        "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+      },
+      {
+        "Path": "reel_config/yngg_rand_main.conf",
+        "Sha256": "5856b541e65b8d3d3d330c715b90ae23ce24d44e3208057d4bdc910c0e6d3248"
+      },
+      {
+        "Path": "special/slot_prop_config.conf",
+        "Sha256": "14900fdcb7ad4b002498e5d9b58b2453850aebccbb84c65eb474813a98d362c2"
+      },
+      {
+        "Path": "special/yngg_bonus.conf",
+        "Sha256": "0b6bce9f8c0e2865d05115e8b57a867b256dfba1663a449d7232674bc080036a"
+      },
+      {
+        "Path": "special/yngg_control.conf",
+        "Sha256": "3fa61132912bd661c60192c7aa9fd0e2b793ce7cdf439f48e42a60fc3c920179"
+      },
+      {
+        "Path": "special/yngg_game_config.conf",
+        "Sha256": "a7e57d64349479bbf63ecf64104dd5e64d2591fe78ace0c8d231096eb3cc0ae3"
+      },
+      {
+        "Path": "special/yngg_game_server.conf",
+        "Sha256": "39b14a27c31d72d4d533859367fdd3610570cd9df2153412d326532d6741a3b6"
+      },
+      {
+        "Path": "special_config/base_game_name.conf",
+        "Sha256": "7dbf33f0706ddf6a6ffb1ada750607083d010e710e11575b2ecca5044e4d4f12"
+      },
+      {
+        "Path": "special_config/game_server.conf",
+        "Sha256": "0ff9035802784faf6e11ae451b28a0769b0697302980ac5c36ff3e3c55549906"
+      },
+      {
+        "Path": "special_config/slot_control_group.conf",
+        "Sha256": "24cc160cc157d05a36299891665cca8c3193025687f012c1414022407e64f927"
+      }
+    ],
+    "SourceHashes": [
+      {
+        "Path": "theme_math.py",
+        "Sha256": "0d3e02dfe752c97519b76e3edeac6026a1c544aca88c91eb9a0c3e6b20333ce1"
+      },
+      {
+        "Path": "simulation.py",
+        "Sha256": "4477a63c9678c54677a345d32f86e9e1805d098fcd15feae0f0599ee514633bd"
+      },
+      {
+        "Path": "calibration_sampler.cpp",
+        "Sha256": "07c3156cb32c9c0c8ccc2d997b22a97a513f8249c9e7eb50f00dc8fc113bdf2d"
+      },
+      {
+        "Path": "verify_calibration_sampler.py",
+        "Sha256": "665f88452e0e21eb540ce5f9e46f9c86fdbcddcfcc2d7f9d8df015f6fb1b3174"
+      },
+      {
+        "Path": "calibrate_rtp.py",
+        "Sha256": "4efc2f84ecee1d00bc94c0a177827bb272a1c54dee827c12ec4058ac7fe14857"
+      },
+      {
+        "Path": "build_from_demo.py",
+        "Sha256": "0426173424f4dd41a9d7db402748e41a1dd91eae44fc79490e3b37d9a389b61d"
+      },
+      {
+        "Path": "../slots_math.py",
+        "Sha256": "31ba271e33064f342574ab6b1b0ccec99aaf8525ef293bdc1264ade5c654d4e8"
+      }
+    ]
+  },
+  "ServerCompatibility": {
+    "DownloadedServerReadsType0BonusOverrides": false,
+    "RequiredBeforeServerCalibration": "Implement named Type0 overrides and align pot-generation cap, rounding and control scope; then rebuild and measure the server separately",
+    "DetailsFile": "yngg_服务器逻辑修改说明.md"
+  },
+  "RuntimeOptimization": {
+    "Date": "2026-10-22",
+    "Report": "spin_performance.json",
+    "Details": "PERFORMANCE.md",
+    "SourceHashesBelongToSamplingVersion": true,
+    "MathParametersUnchanged": true,
+    "CurrentThemeMathSha256": "bef354b142b71432a9e50dd58d94b2d2b868839cbaaee10ff4811134cdf31bab",
+    "ReferenceThemeMathSha256": "0d3e02dfe752c97519b76e3edeac6026a1c544aca88c91eb9a0c3e6b20333ce1",
+    "FullResultsAndRandomStreamMatchedPaidSpins": 20000,
+    "UnitTestsPassed": 79
+  }
 }

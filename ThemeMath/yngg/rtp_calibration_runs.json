@@ -1,0 +1,1065 @@
+{
+  "CurrentRuleValidity": {
+    "Status": "HistoricalBeforeBonusRuleChange",
+    "RuleChangeDate": "2026-10-23",
+    "GameServerVersion": 104,
+    "BonusMaxPotCount": 5,
+    "BonusMaxCloverCount": 3,
+    "BonusRevealMinCoinCount": 1,
+    "AppliesToCurrentRules": false,
+    "Reason": "Whole-feature clover cap and per-reveal coin guarantee change the random path and Bonus distribution. Measurements below describe the 2026-10-22 rules; current rules have not been recalibrated or rebenchmarked."
+  },
+  "Date": "2026-10-22",
+  "CalibrationRevision": "NaturalGroupsExpanded",
+  "TypeIndex": 0,
+  "GeneralIndex": 1,
+  "SamplerKind": "LocalRulesNativeSampler",
+  "BinaryServerExecuted": false,
+  "FullRandom": {
+    "BaseSpinCount": 100000000,
+    "BaseClusterRtp": 0.44993982798199994,
+    "BaseClusterRtpStandardError": 0.00010691902479156624,
+    "BaseBonusRtp": 0.200000913,
+    "BaseBonusRtpStandardError": 0.0009181445921961826,
+    "FreeClusterRtp": 0.072923735,
+    "FreeClusterRtpStandardError": 0.00012038498709837831,
+    "FreeBonusRtp": 0.18027155,
+    "FreeBonusRtpStandardError": 0.0008188378211971381,
+    "SuperFreeClusterRtp": 0.007240870999999999,
+    "SuperFreeClusterRtpStandardError": 3.791006891635846e-05,
+    "SuperFreeBonusRtp": 0.040121037,
+    "SuperFreeBonusRtpStandardError": 0.00042452961263396476,
+    "Rtp": 0.9504979340085,
+    "RtpStandardError": 0.0013401666159704615,
+    "BaseBonusTriggerCount": 1249523,
+    "BaseBonusFrequency": 0.01249523,
+    "FreeTriggerCount": 496215,
+    "FreeFrequency": 0.00496215,
+    "SuperFreeTriggerCount": 49336,
+    "SuperFreeFrequency": 0.00049336,
+    "FreeSpinCount": 5560062,
+    "SuperFreeSpinCount": 552648,
+    "BaseBonusVolatilityStatisticsAvailable": true,
+    "BaseBonusConditionalMean": 16.006180998654763,
+    "BaseBonusConditionalStdDev": 80.58221733963111,
+    "BaseBonusConditionalMeanStandardError": 0.07208871097911154,
+    "BaseBonusMax": 30118.6,
+    "Verification": {
+      "RtpComponentsMatch": true,
+      "BaseBonusConditionalMeanMatchesRtp": true,
+      "RunQuantilesPooled": false
+    },
+    "CreatedAtUtc": "2026-10-22T09:23:26.099741+00:00",
+    "SamplerKind": "LocalRulesNativeSampler",
+    "BinaryServerExecuted": false,
+    "RewardSampling": "FullRandom",
+    "StandardErrorInterpretation": "Monte Carlo SE of fully sampled paid-Base-spin returns.",
+    "Project": "/Users/sunyulu/Desktop/github/HGI/ThemeMath/yngg",
+    "TypeIndex": 0,
+    "GeneralIndex": 1,
+    "BaseBet": 100000,
+    "Denominator": "Total paid Base bets, including triggered Free and Super Free sessions and retriggers.",
+    "SpinsPerRun": 25000000,
+    "RunCount": 4,
+    "Workers": 4,
+    "Seeds": [
+      2026102251,
+      2026102252,
+      2026102253,
+      2026102254
+    ],
+    "InputSnapshotUsed": true,
+    "Compiler": "/usr/bin/clang++",
+    "CompilerOptions": [
+      "-std=c++17",
+      "-O3"
+    ],
+    "ConfigFiles": [
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_0.conf",
+        "Sha256": "adf2906f4fc9ed93350a84bd7d0516464d5cd094e8d9018382d2093cacd09d8b"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_12.conf",
+        "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_17.conf",
+        "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_4.conf",
+        "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_8.conf",
+        "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_main.conf",
+        "Sha256": "5856b541e65b8d3d3d330c715b90ae23ce24d44e3208057d4bdc910c0e6d3248"
+      },
+      {
+        "Path": "general_config/base_bull.conf",
+        "Sha256": "cfab5c53fc9d74fc1c92cb171b0331e6608c1283d77009e966aaf12d21518289"
+      },
+      {
+        "Path": "general_config/base_comm.conf",
+        "Sha256": "c3355d0e8039f1c64f70efa35515cb6c2cfc8edbd7dfe50100006e6a6503547b"
+      },
+      {
+        "Path": "general_config/base_level.conf",
+        "Sha256": "f95c816ba008337646b3a69dcaaf37b952831a6caccb5fde26966988ad210274"
+      },
+      {
+        "Path": "general_config/base_text.conf",
+        "Sha256": "2bfae39ffd1af4e09b421b265a5f7a58772ea746d4e251dc29b626a86bf28be8"
+      },
+      {
+        "Path": "general_config/game_achievement.conf",
+        "Sha256": "5e461465770909107d33196396bc41e62650d235604a6806a735fa773d42a099"
+      },
+      {
+        "Path": "general_config/game_act_coin.conf",
+        "Sha256": "5fe3275245d3f656a270dbcf3e911134e8f36eb4de69ad737ecd1ba087e5dfad"
+      },
+      {
+        "Path": "general_config/game_activity.conf",
+        "Sha256": "2a3ea1dd68928934afff681741f02e08f10c36e9567cf20c09f31fa5e92510fd"
+      },
+      {
+        "Path": "general_config/game_card.conf",
+        "Sha256": "39909f62203d79074bb5010af7d880bd28171a799ae588b2197ccb78fbec5d7a"
+      },
+      {
+        "Path": "general_config/game_get_level_exp.conf",
+        "Sha256": "9b41c1f9e96cce935b56708549d126f2b802e4cee575b114d0d3ddb62aee0e0f"
+      },
+      {
+        "Path": "general_config/slot_activity.conf",
+        "Sha256": "d5fd74c8eeac3710124405368eccb98c4b4d12330355c9da0180a47faca51cb5"
+      },
+      {
+        "Path": "general_config/slot_game_activity.conf",
+        "Sha256": "6159698bb3243fad9a3f705ef6dbe663e42d661bf527986cd5dbe4b7e07c8059"
+      },
+      {
+        "Path": "general_config/slot_game_activity2.conf",
+        "Sha256": "f1945cd6c19e56b3c1c78943ef5ec18116907a4ca1efc40a57d48ab1db7adfc5"
+      },
+      {
+        "Path": "general_config/spe_user_event.conf",
+        "Sha256": "c78fdfb705152c8fbfe0dda9d4f9c7d076aeae442514d98fa59d093566e70362"
+      },
+      {
+        "Path": "general_config/spreader_task.conf",
+        "Sha256": "b21af502cab8ffe786514e4daca284e7930a8984a826a011b7241292d3f69e5f"
+      },
+      {
+        "Path": "general_config/yb_double.conf",
+        "Sha256": "ef5ac994e2c509d1cadfd35454e9c787fdd76b6a8c3b4a510187fc50d4db2491"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_0.conf",
+        "Sha256": "c05e7a9ba667e8831e11451c6da7492510dee77c1cce7331b1dfc27ed1b58760"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_12.conf",
+        "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_17.conf",
+        "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_4.conf",
+        "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_8.conf",
+        "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+      },
+      {
+        "Path": "reel_config/yngg_rand_main.conf",
+        "Sha256": "5856b541e65b8d3d3d330c715b90ae23ce24d44e3208057d4bdc910c0e6d3248"
+      },
+      {
+        "Path": "special/slot_prop_config.conf",
+        "Sha256": "14900fdcb7ad4b002498e5d9b58b2453850aebccbb84c65eb474813a98d362c2"
+      },
+      {
+        "Path": "special/yngg_bonus.conf",
+        "Sha256": "0b6bce9f8c0e2865d05115e8b57a867b256dfba1663a449d7232674bc080036a"
+      },
+      {
+        "Path": "special/yngg_control.conf",
+        "Sha256": "3fa61132912bd661c60192c7aa9fd0e2b793ce7cdf439f48e42a60fc3c920179"
+      },
+      {
+        "Path": "special/yngg_game_config.conf",
+        "Sha256": "a7e57d64349479bbf63ecf64104dd5e64d2591fe78ace0c8d231096eb3cc0ae3"
+      },
+      {
+        "Path": "special/yngg_game_server.conf",
+        "Sha256": "39b14a27c31d72d4d533859367fdd3610570cd9df2153412d326532d6741a3b6"
+      },
+      {
+        "Path": "special_config/base_game_name.conf",
+        "Sha256": "7dbf33f0706ddf6a6ffb1ada750607083d010e710e11575b2ecca5044e4d4f12"
+      },
+      {
+        "Path": "special_config/game_server.conf",
+        "Sha256": "0ff9035802784faf6e11ae451b28a0769b0697302980ac5c36ff3e3c55549906"
+      },
+      {
+        "Path": "special_config/slot_control_group.conf",
+        "Sha256": "24cc160cc157d05a36299891665cca8c3193025687f012c1414022407e64f927"
+      }
+    ],
+    "SourceFiles": [
+      {
+        "Path": "/Users/sunyulu/Desktop/github/HGI/ThemeMath/yngg/calibration_sampler.cpp",
+        "Sha256": "07c3156cb32c9c0c8ccc2d997b22a97a513f8249c9e7eb50f00dc8fc113bdf2d"
+      },
+      {
+        "Path": "/Users/sunyulu/Desktop/github/HGI/ThemeMath/yngg/calibrate_rtp.py",
+        "Sha256": "4efc2f84ecee1d00bc94c0a177827bb272a1c54dee827c12ec4058ac7fe14857"
+      },
+      {
+        "Path": "/Users/sunyulu/Desktop/github/HGI/ThemeMath/yngg/theme_math.py",
+        "Sha256": "0d3e02dfe752c97519b76e3edeac6026a1c544aca88c91eb9a0c3e6b20333ce1"
+      },
+      {
+        "Path": "/Users/sunyulu/Desktop/github/HGI/ThemeMath/yngg/simulation.py",
+        "Sha256": "4477a63c9678c54677a345d32f86e9e1805d098fcd15feae0f0599ee514633bd"
+      },
+      {
+        "Path": "/Users/sunyulu/Desktop/github/HGI/ThemeMath/slots_math.py",
+        "Sha256": "31ba271e33064f342574ab6b1b0ccec99aaf8525ef293bdc1264ade5c654d4e8"
+      }
+    ],
+    "Runs": [
+      {
+        "BaseBet": 100000,
+        "BaseSpinCount": 25000000,
+        "RewardSampling": "FullRandom",
+        "ExpectedRewardsIntegrated": false,
+        "BaseClusterRtp": 0.449976407982,
+        "BaseClusterRtpStandardError": 0.000213815273354,
+        "BaseBonusRtp": 0.201033728,
+        "BaseBonusRtpStandardError": 0.00216446778588,
+        "FreeClusterRtp": 0.072786812,
+        "FreeClusterRtpStandardError": 0.000240459239009,
+        "FreeBonusRtp": 0.179274616,
+        "FreeBonusRtpStandardError": 0.00161276639209,
+        "SuperFreeClusterRtp": 0.007082772,
+        "SuperFreeClusterRtpStandardError": 7.41712512075e-05,
+        "SuperFreeBonusRtp": 0.040111216,
+        "SuperFreeBonusRtpStandardError": 0.000858978872872,
+        "Rtp": 0.950265552008,
+        "RtpStandardError": 0.00290345366454,
+        "BaseBonusFrequency": 0.01247352,
+        "FreeFrequency": 0.00495344,
+        "SuperFreeFrequency": 0.00049124,
+        "FreeSpinCount": 1387488,
+        "SuperFreeSpinCount": 137546,
+        "BaseBonusConditionalMean": 16.1168401542,
+        "BaseBonusConditionalStdDev": 95.5678812076,
+        "BaseBonusP50": 10.2,
+        "BaseBonusP90": 18.4,
+        "BaseBonusP95": 24.8,
+        "BaseBonusP99": 109.1,
+        "BaseBonusMax": 30118.6,
+        "Seconds": 57.919858584,
+        "BaseBonusTriggerCount": 311838,
+        "FreeTriggerCount": 123836,
+        "SuperFreeTriggerCount": 12281,
+        "RunIndex": 0,
+        "Seed": 2026102251
+      },
+      {
+        "BaseBet": 100000,
+        "BaseSpinCount": 25000000,
+        "RewardSampling": "FullRandom",
+        "ExpectedRewardsIntegrated": false,
+        "BaseClusterRtp": 0.449584215982,
+        "BaseClusterRtpStandardError": 0.000213816242533,
+        "BaseBonusRtp": 0.198584612,
+        "BaseBonusRtpStandardError": 0.00156846459201,
+        "FreeClusterRtp": 0.072978564,
+        "FreeClusterRtpStandardError": 0.000241200345852,
+        "FreeBonusRtp": 0.17761178,
+        "FreeBonusRtpStandardError": 0.00150056142649,
+        "SuperFreeClusterRtp": 0.007248064,
+        "SuperFreeClusterRtpStandardError": 7.60630555668e-05,
+        "SuperFreeBonusRtp": 0.040433156,
+        "SuperFreeBonusRtpStandardError": 0.000837282317418,
+        "Rtp": 0.946440392008,
+        "RtpStandardError": 0.00241241803356,
+        "BaseBonusFrequency": 0.01247828,
+        "FreeFrequency": 0.00495752,
+        "SuperFreeFrequency": 0.00049176,
+        "FreeSpinCount": 1388464,
+        "SuperFreeSpinCount": 137294,
+        "BaseBonusConditionalMean": 15.9144218594,
+        "BaseBonusConditionalStdDev": 68.4004228569,
+        "BaseBonusP50": 10.2,
+        "BaseBonusP90": 18.5,
+        "BaseBonusP95": 24.8,
+        "BaseBonusP99": 109.2,
+        "BaseBonusMax": 12516.6,
+        "Seconds": 58.047014,
+        "BaseBonusTriggerCount": 311957,
+        "FreeTriggerCount": 123938,
+        "SuperFreeTriggerCount": 12294,
+        "RunIndex": 1,
+        "Seed": 2026102252
+      },
+      {
+        "BaseBet": 100000,
+        "BaseSpinCount": 25000000,
+        "RewardSampling": "FullRandom",
+        "ExpectedRewardsIntegrated": false,
+        "BaseClusterRtp": 0.449836963982,
+        "BaseClusterRtpStandardError": 0.00021387434292,
+        "BaseBonusRtp": 0.201210388,
+        "BaseBonusRtpStandardError": 0.00194301233527,
+        "FreeClusterRtp": 0.073096264,
+        "FreeClusterRtpStandardError": 0.000240950352384,
+        "FreeBonusRtp": 0.182465092,
+        "FreeBonusRtpStandardError": 0.00185815043706,
+        "SuperFreeClusterRtp": 0.00729154,
+        "SuperFreeClusterRtpStandardError": 7.64749685826e-05,
+        "SuperFreeBonusRtp": 0.040017076,
+        "SuperFreeBonusRtpStandardError": 0.000778605921854,
+        "Rtp": 0.953917324009,
+        "RtpStandardError": 0.00287193817633,
+        "BaseBonusFrequency": 0.01247624,
+        "FreeFrequency": 0.0049758,
+        "SuperFreeFrequency": 0.00049256,
+        "FreeSpinCount": 1393732,
+        "SuperFreeSpinCount": 138118,
+        "BaseBonusConditionalMean": 16.1274861657,
+        "BaseBonusConditionalStdDev": 85.4875562672,
+        "BaseBonusP50": 10.2,
+        "BaseBonusP90": 18.4,
+        "BaseBonusP95": 24.7,
+        "BaseBonusP99": 109.2,
+        "BaseBonusMax": 20034.7,
+        "Seconds": 57.897193584,
+        "BaseBonusTriggerCount": 311906,
+        "FreeTriggerCount": 124395,
+        "SuperFreeTriggerCount": 12314,
+        "RunIndex": 2,
+        "Seed": 2026102253
+      },
+      {
+        "BaseBet": 100000,
+        "BaseSpinCount": 25000000,
+        "RewardSampling": "FullRandom",
+        "ExpectedRewardsIntegrated": false,
+        "BaseClusterRtp": 0.450361723982,
+        "BaseClusterRtpStandardError": 0.000213846317201,
+        "BaseBonusRtp": 0.199174924,
+        "BaseBonusRtpStandardError": 0.00160235238424,
+        "FreeClusterRtp": 0.0728333,
+        "FreeClusterRtpStandardError": 0.00024046912835,
+        "FreeBonusRtp": 0.181734712,
+        "FreeBonusRtpStandardError": 0.0015564391035,
+        "SuperFreeClusterRtp": 0.007341108,
+        "SuperFreeClusterRtpStandardError": 7.65466435561e-05,
+        "SuperFreeBonusRtp": 0.0399227,
+        "SuperFreeBonusRtpStandardError": 0.000915692518264,
+        "Rtp": 0.951368468009,
+        "RtpStandardError": 0.00249778137573,
+        "BaseBonusFrequency": 0.01255288,
+        "FreeFrequency": 0.00496184,
+        "SuperFreeFrequency": 0.00049788,
+        "FreeSpinCount": 1390378,
+        "SuperFreeSpinCount": 139690,
+        "BaseBonusConditionalMean": 15.8668707101,
+        "BaseBonusConditionalStdDev": 69.7483831037,
+        "BaseBonusP50": 10.2,
+        "BaseBonusP90": 18.4,
+        "BaseBonusP95": 24.7,
+        "BaseBonusP99": 109,
+        "BaseBonusMax": 10100.1,
+        "Seconds": 57.9185585,
+        "BaseBonusTriggerCount": 313822,
+        "FreeTriggerCount": 124046,
+        "SuperFreeTriggerCount": 12447,
+        "RunIndex": 3,
+        "Seed": 2026102254
+      }
+    ],
+    "Seconds": 61.298464959
+  },
+  "ConditionalExpectation": {
+    "BaseSpinCount": 50000000,
+    "BaseClusterRtp": 0.449972255999,
+    "BaseClusterRtpStandardError": 0.00015120128671818636,
+    "BaseBonusRtp": 0.1998247312755,
+    "BaseBonusRtpStandardError": 0.0002971244572441031,
+    "FreeClusterRtp": 0.073042306,
+    "FreeClusterRtpStandardError": 0.00017047255345035278,
+    "FreeBonusRtp": 0.18002918856300001,
+    "FreeBonusRtpStandardError": 0.00041701057255851486,
+    "SuperFreeClusterRtp": 0.007275504,
+    "SuperFreeClusterRtpStandardError": 5.3785480556476496e-05,
+    "SuperFreeBonusRtp": 0.040476251406,
+    "SuperFreeBonusRtpStandardError": 0.0003080235372197061,
+    "Rtp": 0.95062023722475,
+    "RtpStandardError": 0.0007495549168757553,
+    "BaseBonusTriggerCount": 624772,
+    "BaseBonusFrequency": 0.01249544,
+    "FreeTriggerCount": 248200,
+    "FreeFrequency": 0.004964,
+    "SuperFreeTriggerCount": 24671,
+    "SuperFreeFrequency": 0.00049342,
+    "FreeSpinCount": 2782022,
+    "SuperFreeSpinCount": 276476,
+    "BaseBonusVolatilityStatisticsAvailable": false,
+    "BaseBonusConditionalMean": 15.991812315170419,
+    "Verification": {
+      "RtpComponentsMatch": true,
+      "BaseBonusConditionalMeanMatchesRtp": true,
+      "RunQuantilesPooled": false
+    },
+    "CreatedAtUtc": "2026-10-22T09:23:52.182939+00:00",
+    "SamplerKind": "LocalRulesNativeSampler",
+    "BinaryServerExecuted": false,
+    "RewardSampling": "ConditionalExpectation",
+    "StandardErrorInterpretation": "Monte Carlo SE after integrating independent reward tiers; it does not describe player payout volatility.",
+    "Project": "/Users/sunyulu/Desktop/github/HGI/ThemeMath/yngg",
+    "TypeIndex": 0,
+    "GeneralIndex": 1,
+    "BaseBet": 100000,
+    "Denominator": "Total paid Base bets, including triggered Free and Super Free sessions and retriggers.",
+    "SpinsPerRun": 12500000,
+    "RunCount": 4,
+    "Workers": 4,
+    "Seeds": [
+      2026102251,
+      2026102252,
+      2026102253,
+      2026102254
+    ],
+    "InputSnapshotUsed": true,
+    "Compiler": "/usr/bin/clang++",
+    "CompilerOptions": [
+      "-std=c++17",
+      "-O3"
+    ],
+    "ConfigFiles": [
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_0.conf",
+        "Sha256": "adf2906f4fc9ed93350a84bd7d0516464d5cd094e8d9018382d2093cacd09d8b"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_12.conf",
+        "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_17.conf",
+        "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_4.conf",
+        "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_8.conf",
+        "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_main.conf",
+        "Sha256": "5856b541e65b8d3d3d330c715b90ae23ce24d44e3208057d4bdc910c0e6d3248"
+      },
+      {
+        "Path": "general_config/base_bull.conf",
+        "Sha256": "cfab5c53fc9d74fc1c92cb171b0331e6608c1283d77009e966aaf12d21518289"
+      },
+      {
+        "Path": "general_config/base_comm.conf",
+        "Sha256": "c3355d0e8039f1c64f70efa35515cb6c2cfc8edbd7dfe50100006e6a6503547b"
+      },
+      {
+        "Path": "general_config/base_level.conf",
+        "Sha256": "f95c816ba008337646b3a69dcaaf37b952831a6caccb5fde26966988ad210274"
+      },
+      {
+        "Path": "general_config/base_text.conf",
+        "Sha256": "2bfae39ffd1af4e09b421b265a5f7a58772ea746d4e251dc29b626a86bf28be8"
+      },
+      {
+        "Path": "general_config/game_achievement.conf",
+        "Sha256": "5e461465770909107d33196396bc41e62650d235604a6806a735fa773d42a099"
+      },
+      {
+        "Path": "general_config/game_act_coin.conf",
+        "Sha256": "5fe3275245d3f656a270dbcf3e911134e8f36eb4de69ad737ecd1ba087e5dfad"
+      },
+      {
+        "Path": "general_config/game_activity.conf",
+        "Sha256": "2a3ea1dd68928934afff681741f02e08f10c36e9567cf20c09f31fa5e92510fd"
+      },
+      {
+        "Path": "general_config/game_card.conf",
+        "Sha256": "39909f62203d79074bb5010af7d880bd28171a799ae588b2197ccb78fbec5d7a"
+      },
+      {
+        "Path": "general_config/game_get_level_exp.conf",
+        "Sha256": "9b41c1f9e96cce935b56708549d126f2b802e4cee575b114d0d3ddb62aee0e0f"
+      },
+      {
+        "Path": "general_config/slot_activity.conf",
+        "Sha256": "d5fd74c8eeac3710124405368eccb98c4b4d12330355c9da0180a47faca51cb5"
+      },
+      {
+        "Path": "general_config/slot_game_activity.conf",
+        "Sha256": "6159698bb3243fad9a3f705ef6dbe663e42d661bf527986cd5dbe4b7e07c8059"
+      },
+      {
+        "Path": "general_config/slot_game_activity2.conf",
+        "Sha256": "f1945cd6c19e56b3c1c78943ef5ec18116907a4ca1efc40a57d48ab1db7adfc5"
+      },
+      {
+        "Path": "general_config/spe_user_event.conf",
+        "Sha256": "c78fdfb705152c8fbfe0dda9d4f9c7d076aeae442514d98fa59d093566e70362"
+      },
+      {
+        "Path": "general_config/spreader_task.conf",
+        "Sha256": "b21af502cab8ffe786514e4daca284e7930a8984a826a011b7241292d3f69e5f"
+      },
+      {
+        "Path": "general_config/yb_double.conf",
+        "Sha256": "ef5ac994e2c509d1cadfd35454e9c787fdd76b6a8c3b4a510187fc50d4db2491"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_0.conf",
+        "Sha256": "c05e7a9ba667e8831e11451c6da7492510dee77c1cce7331b1dfc27ed1b58760"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_12.conf",
+        "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_17.conf",
+        "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_4.conf",
+        "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_8.conf",
+        "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+      },
+      {
+        "Path": "reel_config/yngg_rand_main.conf",
+        "Sha256": "5856b541e65b8d3d3d330c715b90ae23ce24d44e3208057d4bdc910c0e6d3248"
+      },
+      {
+        "Path": "special/slot_prop_config.conf",
+        "Sha256": "14900fdcb7ad4b002498e5d9b58b2453850aebccbb84c65eb474813a98d362c2"
+      },
+      {
+        "Path": "special/yngg_bonus.conf",
+        "Sha256": "0b6bce9f8c0e2865d05115e8b57a867b256dfba1663a449d7232674bc080036a"
+      },
+      {
+        "Path": "special/yngg_control.conf",
+        "Sha256": "3fa61132912bd661c60192c7aa9fd0e2b793ce7cdf439f48e42a60fc3c920179"
+      },
+      {
+        "Path": "special/yngg_game_config.conf",
+        "Sha256": "a7e57d64349479bbf63ecf64104dd5e64d2591fe78ace0c8d231096eb3cc0ae3"
+      },
+      {
+        "Path": "special/yngg_game_server.conf",
+        "Sha256": "39b14a27c31d72d4d533859367fdd3610570cd9df2153412d326532d6741a3b6"
+      },
+      {
+        "Path": "special_config/base_game_name.conf",
+        "Sha256": "7dbf33f0706ddf6a6ffb1ada750607083d010e710e11575b2ecca5044e4d4f12"
+      },
+      {
+        "Path": "special_config/game_server.conf",
+        "Sha256": "0ff9035802784faf6e11ae451b28a0769b0697302980ac5c36ff3e3c55549906"
+      },
+      {
+        "Path": "special_config/slot_control_group.conf",
+        "Sha256": "24cc160cc157d05a36299891665cca8c3193025687f012c1414022407e64f927"
+      }
+    ],
+    "SourceFiles": [
+      {
+        "Path": "/Users/sunyulu/Desktop/github/HGI/ThemeMath/yngg/calibration_sampler.cpp",
+        "Sha256": "07c3156cb32c9c0c8ccc2d997b22a97a513f8249c9e7eb50f00dc8fc113bdf2d"
+      },
+      {
+        "Path": "/Users/sunyulu/Desktop/github/HGI/ThemeMath/yngg/calibrate_rtp.py",
+        "Sha256": "4efc2f84ecee1d00bc94c0a177827bb272a1c54dee827c12ec4058ac7fe14857"
+      },
+      {
+        "Path": "/Users/sunyulu/Desktop/github/HGI/ThemeMath/yngg/theme_math.py",
+        "Sha256": "0d3e02dfe752c97519b76e3edeac6026a1c544aca88c91eb9a0c3e6b20333ce1"
+      },
+      {
+        "Path": "/Users/sunyulu/Desktop/github/HGI/ThemeMath/yngg/simulation.py",
+        "Sha256": "4477a63c9678c54677a345d32f86e9e1805d098fcd15feae0f0599ee514633bd"
+      },
+      {
+        "Path": "/Users/sunyulu/Desktop/github/HGI/ThemeMath/slots_math.py",
+        "Sha256": "31ba271e33064f342574ab6b1b0ccec99aaf8525ef293bdc1264ade5c654d4e8"
+      }
+    ],
+    "Runs": [
+      {
+        "BaseBet": 100000,
+        "BaseSpinCount": 12500000,
+        "RewardSampling": "ConditionalExpectation",
+        "ExpectedRewardsIntegrated": true,
+        "BaseClusterRtp": 0.449973063999,
+        "BaseClusterRtpStandardError": 0.000302300920201,
+        "BaseBonusRtp": 0.199589875006,
+        "BaseBonusRtpStandardError": 0.000598691998492,
+        "FreeClusterRtp": 0.072744408,
+        "FreeClusterRtpStandardError": 0.000340123408896,
+        "FreeBonusRtp": 0.179198781384,
+        "FreeBonusRtpStandardError": 0.000835385157606,
+        "SuperFreeClusterRtp": 0.007008464,
+        "SuperFreeClusterRtpStandardError": 0.000104422927573,
+        "SuperFreeBonusRtp": 0.0396338180896,
+        "SuperFreeBonusRtpStandardError": 0.000598268901369,
+        "Rtp": 0.94814841046,
+        "RtpStandardError": 0.00149157484454,
+        "BaseBonusFrequency": 0.01247992,
+        "FreeFrequency": 0.00494192,
+        "SuperFreeFrequency": 0.00048632,
+        "FreeSpinCount": 692518,
+        "SuperFreeSpinCount": 68068,
+        "BaseBonusConditionalMean": 15.9928809645,
+        "Seconds": 24.702581959,
+        "BaseBonusTriggerCount": 155999,
+        "FreeTriggerCount": 61774,
+        "SuperFreeTriggerCount": 6079,
+        "RunIndex": 0,
+        "Seed": 2026102251
+      },
+      {
+        "BaseBet": 100000,
+        "BaseSpinCount": 12500000,
+        "RewardSampling": "ConditionalExpectation",
+        "ExpectedRewardsIntegrated": true,
+        "BaseClusterRtp": 0.449887655999,
+        "BaseClusterRtpStandardError": 0.000302538509718,
+        "BaseBonusRtp": 0.199830402291,
+        "BaseBonusRtpStandardError": 0.000593069758002,
+        "FreeClusterRtp": 0.07290764,
+        "FreeClusterRtpStandardError": 0.000340759617249,
+        "FreeBonusRtp": 0.1793249251,
+        "FreeBonusRtpStandardError": 0.000830037739574,
+        "SuperFreeClusterRtp": 0.007302648,
+        "SuperFreeClusterRtpStandardError": 0.000107562927927,
+        "SuperFreeBonusRtp": 0.0407672831232,
+        "SuperFreeBonusRtpStandardError": 0.000604217195616,
+        "Rtp": 0.950020554495,
+        "RtpStandardError": 0.00149134887055,
+        "BaseBonusFrequency": 0.01249,
+        "FreeFrequency": 0.00494816,
+        "SuperFreeFrequency": 0.00049456,
+        "FreeSpinCount": 692504,
+        "SuperFreeSpinCount": 69172,
+        "BaseBonusConditionalMean": 15.9992315685,
+        "Seconds": 24.543117834,
+        "BaseBonusTriggerCount": 156125,
+        "FreeTriggerCount": 61852,
+        "SuperFreeTriggerCount": 6182,
+        "RunIndex": 1,
+        "Seed": 2026102252
+      },
+      {
+        "BaseBet": 100000,
+        "BaseSpinCount": 12500000,
+        "RewardSampling": "ConditionalExpectation",
+        "ExpectedRewardsIntegrated": true,
+        "BaseClusterRtp": 0.449411967999,
+        "BaseClusterRtpStandardError": 0.000302211255372,
+        "BaseBonusRtp": 0.19937357036,
+        "BaseBonusRtpStandardError": 0.000594123847088,
+        "FreeClusterRtp": 0.073216656,
+        "FreeClusterRtpStandardError": 0.000341127626093,
+        "FreeBonusRtp": 0.180843967274,
+        "FreeBonusRtpStandardError": 0.00083417259082,
+        "SuperFreeClusterRtp": 0.007371984,
+        "SuperFreeClusterRtpStandardError": 0.000109642000227,
+        "SuperFreeBonusRtp": 0.0401937289392,
+        "SuperFreeBonusRtpStandardError": 0.000596246738617,
+        "Rtp": 0.950411874553,
+        "RtpStandardError": 0.00149250092595,
+        "BaseBonusFrequency": 0.01246568,
+        "FreeFrequency": 0.0049808,
+        "SuperFreeFrequency": 0.00049224,
+        "FreeSpinCount": 698292,
+        "SuperFreeSpinCount": 68984,
+        "BaseBonusConditionalMean": 15.9937982011,
+        "Seconds": 24.61574325,
+        "BaseBonusTriggerCount": 155821,
+        "FreeTriggerCount": 62260,
+        "SuperFreeTriggerCount": 6153,
+        "RunIndex": 2,
+        "Seed": 2026102253
+      },
+      {
+        "BaseBet": 100000,
+        "BaseSpinCount": 12500000,
+        "RewardSampling": "ConditionalExpectation",
+        "ExpectedRewardsIntegrated": true,
+        "BaseClusterRtp": 0.450616335999,
+        "BaseClusterRtpStandardError": 0.000302559398577,
+        "BaseBonusRtp": 0.200505077445,
+        "BaseBonusRtpStandardError": 0.000591083855228,
+        "FreeClusterRtp": 0.07330052,
+        "FreeClusterRtpStandardError": 0.000341767710514,
+        "FreeBonusRtp": 0.180749080494,
+        "FreeBonusRtpStandardError": 0.000836474827832,
+        "SuperFreeClusterRtp": 0.00741892,
+        "SuperFreeClusterRtpStandardError": 0.000108585182421,
+        "SuperFreeBonusRtp": 0.041310175472,
+        "SuperFreeBonusRtpStandardError": 0.000662979400946,
+        "Rtp": 0.953900109391,
+        "RtpStandardError": 0.00152080384922,
+        "BaseBonusFrequency": 0.01254616,
+        "FreeFrequency": 0.00498512,
+        "SuperFreeFrequency": 0.00050056,
+        "FreeSpinCount": 698708,
+        "SuperFreeSpinCount": 70252,
+        "BaseBonusConditionalMean": 15.9813901182,
+        "Seconds": 24.705047416,
+        "BaseBonusTriggerCount": 156827,
+        "FreeTriggerCount": 62314,
+        "SuperFreeTriggerCount": 6257,
+        "RunIndex": 3,
+        "Seed": 2026102254
+      }
+    ],
+    "Seconds": 26.002766249999997
+  },
+  "ConfigFiles": [
+    {
+      "Path": "free_reel_config/yngg_free_rand_ex_0.conf",
+      "Sha256": "adf2906f4fc9ed93350a84bd7d0516464d5cd094e8d9018382d2093cacd09d8b"
+    },
+    {
+      "Path": "free_reel_config/yngg_free_rand_ex_12.conf",
+      "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+    },
+    {
+      "Path": "free_reel_config/yngg_free_rand_ex_17.conf",
+      "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+    },
+    {
+      "Path": "free_reel_config/yngg_free_rand_ex_4.conf",
+      "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+    },
+    {
+      "Path": "free_reel_config/yngg_free_rand_ex_8.conf",
+      "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+    },
+    {
+      "Path": "free_reel_config/yngg_free_rand_main.conf",
+      "Sha256": "5856b541e65b8d3d3d330c715b90ae23ce24d44e3208057d4bdc910c0e6d3248"
+    },
+    {
+      "Path": "general_config/base_bull.conf",
+      "Sha256": "cfab5c53fc9d74fc1c92cb171b0331e6608c1283d77009e966aaf12d21518289"
+    },
+    {
+      "Path": "general_config/base_comm.conf",
+      "Sha256": "c3355d0e8039f1c64f70efa35515cb6c2cfc8edbd7dfe50100006e6a6503547b"
+    },
+    {
+      "Path": "general_config/base_level.conf",
+      "Sha256": "f95c816ba008337646b3a69dcaaf37b952831a6caccb5fde26966988ad210274"
+    },
+    {
+      "Path": "general_config/base_text.conf",
+      "Sha256": "2bfae39ffd1af4e09b421b265a5f7a58772ea746d4e251dc29b626a86bf28be8"
+    },
+    {
+      "Path": "general_config/game_achievement.conf",
+      "Sha256": "5e461465770909107d33196396bc41e62650d235604a6806a735fa773d42a099"
+    },
+    {
+      "Path": "general_config/game_act_coin.conf",
+      "Sha256": "5fe3275245d3f656a270dbcf3e911134e8f36eb4de69ad737ecd1ba087e5dfad"
+    },
+    {
+      "Path": "general_config/game_activity.conf",
+      "Sha256": "2a3ea1dd68928934afff681741f02e08f10c36e9567cf20c09f31fa5e92510fd"
+    },
+    {
+      "Path": "general_config/game_card.conf",
+      "Sha256": "39909f62203d79074bb5010af7d880bd28171a799ae588b2197ccb78fbec5d7a"
+    },
+    {
+      "Path": "general_config/game_get_level_exp.conf",
+      "Sha256": "9b41c1f9e96cce935b56708549d126f2b802e4cee575b114d0d3ddb62aee0e0f"
+    },
+    {
+      "Path": "general_config/slot_activity.conf",
+      "Sha256": "d5fd74c8eeac3710124405368eccb98c4b4d12330355c9da0180a47faca51cb5"
+    },
+    {
+      "Path": "general_config/slot_game_activity.conf",
+      "Sha256": "6159698bb3243fad9a3f705ef6dbe663e42d661bf527986cd5dbe4b7e07c8059"
+    },
+    {
+      "Path": "general_config/slot_game_activity2.conf",
+      "Sha256": "f1945cd6c19e56b3c1c78943ef5ec18116907a4ca1efc40a57d48ab1db7adfc5"
+    },
+    {
+      "Path": "general_config/spe_user_event.conf",
+      "Sha256": "c78fdfb705152c8fbfe0dda9d4f9c7d076aeae442514d98fa59d093566e70362"
+    },
+    {
+      "Path": "general_config/spreader_task.conf",
+      "Sha256": "b21af502cab8ffe786514e4daca284e7930a8984a826a011b7241292d3f69e5f"
+    },
+    {
+      "Path": "general_config/yb_double.conf",
+      "Sha256": "ef5ac994e2c509d1cadfd35454e9c787fdd76b6a8c3b4a510187fc50d4db2491"
+    },
+    {
+      "Path": "reel_config/yngg_rand_ex_0.conf",
+      "Sha256": "a398e2b17c3c0f5bdfa87dee058396468666536f5e7beb9970fb6cb0bcd25fd6"
+    },
+    {
+      "Path": "reel_config/yngg_rand_ex_12.conf",
+      "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+    },
+    {
+      "Path": "reel_config/yngg_rand_ex_17.conf",
+      "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+    },
+    {
+      "Path": "reel_config/yngg_rand_ex_4.conf",
+      "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+    },
+    {
+      "Path": "reel_config/yngg_rand_ex_8.conf",
+      "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+    },
+    {
+      "Path": "reel_config/yngg_rand_main.conf",
+      "Sha256": "5856b541e65b8d3d3d330c715b90ae23ce24d44e3208057d4bdc910c0e6d3248"
+    },
+    {
+      "Path": "special/slot_prop_config.conf",
+      "Sha256": "14900fdcb7ad4b002498e5d9b58b2453850aebccbb84c65eb474813a98d362c2"
+    },
+    {
+      "Path": "special/yngg_bonus.conf",
+      "Sha256": "0b6bce9f8c0e2865d05115e8b57a867b256dfba1663a449d7232674bc080036a"
+    },
+    {
+      "Path": "special/yngg_control.conf",
+      "Sha256": "3fa61132912bd661c60192c7aa9fd0e2b793ce7cdf439f48e42a60fc3c920179"
+    },
+    {
+      "Path": "special/yngg_game_config.conf",
+      "Sha256": "a7e57d64349479bbf63ecf64104dd5e64d2591fe78ace0c8d231096eb3cc0ae3"
+    },
+    {
+      "Path": "special/yngg_game_server.conf",
+      "Sha256": "39b14a27c31d72d4d533859367fdd3610570cd9df2153412d326532d6741a3b6"
+    },
+    {
+      "Path": "special_config/base_game_name.conf",
+      "Sha256": "7dbf33f0706ddf6a6ffb1ada750607083d010e710e11575b2ecca5044e4d4f12"
+    },
+    {
+      "Path": "special_config/game_server.conf",
+      "Sha256": "0ff9035802784faf6e11ae451b28a0769b0697302980ac5c36ff3e3c55549906"
+    },
+    {
+      "Path": "special_config/slot_control_group.conf",
+      "Sha256": "24cc160cc157d05a36299891665cca8c3193025687f012c1414022407e64f927"
+    }
+  ],
+  "SampledConfigFiles": [
+    {
+      "Path": "free_reel_config/yngg_free_rand_ex_0.conf",
+      "Sha256": "adf2906f4fc9ed93350a84bd7d0516464d5cd094e8d9018382d2093cacd09d8b"
+    },
+    {
+      "Path": "free_reel_config/yngg_free_rand_ex_12.conf",
+      "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+    },
+    {
+      "Path": "free_reel_config/yngg_free_rand_ex_17.conf",
+      "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+    },
+    {
+      "Path": "free_reel_config/yngg_free_rand_ex_4.conf",
+      "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+    },
+    {
+      "Path": "free_reel_config/yngg_free_rand_ex_8.conf",
+      "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+    },
+    {
+      "Path": "free_reel_config/yngg_free_rand_main.conf",
+      "Sha256": "5856b541e65b8d3d3d330c715b90ae23ce24d44e3208057d4bdc910c0e6d3248"
+    },
+    {
+      "Path": "general_config/base_bull.conf",
+      "Sha256": "cfab5c53fc9d74fc1c92cb171b0331e6608c1283d77009e966aaf12d21518289"
+    },
+    {
+      "Path": "general_config/base_comm.conf",
+      "Sha256": "c3355d0e8039f1c64f70efa35515cb6c2cfc8edbd7dfe50100006e6a6503547b"
+    },
+    {
+      "Path": "general_config/base_level.conf",
+      "Sha256": "f95c816ba008337646b3a69dcaaf37b952831a6caccb5fde26966988ad210274"
+    },
+    {
+      "Path": "general_config/base_text.conf",
+      "Sha256": "2bfae39ffd1af4e09b421b265a5f7a58772ea746d4e251dc29b626a86bf28be8"
+    },
+    {
+      "Path": "general_config/game_achievement.conf",
+      "Sha256": "5e461465770909107d33196396bc41e62650d235604a6806a735fa773d42a099"
+    },
+    {
+      "Path": "general_config/game_act_coin.conf",
+      "Sha256": "5fe3275245d3f656a270dbcf3e911134e8f36eb4de69ad737ecd1ba087e5dfad"
+    },
+    {
+      "Path": "general_config/game_activity.conf",
+      "Sha256": "2a3ea1dd68928934afff681741f02e08f10c36e9567cf20c09f31fa5e92510fd"
+    },
+    {
+      "Path": "general_config/game_card.conf",
+      "Sha256": "39909f62203d79074bb5010af7d880bd28171a799ae588b2197ccb78fbec5d7a"
+    },
+    {
+      "Path": "general_config/game_get_level_exp.conf",
+      "Sha256": "9b41c1f9e96cce935b56708549d126f2b802e4cee575b114d0d3ddb62aee0e0f"
+    },
+    {
+      "Path": "general_config/slot_activity.conf",
+      "Sha256": "d5fd74c8eeac3710124405368eccb98c4b4d12330355c9da0180a47faca51cb5"
+    },
+    {
+      "Path": "general_config/slot_game_activity.conf",
+      "Sha256": "6159698bb3243fad9a3f705ef6dbe663e42d661bf527986cd5dbe4b7e07c8059"
+    },
+    {
+      "Path": "general_config/slot_game_activity2.conf",
+      "Sha256": "f1945cd6c19e56b3c1c78943ef5ec18116907a4ca1efc40a57d48ab1db7adfc5"
+    },
+    {
+      "Path": "general_config/spe_user_event.conf",
+      "Sha256": "c78fdfb705152c8fbfe0dda9d4f9c7d076aeae442514d98fa59d093566e70362"
+    },
+    {
+      "Path": "general_config/spreader_task.conf",
+      "Sha256": "b21af502cab8ffe786514e4daca284e7930a8984a826a011b7241292d3f69e5f"
+    },
+    {
+      "Path": "general_config/yb_double.conf",
+      "Sha256": "ef5ac994e2c509d1cadfd35454e9c787fdd76b6a8c3b4a510187fc50d4db2491"
+    },
+    {
+      "Path": "reel_config/yngg_rand_ex_0.conf",
+      "Sha256": "c05e7a9ba667e8831e11451c6da7492510dee77c1cce7331b1dfc27ed1b58760"
+    },
+    {
+      "Path": "reel_config/yngg_rand_ex_12.conf",
+      "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+    },
+    {
+      "Path": "reel_config/yngg_rand_ex_17.conf",
+      "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+    },
+    {
+      "Path": "reel_config/yngg_rand_ex_4.conf",
+      "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+    },
+    {
+      "Path": "reel_config/yngg_rand_ex_8.conf",
+      "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+    },
+    {
+      "Path": "reel_config/yngg_rand_main.conf",
+      "Sha256": "5856b541e65b8d3d3d330c715b90ae23ce24d44e3208057d4bdc910c0e6d3248"
+    },
+    {
+      "Path": "special/slot_prop_config.conf",
+      "Sha256": "14900fdcb7ad4b002498e5d9b58b2453850aebccbb84c65eb474813a98d362c2"
+    },
+    {
+      "Path": "special/yngg_bonus.conf",
+      "Sha256": "0b6bce9f8c0e2865d05115e8b57a867b256dfba1663a449d7232674bc080036a"
+    },
+    {
+      "Path": "special/yngg_control.conf",
+      "Sha256": "3fa61132912bd661c60192c7aa9fd0e2b793ce7cdf439f48e42a60fc3c920179"
+    },
+    {
+      "Path": "special/yngg_game_config.conf",
+      "Sha256": "a7e57d64349479bbf63ecf64104dd5e64d2591fe78ace0c8d231096eb3cc0ae3"
+    },
+    {
+      "Path": "special/yngg_game_server.conf",
+      "Sha256": "39b14a27c31d72d4d533859367fdd3610570cd9df2153412d326532d6741a3b6"
+    },
+    {
+      "Path": "special_config/base_game_name.conf",
+      "Sha256": "7dbf33f0706ddf6a6ffb1ada750607083d010e710e11575b2ecca5044e4d4f12"
+    },
+    {
+      "Path": "special_config/game_server.conf",
+      "Sha256": "0ff9035802784faf6e11ae451b28a0769b0697302980ac5c36ff3e3c55549906"
+    },
+    {
+      "Path": "special_config/slot_control_group.conf",
+      "Sha256": "24cc160cc157d05a36299891665cca8c3193025687f012c1414022407e64f927"
+    }
+  ],
+  "SourceFiles": [
+    {
+      "Path": "theme_math.py",
+      "Sha256": "0d3e02dfe752c97519b76e3edeac6026a1c544aca88c91eb9a0c3e6b20333ce1"
+    },
+    {
+      "Path": "simulation.py",
+      "Sha256": "4477a63c9678c54677a345d32f86e9e1805d098fcd15feae0f0599ee514633bd"
+    },
+    {
+      "Path": "calibration_sampler.cpp",
+      "Sha256": "07c3156cb32c9c0c8ccc2d997b22a97a513f8249c9e7eb50f00dc8fc113bdf2d"
+    },
+    {
+      "Path": "verify_calibration_sampler.py",
+      "Sha256": "665f88452e0e21eb540ce5f9e46f9c86fdbcddcfcc2d7f9d8df015f6fb1b3174"
+    },
+    {
+      "Path": "calibrate_rtp.py",
+      "Sha256": "4efc2f84ecee1d00bc94c0a177827bb272a1c54dee827c12ec4058ac7fe14857"
+    },
+    {
+      "Path": "build_from_demo.py",
+      "Sha256": "0426173424f4dd41a9d7db402748e41a1dd91eae44fc79490e3b37d9a389b61d"
+    },
+    {
+      "Path": "../slots_math.py",
+      "Sha256": "31ba271e33064f342574ab6b1b0ccec99aaf8525ef293bdc1264ade5c654d4e8"
+    }
+  ],
+  "PostSamplingConfigChangesCommentOnly": true,
+  "PublishedParametersMatchSampledParameters": true
+}

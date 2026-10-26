@@ -1,5 +1,10 @@
 # HGI 项目约定
 
+## 按 model 生成主题
+
+- 按 model 生成或调整主题前，先阅读 [README.md 的 model 生成与配置字段归属](README.md#model-生成与配置字段归属)，遵守其中的目录、配置协议、字段归属和数值填写规范。
+- 主题特殊玩法新增字段只放在 `{name}_game_server.conf`；有独立 Bonus 玩法时生成 `{name}_bonus.conf` 存放 Bonus 专用配置；其他配置文件不加入对应 model 之外的字段。
+
 ## 新增字段命名
 
 - 本规则适用于 HGI 文件夹及其所有子目录中的新增内容。

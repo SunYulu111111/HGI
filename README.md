@@ -19,7 +19,7 @@ HGI Math 是一个 Slots 数学逻辑与仿真项目。仓库核心在 `ThemeMat
     |-- mahj3/                 # Ways：麻将主题（消除补牌 / 金色 symbol）
     |-- mjwl/                  # Ways：有效格裁剪 / 金色变 Wild
     |-- rzcs/                  # Lines：第三列分裂 / Free 与 Super Free
-    |-- cjyx/                  # Lines：超级英雄玩法介绍与数值逻辑草稿
+    |-- cjyx/                  # Lines：超级英雄数学逻辑、仿真与配置
     |-- klsj/                  # Ways：恐龙世界数学入口、仿真与配置
     |-- yngg/                  # Count：Cluster 消除 / 金色玩法
     `-- xml/                   # 独立水果机轮盘玩法（不继承上述三类）
@@ -51,7 +51,7 @@ HGI Math 是一个 Slots 数学逻辑与仿真项目。仓库核心在 `ThemeMat
 | `mahj3` | `WaysGame` | 消除补牌、金色 symbol、级联倍数 |
 | `mjwl` | `WaysGame` | 5×6 有效格裁剪、金色 symbol 变 Wild |
 | `rzcs` | `LinesGame` | 押注解锁第三列分裂、Free / Super Free |
-| `cjyx` | Lines 玩法文档 | 5×5、19 线、Wild 延展与乘倍、超级免费列激活；[项目文档](ThemeMath/cjyx/README.md) |
+| `cjyx` | `LinesGame` | 5×5、19 线、Wild 延展与乘倍、超级免费列激活；[项目文档](ThemeMath/cjyx/README.md) |
 | `klsj` | `WaysGame` | 六列 Megaways、银框升级、连消倍数与免费游戏；[项目文档](ThemeMath/klsj/README.md) |
 | `yngg` | `CountGame` | 6×5 Cluster、Scatter / Super Scatter、金色玩法 |
 | `xml` | 独立实现 | 多 symbol 下注的轮盘水果机 + Bonus / 翻倍 |
@@ -83,6 +83,9 @@ python ThemeMath/mjwl/simulation.py --spins 100000
 # rzcs（Lines）
 python ThemeMath/rzcs/simulation.py --spins 100000
 
+# cjyx（19 线，流程验证配置）
+python ThemeMath/cjyx/simulation.py --spins 100000 --index 0 --general 1 --seed 20261026
+
 # xml（水果机）
 python ThemeMath/xml/simulation.py --spins 100000
 ```
@@ -92,6 +95,7 @@ python ThemeMath/xml/simulation.py --spins 100000
 ```bash
 python -m unittest ThemeMath.yngg.test_theme_math
 python -m unittest ThemeMath.xml.test_theme_math
+python -m unittest discover -s ThemeMath/cjyx -p 'test_*.py'
 ```
 
 统计并更新某个主题的轴带 symbol 数量：
@@ -114,11 +118,23 @@ python ThemeMath/symbol_count.py --root ThemeMath/rzcs --dry-run
 
 1. 按玩法类型复制模板：`model_waysgame/`、`model_linesgame/` 或 `model_countgame/`。
 2. 重命名为新目录，例如 `ThemeMath/new_theme/`。
-3. 替换或补齐 `game_config.conf`、`reel_config/`、`free_reel_config/` 等配置。
+3. 按下方配置字段归属规则替换或补齐 `game_config.conf`、`reel_config/`、`free_reel_config/` 等配置。
 4. 在新目录内维护 `theme_math.py`、`simulation.py`、`<主题名>_数值逻辑.md` 和 `<主题名>_玩法描述.md`，文档及中文注释遵循下节写法。
 5. 大规模仿真输出（如 `simulate_result.csv`）建议单独保存，提交前确认是否纳入版本库。
 
 非标准玩法（类似 `xml`）可不继承 Ways / Lines / Count，但仍建议沿用同一目录约定与仿真报表字段。
+
+### model 生成与配置字段归属
+
+按 model 生成、补全或调整主题时，先阅读本 README，并以对应的 `model_waysgame`、`model_linesgame` 或 `model_countgame` 为目录、配置格式和公共接口的依据。主题入口继承对应玩法基类，复用公共配置读取、抽盘、基础判奖和仿真统计；主题层处理本机台的特殊玩法。
+
+- 主题玩法新增的特殊字段统一放在 `special/{name}_game_server.conf`，包括特殊图标、Feature、免费游戏、倍数、收集、Respin 等参数。
+- 主题有独立 Bonus 玩法时，生成 `special/{name}_bonus.conf` 存放 Bonus 专用配置；其余特色玩法字段仍放在 `{name}_game_server.conf`。没有 Bonus 玩法时不生成空的 Bonus 文件。
+- 其他配置文件只使用对应 model 已有的字段与配置段，填写本主题的盘面、奖表、线路、轴带及平台配置。不得自行增加 model 之外的字段，即使公共读取程序能够识别该字段。`LINE_RULES_n`、`ITEM_PRIZES_n`、`INIT_ROLLER_ICON_n` 等已有编号字段，按本主题实际数量填写。
+- 生成用途、生成种子、验证记录等说明写入注释或主题 README，不作为新的服务器配置字段写入轴带或基础配置。
+- 修改配置时同步更新读取逻辑、生成脚本、校验和文档；新增特殊字段遵循 PascalCase 命名。已有 model 协议字段保留原名。
+
+押注与奖表按本文的服务器配置规则填写：`BetScopes` 是档位系数，实际总投注为房间底分 `10000 × BetPerReel × BetScopes`；`USE_WILDS` 中 Wild 自身的对应项为 `0`。
 
 ## 文档与中文注释写法
 
@@ -220,7 +236,7 @@ python ThemeMath/symbol_count.py --root ThemeMath/rzcs --dry-run
 | `{name}_control.conf` | 根据玩家状态和条件选择 GROUP |
 | `slot_control_group.conf` | GROUP 内的 TYPE 构成、权重及砍分阈值 |
 | `slot_prop_config.conf` | 免费游戏道具卡、SPIN 卡属性 |
-| `{name}_bonus.conf` | 涉及 Jackpot Bonus 时使用的可选配置 |
+| `{name}_bonus.conf` | 主题有独立 Bonus 玩法时生成，存放 Bonus 专用配置 |
 
 ### 押注、赔率与基础交互字段（00:34–00:52）
 
@@ -251,7 +267,7 @@ python ThemeMath/symbol_count.py --root ThemeMath/rzcs --dry-run
 
 ### 赔付与图标字段（00:52–01:18）
 
-`{name}_game_config.conf` 的必要内容包括版本、机台基本信息及赔付配置；Pay Line、无效格子和特殊机制按玩法补充。Scatter 次数或金额奖励若由玩法逻辑实现，可省略相应奖励字段。
+`{name}_game_config.conf` 的必要内容包括版本、机台基本信息及赔付配置；按对应 model 已有字段填写 Pay Line 等基础信息。主题特殊玩法的新增字段统一放在 `{name}_game_server.conf`，Bonus 专用配置放在 `{name}_bonus.conf`。Scatter 次数或金额奖励若由玩法逻辑实现，可省略相应奖励字段。
 
 | 字段 | 类型 / 对应关系 | 填写规则 |
 | --- | --- | --- |

@@ -55,6 +55,24 @@ RESULT_CSV_FIELDS = [
     "free_rtp",
     "free_cluster_rtp",
     "free_bonus_rtp",
+    "NormalFreeRtp",
+    "NormalFreeClusterRtp",
+    "NormalFreeBonusRtp",
+    "NormalFreeFrequency",
+    "NormalFreeSessionCount",
+    "NormalFreeSpinCount",
+    "NormalFreeRetriggerCount",
+    "NormalFreeClusterWin",
+    "NormalFreeBonusWin",
+    "SuperFreeRtp",
+    "SuperFreeClusterRtp",
+    "SuperFreeBonusRtp",
+    "SuperFreeFrequency",
+    "SuperFreeSessionCount",
+    "SuperFreeSpinCount",
+    "SuperFreeRetriggerCount",
+    "SuperFreeClusterWin",
+    "SuperFreeBonusWin",
     "总赢钱",
     "Cluster赢钱",
     "Bonus赢钱",
@@ -168,6 +186,21 @@ def record_spin_wins(status: dict, result: dict, mode_key: str) -> int:
     return total_win
 
 
+def new_mode_stats() -> dict:
+    """Separate session counts and wins without duplicating legacy RTP entries."""
+
+    return {
+        Mode: {
+            "SessionCount": 0,
+            "SpinCount": 0,
+            "ClusterWin": 0,
+            "BonusWin": 0,
+            "RetriggerCount": 0,
+        }
+        for Mode in ("Free", "SuperFree")
+    }
+
+
 def run_free_spins(status: dict, index: int, general_index: int, ng_result: dict) -> int:
     """Consume a free/super-free session and return total free win."""
 
@@ -176,10 +209,15 @@ def run_free_spins(status: dict, index: int, general_index: int, ng_result: dict
     golden_squares = set()
     bonus_seen = False
     free_total_win = 0
+    ModeName = "SuperFree" if free_mode == "super_free" else "Free"
+    ModeStats = status.setdefault("ModeStats", new_mode_stats())[ModeName]
+    if remaining_free_times > 0:
+        ModeStats["SessionCount"] += 1
 
     while remaining_free_times > 0:
         remaining_free_times -= 1
         status_handler.add_status_value(status, 1, "free", "spin")
+        ModeStats["SpinCount"] += 1
         fg_result = m.fg_spin(
             index=index,
             general_index=general_index,
@@ -188,13 +226,19 @@ def run_free_spins(status: dict, index: int, general_index: int, ng_result: dict
             remaining_spins=remaining_free_times + 1,
             bonus_seen=bonus_seen,
         )
-        free_total_win += record_spin_wins(status, fg_result, "free")
+        SpinWin = record_spin_wins(status, fg_result, "free")
+        BonusWin = int(fg_result.get("feature_win", 0))
+        ModeStats["ClusterWin"] += SpinWin - BonusWin
+        ModeStats["BonusWin"] += BonusWin
+        free_total_win += SpinWin
         if fg_result.get("is_trigger_feature"):
             status_handler.add_status_value(status, 1, "free_bonus_trigger")
         bonus_seen = bool(fg_result.get("free_bonus_seen"))
         golden_squares = set(map(tuple, fg_result.get("golden_squares") or []))
         retrigger_times = int(fg_result.get("retrigger_spins", 0))
         status_handler.update_free_trigger(status, "free", retrigger_times)
+        if retrigger_times > 0:
+            ModeStats["RetriggerCount"] += 1
         remaining_free_times += retrigger_times
 
     return free_total_win
@@ -203,7 +247,10 @@ def run_free_spins(status: dict, index: int, general_index: int, ng_result: dict
 def build_simulation_row(status: dict, index: int, general_index: int) -> dict:
     """Build one yngg report row from current status."""
 
-    row = status_handler.build_report_row(status)
+    # The shared helper derives legacy underscore-named fields recursively.
+    # Keep the separate scalar counters out of that compatibility projection.
+    ReportStatus = {Key: Value for Key, Value in status.items() if Key != "ModeStats"}
+    row = status_handler.build_report_row(ReportStatus)
     row["INDEX"] = index
     row["GENERAL"] = general_index
     row["错误"] = ""
@@ -244,6 +291,18 @@ def build_simulation_row(status: dict, index: int, general_index: int) -> dict:
         if status["free"]["spin"]
         else 0
     )
+    ModeStats = status.get("ModeStats", new_mode_stats())
+    for ModeName, Prefix in (("Free", "NormalFree"), ("SuperFree", "SuperFree")):
+        Stats = ModeStats[ModeName]
+        ClusterWin = Stats["ClusterWin"]
+        BonusWin = Stats["BonusWin"]
+        TotalBet = status["bet"]
+        row[f"{Prefix}ClusterRtp"] = ClusterWin / TotalBet if TotalBet else 0
+        row[f"{Prefix}BonusRtp"] = BonusWin / TotalBet if TotalBet else 0
+        row[f"{Prefix}Rtp"] = (ClusterWin + BonusWin) / TotalBet if TotalBet else 0
+        row[f"{Prefix}Frequency"] = Stats["SessionCount"] / base_spin if base_spin else 0
+        for Field in ("SessionCount", "SpinCount", "RetriggerCount", "ClusterWin", "BonusWin"):
+            row[f"{Prefix}{Field}"] = Stats[Field]
     add_main_cascade_report_values(row, status)
     return row
 
@@ -361,11 +420,19 @@ def print_summary(result: dict | list[dict]) -> None:
     print(f"总押注: {result['总押注']}")
     print(f"普通游戏 Cluster: {result['BaseCluster']}")
     print(f"普通游戏 Bonus: {result['BaseBonus']}")
-    print(f"免费游戏 Cluster: {result['FreeCluster']}")
-    print(f"免费游戏 Bonus: {result['FreeBonus']}")
+    print(f"免费游戏合计 Cluster: {result['FreeCluster']}")
+    print(f"免费游戏合计 Bonus: {result['FreeBonus']}")
     print(f"总赢钱: {result['总赢钱']}")
     print(f"普通游戏 RTP: {result['base_rtp']:.3f}")
-    print(f"免费游戏 RTP: {result['free_rtp']:.3f}")
+    print(f"免费游戏合计 RTP: {result['free_rtp']:.3f}")
+    for Prefix, Label in (("NormalFree", "普通 Free"), ("SuperFree", "Super Free")):
+        if f"{Prefix}Rtp" in result:
+            print(
+                f"{Label} RTP: {result[f'{Prefix}Rtp']:.6f} "
+                f"(Cluster {result[f'{Prefix}ClusterRtp']:.6f}, "
+                f"Bonus {result[f'{Prefix}BonusRtp']:.6f})"
+            )
+            print(f"{Label} 触发概率: {result[f'{Prefix}Frequency']:.3%}")
     print(f"总 RTP: {result['rtp']:.3f}")
     print(f"RTP 校验: {result['rtp_check']:.3f}")
     print(f"赢钱次数: {result['Hit']}")
@@ -460,8 +527,10 @@ class YnggSlotsSimulation(SlotsSimulation):
     def format_cell(self, header: str, value):
         if value == "" or value is None:
             return ""
-        if header in {"Bonus频率", "SuperFree频率"}:
+        if header in {"Bonus频率", "SuperFree频率"} or header.endswith("Frequency"):
             return f"{value:.3%}"
+        if header.endswith("Rtp"):
+            return f"{value:.6f}"
         if header in {"Bonus 1/n", "Free 1/n"}:
             return f"{value:.1f}" if value else ""
         return super().format_cell(header, value)
@@ -494,6 +563,7 @@ status_model = {
     "free_bonus_trigger": 0,
     "super_free": 0,
     "main_cascade_counts": [0 for _ in range(MAIN_CASCADE_BUCKET_COUNT)],
+    "ModeStats": new_mode_stats(),
 }
 
 statics_columns = [
@@ -547,7 +617,7 @@ statics_columns = [
         ],
     },
     {
-        "title": "Free",
+        "title": "Free 合计",
         "fields": [
             "free_rtp",
             "free_cluster_rtp",
@@ -566,6 +636,30 @@ statics_columns = [
             "Free平均倍",
             "SuperFree",
             "SuperFree频率",
+        ],
+    },
+    {
+        "title": "普通 Free",
+        "fields": [
+            "NormalFreeRtp",
+            "NormalFreeClusterRtp",
+            "NormalFreeBonusRtp",
+            "NormalFreeFrequency",
+            "NormalFreeSessionCount",
+            "NormalFreeSpinCount",
+            "NormalFreeRetriggerCount",
+        ],
+    },
+    {
+        "title": "Super Free",
+        "fields": [
+            "SuperFreeRtp",
+            "SuperFreeClusterRtp",
+            "SuperFreeBonusRtp",
+            "SuperFreeFrequency",
+            "SuperFreeSessionCount",
+            "SuperFreeSpinCount",
+            "SuperFreeRetriggerCount",
         ],
     },
 ]

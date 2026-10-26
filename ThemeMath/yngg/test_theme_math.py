@@ -68,7 +68,8 @@ class ThemeMathTest(unittest.TestCase):
         self.assertEqual(self.math.COIN_MULTI_2, 25)
         self.assertEqual(self.math.BONUS_MAX_ROUND, 5)
 
-    def test_all_types_share_general_bonus_despite_conflicting_legacy_sections(self):
+    def test_all_types_share_general_bonus_without_type_zero_override(self):
+        self.math._activate_type(4)
         General = self.math.bonus_config["GENERAL"]
         Text = "[GENERAL]\n" + "\n".join(
             f"{Key}={Value}" for Key, Value in General.items()
@@ -104,6 +105,133 @@ class ThemeMathTest(unittest.TestCase):
                         self.assertEqual(Game.ActiveTypeIndex, TypeIndex)
                         self.assertEqual(tuple(getattr(Game, Attribute) for Attribute in Attributes), Expected)
                 Loader.assert_not_called()
+
+    def test_type_zero_bonus_override_switches_cached_weights_and_keeps_shared_awards(self):
+        self.math._activate_type(4)
+        General = self.math.bonus_config["GENERAL"]
+        Text = "[GENERAL]\n" + "\n".join(
+            f"{Key}={Value}" for Key, Value in General.items()
+        )
+        Text += (
+            "\n[Type0]\n"
+            "BonusSymbolTypeProbability=1,0,0,0\n"
+            "BonusCoinMultipleProbability="
+            + ",".join(["0"] * (len(self.math.COIN_VALUES) - 1) + ["1"]) + "\n"
+            "BonusCloverMultipleProbability=0,0,0,0,0,1\n"
+            "BonusJpTypeProbability=0,0,0,1\n"
+            "[0]\nBONUS_SYMBOL_TYPE_PROBABILITY=0,0,0,0\n"
+            "[4]\nBONUS_COIN_MULTIPLE=invalid\n"
+        )
+        SharedWeights = tuple(
+            getattr(self.math, Attribute) for Attribute in self.math.BonusWeightAttributes
+        )
+        SharedAwards = (
+            self.math.COIN_VALUES,
+            self.math.GREEN_CLOVER_MULTIPLIERS,
+            self.math.JACKPOT_MULTIPLIERS,
+        )
+        with TemporaryDirectory() as Directory:
+            ConfigPath = Path(Directory) / "bonus.conf"
+            ConfigPath.write_text(Text, encoding="utf-8")
+            Game = ThemeMath(bonus_config_file=str(ConfigPath))
+            TypeZeroWeights = Game.BonusWeightsByType[0]
+            self.assertEqual(TypeZeroWeights[0], (1, 0, 0, 0))
+            self.assertEqual(TypeZeroWeights[1], (0,) * 14 + (1,))
+            self.assertEqual(TypeZeroWeights[2], (0, 0, 0, 0, 0, 1))
+            self.assertEqual(TypeZeroWeights[3], (0, 0, 0, 1))
+            with patch.object(Game, "_load_bonus_config", wraps=Game._load_bonus_config) as Loader:
+                for TypeIndex in (0, 4, 8, 12, 17, 0):
+                    with self.subTest(TypeIndex=TypeIndex):
+                        Game._load_reel_config(TypeIndex, 1)
+                        Expected = TypeZeroWeights if TypeIndex == 0 else Game.GeneralBonusWeights
+                        if TypeIndex != 0:
+                            self.assertEqual(Expected, SharedWeights)
+                        self.assertEqual(
+                            tuple(getattr(Game, Attribute) for Attribute in Game.BonusWeightAttributes),
+                            Expected,
+                        )
+                        self.assertEqual(
+                            (Game.COIN_VALUES, Game.GREEN_CLOVER_MULTIPLIERS, Game.JACKPOT_MULTIPLIERS),
+                            SharedAwards,
+                        )
+                        Game._load_reel_config(
+                            TypeIndex, 1, "free_reel_config", "yngg_free_rand_ex_{index}.conf"
+                        )
+                        self.assertEqual(
+                            tuple(getattr(Game, Attribute) for Attribute in Game.BonusWeightAttributes),
+                            Expected,
+                        )
+                        for Attribute, Weights in zip(Game.BonusWeightAttributes, Expected):
+                            self.assertIs(getattr(Game, Attribute), Weights)
+                Loader.assert_not_called()
+
+            # Isolate each configured award tier from the batch coin guarantee.
+            Game.BonusRevealMinCoinCount = 0
+            self.assertEqual(Game.generate_golden_round({(0, 0)})[0]["value"], 500)
+            for TypeWeights, ExpectedField, ExpectedValue in (
+                ("0,1,0,0", "multiplier", 20),
+                ("0,0,0,1", "tier", "grand"),
+            ):
+                Game.bonus_config["Type0"]["BonusSymbolTypeProbability"] = TypeWeights
+                Game._load_bonus_config()
+                self.assertEqual(
+                    Game.generate_golden_round({(0, 0)})[0][ExpectedField],
+                    ExpectedValue,
+                )
+
+    def test_partial_type_zero_bonus_override_inherits_other_general_weights(self):
+        General = self.math.bonus_config["GENERAL"]
+        Text = "[GENERAL]\n" + "\n".join(
+            f"{Key}={Value}" for Key, Value in General.items()
+        ) + "\n[Type0]\nBonusJpTypeProbability=0,0,0,1\n"
+        with TemporaryDirectory() as Directory:
+            ConfigPath = Path(Directory) / "bonus.conf"
+            ConfigPath.write_text(Text, encoding="utf-8")
+            Game = ThemeMath(bonus_config_file=str(ConfigPath))
+            self.assertEqual(Game.BonusWeightsByType[0][:3], Game.GeneralBonusWeights[:3])
+            self.assertEqual(Game.JACKPOT_TYPE_WEIGHTS, (0, 0, 0, 1))
+            Game._activate_type(4)
+            self.assertEqual(Game.JACKPOT_TYPE_WEIGHTS, (80, 25, 8, 1))
+            Game._activate_type(0)
+            self.assertEqual(Game.JACKPOT_TYPE_WEIGHTS, (0, 0, 0, 1))
+
+    def test_invalid_type_zero_bonus_overrides_fail_without_numeric_fallback(self):
+        Cases = (
+            ("BonusSymbolTypeProbability", "0,0,0,0"),
+            ("BonusCoinMultipleProbability", "1,2"),
+            ("BonusCloverMultipleProbability", "-1,2,3,4,5,6"),
+            ("BonusJpTypeProbability", "0,0,0,0"),
+            ("BonusCoinMultipleProbability", ""),
+            ("BonusCoinMultiple", "0.2,0.5"),
+            ("BONUS_SYMBOL_TYPE_PROBABILITY", "1,0,0,0"),
+        )
+        General = self.math.bonus_config["GENERAL"]
+        GeneralText = "[GENERAL]\n" + "\n".join(
+            f"{Key}={Value}" for Key, Value in General.items()
+        )
+        with TemporaryDirectory() as Directory:
+            ConfigPath = Path(Directory) / "bonus.conf"
+            for Field, Value in Cases:
+                with self.subTest(Field=Field, Value=Value):
+                    ConfigPath.write_text(
+                        GeneralText + f"\n[Type0]\n{Field}={Value}\n[0]\n{Field}=1\n",
+                        encoding="utf-8",
+                    )
+                    with self.assertRaisesRegex(ValueError, Field):
+                        ThemeMath(bonus_config_file=str(ConfigPath))
+
+    def test_invalid_type_zero_bonus_reload_preserves_cached_switching_values(self):
+        self.math.bonus_config["Type0"] = {"BonusJpTypeProbability": "0,0,0,1"}
+        self.math._load_bonus_config()
+        OriginalWeights = self.math.BonusWeightsByType[0]
+        self.math.bonus_config["Type0"]["BonusJpTypeProbability"] = "0,0,0,0"
+        with self.assertRaisesRegex(ValueError, "BonusJpTypeProbability"):
+            self.math._load_bonus_config()
+        self.assertIs(self.math.BonusWeightsByType[0], OriginalWeights)
+        self.math._activate_type(4)
+        self.assertEqual(self.math.JACKPOT_TYPE_WEIGHTS, (80, 25, 8, 1))
+        self.math._activate_type(0)
+        self.assertEqual(self.math.JACKPOT_TYPE_WEIGHTS, (0, 0, 0, 1))
 
     def test_bonus_symbol_type_order_is_fixed_when_legacy_field_is_missing_or_changed(self):
         General = self.math.bonus_config["GENERAL"]
@@ -197,6 +325,7 @@ class ThemeMathTest(unittest.TestCase):
             {"position": list(position), "type": "pot"}
             for position in sorted(positions)[:6]
         ]
+        self.math.BonusRevealMinCoinCount = 0
         with self.assertRaisesRegex(ValueError, "pot limit=5"):
             self.math.resolve_golden_feature(
                 [pot_round],
@@ -204,6 +333,7 @@ class ThemeMathTest(unittest.TestCase):
             )
 
     def test_super_scatter_rolls_once_and_converts_at_most_one(self):
+        self.math.SUPER_SCATTER_PROBABILITY = 200
         self.assertEqual(self.math.config.item_count, 13)
         self.assertEqual(len(self.math.config.item_prizes), 13)
         self.assertEqual(len(self.math.config.use_wilds), 13)
@@ -600,6 +730,7 @@ class ThemeMathTest(unittest.TestCase):
         )
 
     def test_dropped_scatters_are_counted_from_final_board(self):
+        self.math.SUPER_SCATTER_PROBABILITY = 0
         board = [
             [12, 12, 12, 3, 4],
             [12, 12, 5, 6, 7],
@@ -1401,6 +1532,9 @@ class ThemeMathTest(unittest.TestCase):
         ExpectedWeights = tuple(self.math._parse_int_list(
             self.math.game_server_config["Game Info"]["ScatterCountProbability"]
         ))
+        ExpectedSuperProbability = int(
+            self.math.game_server_config["Game Info"]["SuperScatterProbability"]
+        )
         self.math.game_server_config.remove_section("0")
         self.math._load_super_scatter_config()
         self.assertIn(0, self.math.ConfiguredTypes)
@@ -1412,7 +1546,7 @@ class ThemeMathTest(unittest.TestCase):
         self.math._activate_type(4)
         self.math._activate_type(0)
         self.assertEqual(self.math.SCATTER_COUNT_WEIGHTS, ExpectedWeights)
-        self.assertEqual(self.math.SUPER_SCATTER_PROBABILITY, 200)
+        self.assertEqual(self.math.SUPER_SCATTER_PROBABILITY, ExpectedSuperProbability)
 
     def test_type_probabilities_follow_selected_reels(self):
         original = self.math.game_server_config["4"]["ScatterCountProbability"]
@@ -1427,6 +1561,64 @@ class ThemeMathTest(unittest.TestCase):
             self.assertEqual(self.math.SCATTER_COUNT_WEIGHTS, TypeZeroWeights)
         finally:
             self.math.game_server_config["4"]["ScatterCountProbability"] = original
+
+    def test_type_parameter_cache_restores_attributes_and_detects_config_edits(self):
+        ExpectedWeights = self.math.SCATTER_COUNT_WEIGHTS
+        ExpectedSuper = self.math.SUPER_SCATTER_PROBABILITY
+        with patch.object(self.math, "_parse_int_list", wraps=self.math._parse_int_list) as Parse:
+            self.math.SCATTER_COUNT_WEIGHTS = (1, 0, 0, 0)
+            self.math.SUPER_SCATTER_PROBABILITY = 0
+            self.math._activate_type(0)
+            self.assertEqual(self.math.SCATTER_COUNT_WEIGHTS, ExpectedWeights)
+            self.assertEqual(self.math.SUPER_SCATTER_PROBABILITY, ExpectedSuper)
+            self.assertEqual(Parse.call_count, 0)
+            self.math.game_server_config["Game Info"]["ScatterCountProbability"] = "1,2,3,4"
+            self.math._activate_type(0)
+            self.assertEqual(self.math.SCATTER_COUNT_WEIGHTS, (1, 2, 3, 4))
+            self.assertEqual(Parse.call_count, len(self.math.TypeProbabilityFields))
+            self.math._activate_type(0)
+            self.assertEqual(Parse.call_count, len(self.math.TypeProbabilityFields))
+
+    def test_type_parameter_cache_detects_interpolated_default_edits(self):
+        self.math.game_server_config.defaults()["CachedScatterWeights"] = "1,2,3,4"
+        self.math.game_server_config["Game Info"]["ScatterCountProbability"] = "%(CachedScatterWeights)s"
+        self.math._activate_type(0)
+        self.assertEqual(self.math.SCATTER_COUNT_WEIGHTS, (1, 2, 3, 4))
+        self.math.game_server_config.defaults()["CachedScatterWeights"] = "4,3,2,1"
+        self.math._activate_type(0)
+        self.assertEqual(self.math.SCATTER_COUNT_WEIGHTS, (4, 3, 2, 1))
+
+    def test_type_parameter_cache_does_not_hide_invalid_config_changes(self):
+        Section = self.math.game_server_config["Game Info"]
+        Original = Section["ScatterCountProbability"]
+        Section["ScatterCountProbability"] = "0,0,0,0"
+        with self.assertRaisesRegex(ValueError, "ScatterCountProbability weights total"):
+            self.math._activate_type(0)
+        Section["ScatterCountProbability"] = Original
+        self.math._activate_type(0)
+        Section["SuperScatterProbability"] = "10001"
+        with self.assertRaisesRegex(ValueError, "SuperScatterProbability"):
+            self.math._activate_type(0)
+
+    def test_weighted_sampling_cache_preserves_boundaries_and_random_ranges(self):
+        for Weights in ((0, 2, 0, 3), [0, 2, 0, 3], (-2, 2, 0, 3), ("0", "2", "0", "3")):
+            for Hit, Expected in enumerate((1, 1, 3, 3, 3)):
+                with self.subTest(Weights=Weights, Hit=Hit), \
+                        patch("theme_math.random.randrange", return_value=Hit) as Draw:
+                    self.assertEqual(self.math.weighted_random_index(Weights), Expected)
+                    Draw.assert_called_once_with(5)
+        Weights = [1, 0]
+        with patch("theme_math.random.randrange", return_value=0) as Draw:
+            self.assertEqual(self.math.weighted_random_index(Weights), 0)
+            Weights[:] = [0, 2]
+            self.assertEqual(self.math.weighted_random_index(Weights), 1)
+            self.assertEqual(Draw.call_args_list[0].args, (1,))
+            self.assertEqual(Draw.call_args_list[1].args, (2,))
+        with patch("theme_math.random.randrange") as Draw:
+            for Weights in ((), (0, 0), (-2, 0), []):
+                with self.subTest(Weights=Weights), self.assertRaisesRegex(ValueError, "weights total"):
+                    self.math.weighted_random_index(Weights)
+            Draw.assert_not_called()
 
     def test_missing_type_reel_cannot_fall_back(self):
         with TemporaryDirectory() as directory:
@@ -1574,6 +1766,8 @@ class ThemeMathTest(unittest.TestCase):
         self.assertEqual(result["golden_squares"], [])
 
     def test_pots_collect_by_column_before_later_clover_multiplies(self):
+        # This partial script isolates collection order and later Clover payout.
+        self.math.BonusRevealMinCoinCount = 0
         result = self.math.resolve_golden_feature(
             [
                 [
@@ -1697,6 +1891,11 @@ class ServerConfigTest(unittest.TestCase):
             "BONUS_COIN_MULTIPLE=0.2,0.5\n"
             "BONUS_COIN_MULTIPLE_PROBABILITY=7,3\n"
         )
+        TypeZero = (
+            "[Type0]\n# retained TYPE 0 calibration\n"
+            "BonusSymbolTypeProbability=10000,10,2,1\n"
+            "BonusCoinMultipleProbability=99,1\n"
+        )
         Notes = "[NOTES]\n# retained notes\nMemo=keep\n"
         with TemporaryDirectory() as Directory:
             Root = Path(Directory)
@@ -1704,15 +1903,19 @@ class ServerConfigTest(unittest.TestCase):
             BonusPath = Root / "special/yngg_bonus.conf"
             BonusPath.write_text(
                 General + "[0]\nBONUS_COIN_MULTIPLE=invalid\n"
-                "[4]\nBONUS_JP_TYPE_PROBABILITY=0,0,0,0\n" + Notes,
+                "[4]\nBONUS_JP_TYPE_PROBABILITY=0,0,0,0\n" + TypeZero + Notes,
                 encoding="utf-8",
             )
             with patch.object(build_from_demo, "THEME_DIR", Root):
                 build_from_demo.write_bonus_config()
                 Published = BonusPath.read_text(encoding="utf-8")
                 self.assertTrue(Published.startswith(General))
+                self.assertIn(TypeZero, Published)
                 self.assertTrue(Published.endswith(Notes))
-                self.assertEqual(ThemeMath._read_config_file(BonusPath).sections(), ["GENERAL", "NOTES"])
+                self.assertEqual(
+                    ThemeMath._read_config_file(BonusPath).sections(),
+                    ["GENERAL", "Type0", "NOTES"],
+                )
                 build_from_demo.write_bonus_config()
                 self.assertEqual(BonusPath.read_text(encoding="utf-8"), Published)
 
@@ -1748,6 +1951,12 @@ class ServerConfigTest(unittest.TestCase):
                 build_from_demo, "load_strip", return_value=[[12] * 220 + [1, 3]] * 6
             ):
                 build_from_demo.main(["--demo-dir", str(root)])
+                InitialBonusMetadata = json.loads(
+                    (root / "source_math.json").read_text(encoding="utf-8")
+                )["bonus_generation"]
+                self.assertTrue(InitialBonusMetadata["SharedAcrossTypes"])
+                self.assertEqual(InitialBonusMetadata["ConfigSectionOrder"], ["GENERAL"])
+                self.assertNotIn("TypeIndex", InitialBonusMetadata)
                 TypeZeroSnapshots = []
                 for Directory, Prefix in (
                     ("reel_config", "yngg"),
@@ -1767,11 +1976,18 @@ class ServerConfigTest(unittest.TestCase):
                     )
                     TypeZeroSnapshots.append((TypeZeroPath, TypeZeroPath.read_bytes()))
                 BonusPath = root / "special/yngg_bonus.conf"
+                TypeZeroBonus = (
+                    "\n[Type0]\n# retained TYPE 0 Bonus calibration\n"
+                    "BonusSymbolTypeProbability=20000,8,1,1\n"
+                    "BonusCoinMultipleProbability=1,2,3,4,5,6,7,8,9,10,11,12,13,14,15\n"
+                    "BonusCloverMultipleProbability=1,1,1,1,1,1\n"
+                    "BonusJpTypeProbability=1000,100,10,1\n"
+                )
                 BonusPath.write_text(
                     BonusPath.read_text(encoding="utf-8").replace(
                         "BONUS_SYMBOL_TYPE_PROBABILITY=1000,80,6,2",
                         "BONUS_SYMBOL_TYPE_PROBABILITY=10000,80,6,2",
-                    ) + "\n# retained shared Bonus calibration\n",
+                    ) + "\n# retained shared Bonus calibration\n" + TypeZeroBonus,
                     encoding="utf-8",
                 )
                 BonusSnapshot = BonusPath.read_bytes()
@@ -1800,11 +2016,18 @@ class ServerConfigTest(unittest.TestCase):
                     encoding="utf-8"
                 ))
                 Targets = Metadata["math_targets"]
-                self.assertEqual(Targets["total_rtp"], 0.98)
-                self.assertEqual(Targets["BaseClusterRtp"], 0.55)
-                self.assertEqual(Targets["BaseBonusRtp"], 0.10)
-                self.assertEqual(Targets["FreeClusterRtp"], 0.13)
-                self.assertEqual(Targets["FreeBonusRtp"], 0.20)
+                self.assertEqual(Targets["total_rtp"], 0.95)
+                self.assertEqual(Targets["BaseClusterRtp"], 0.45)
+                self.assertEqual(Targets["BaseBonusRtp"], 0.20)
+                self.assertEqual(Targets["FreeClusterRtp"], 0.073)
+                self.assertEqual(Targets["FreeBonusRtp"], 0.18)
+                self.assertEqual(Targets["SuperFreeClusterRtp"], 0.007)
+                self.assertEqual(Targets["SuperFreeBonusRtp"], 0.04)
+                self.assertEqual(Targets["NormalFreeTriggerRate"], 0.005)
+                self.assertEqual(Targets["SuperFreeTriggerRate"], 0.0005)
+                self.assertEqual(Targets["BaseBonusTriggerRate"], 0.0125)
+                self.assertEqual(Targets["free_trigger_rate"], 0.0055)
+                self.assertEqual(Targets["base_bonus_trigger_interval"], 80)
                 Special = Metadata["special_symbol_generation"]
                 self.assertEqual(Special["ConfigSection"], "Game Info")
                 self.assertEqual(Special["FreeInitialBonusMaxScatterCount"], 2)
@@ -1813,10 +2036,29 @@ class ServerConfigTest(unittest.TestCase):
                 self.assertEqual(Special["FreeBonusGuaranteeRemainingSpins"], 1)
                 BonusMetadata = Metadata["bonus_generation"]
                 self.assertTrue(BonusMetadata["SymbolTypeOrderFixed"])
-                self.assertTrue(BonusMetadata["SharedAcrossTypes"])
-                self.assertEqual(BonusMetadata["ConfigSectionOrder"], ["GENERAL"])
-                self.assertNotIn("TypeIndex", BonusMetadata)
-                self.assertEqual(BonusMetadata["symbol_type_weights"], [10000, 80, 6, 2])
+                self.assertFalse(BonusMetadata["SharedAcrossTypes"])
+                self.assertEqual(BonusMetadata["ConfigSectionOrder"], ["GENERAL", "Type0"])
+                self.assertEqual(BonusMetadata["TypeIndex"], 0)
+                self.assertEqual(BonusMetadata["symbol_type_weights"], [20000, 8, 1, 1])
+                self.assertEqual(BonusMetadata["coin_value_weights"], list(range(1, 16)))
+                self.assertEqual(BonusMetadata["clover_multiplier_weights"], [1] * 6)
+                self.assertEqual(BonusMetadata["jackpot_type_weights"], [1000, 100, 10, 1])
+                GeneralSharedWeights = BonusMetadata["GeneralSharedWeights"]
+                self.assertEqual(
+                    GeneralSharedWeights["BonusSymbolTypeProbability"], [10000, 80, 6, 2]
+                )
+                self.assertEqual(
+                    GeneralSharedWeights["BonusCoinMultipleProbability"],
+                    InitialBonusMetadata["coin_value_weights"],
+                )
+                self.assertEqual(
+                    GeneralSharedWeights["BonusCloverMultipleProbability"],
+                    InitialBonusMetadata["clover_multiplier_weights"],
+                )
+                self.assertEqual(
+                    GeneralSharedWeights["BonusJpTypeProbability"],
+                    InitialBonusMetadata["jackpot_type_weights"],
+                )
                 self.assertIn("# retained TYPE tuning", server_path.read_text(encoding="utf-8"))
                 self.assertIn("# retained reel tuning", reel_path.read_text(encoding="utf-8"))
                 self.assertIn("# retained prop config", prop_path.read_text(encoding="utf-8"))

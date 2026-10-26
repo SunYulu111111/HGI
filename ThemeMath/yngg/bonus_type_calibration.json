@@ -1,0 +1,1079 @@
+{
+  "Date": "2026-10-26",
+  "CalibrationRevision": "SmoothedBonusRewardsSharedType0",
+  "TypeIndex": 0,
+  "GeneralIndex": 1,
+  "BaseBet": 100000,
+  "Scope": {
+    "BaseBonusRtpTarget": 0.2,
+    "RtpDenominator": "PaidBaseBet",
+    "Modes": [
+      "Base",
+      "NormalFree",
+      "SuperFree"
+    ],
+    "SharedAcrossModes": true,
+    "FreeAndTotalRtpChangesAccepted": true,
+    "AllOtherTypesRetainGeneralWeights": true
+  },
+  "ConfiguredWeights": {
+    "BonusSymbolTypeProbability": [
+      10081,
+      40,
+      6,
+      5
+    ],
+    "BonusCoinMultipleProbability": [
+      162000,
+      162000,
+      162000,
+      253845,
+      145000,
+      70000,
+      30000,
+      10000,
+      3000,
+      1000,
+      400,
+      200,
+      185,
+      185,
+      185
+    ],
+    "BonusCloverMultipleProbability": [
+      23,
+      23,
+      23,
+      23,
+      4,
+      4
+    ],
+    "BonusJpTypeProbability": [
+      80,
+      25,
+      8,
+      1
+    ]
+  },
+  "BeforeWeights": {
+    "BonusSymbolTypeProbability": [
+      5000,
+      58,
+      6,
+      2
+    ],
+    "BonusCoinMultipleProbability": [
+      333137,
+      333137,
+      333137,
+      9,
+      7,
+      5,
+      4,
+      3,
+      2,
+      2,
+      1,
+      1,
+      185,
+      185,
+      185
+    ],
+    "BonusCloverMultipleProbability": [
+      23,
+      23,
+      23,
+      23,
+      4,
+      4
+    ],
+    "BonusJpTypeProbability": [
+      80,
+      25,
+      8,
+      1
+    ]
+  },
+  "CoinValues": [
+    0.2,
+    0.5,
+    1.0,
+    2.0,
+    3.0,
+    4.0,
+    5.0,
+    10.0,
+    15.0,
+    20.0,
+    25.0,
+    50.0,
+    100.0,
+    250.0,
+    500.0
+  ],
+  "CoinMean": 1.99034,
+  "Rules": {
+    "BonusMaxPotCount": 5,
+    "BonusMaxCloverCount": 3,
+    "BonusRevealMinCoinCount": 1,
+    "BaseBonusRequiresBaseCascade": true,
+    "BaseWinBonusCountProbability": [
+      9581,
+      419
+    ],
+    "BaseNoWinBonusCountProbability": [
+      98,
+      2
+    ],
+    "BaseSourceWeights": [
+      8580,
+      1420,
+      0,
+      0
+    ],
+    "NormalAndSuperFreeInitialSpins": [
+      10,
+      10
+    ]
+  },
+  "FullRandom": {
+    "BaseSpinCount": 100000000,
+    "BaseClusterRtp": 0.39960770598900003,
+    "BaseClusterRtpStandardError": 0.00010475580740503089,
+    "BaseBonusRtp": 0.200336602,
+    "BaseBonusRtpStandardError": 0.0004527420217372361,
+    "FreeClusterRtp": 0.090526545,
+    "FreeClusterRtpStandardError": 0.0001339068178577476,
+    "FreeBonusRtp": 0.5337176,
+    "FreeBonusRtpStandardError": 0.0010210599336424213,
+    "SuperFreeClusterRtp": 0.008842293000000001,
+    "SuperFreeClusterRtpStandardError": 4.1892477428467845e-05,
+    "SuperFreeBonusRtp": 0.115945315,
+    "SuperFreeBonusRtpStandardError": 0.0006534516351717647,
+    "Rtp": 1.3489760610350001,
+    "RtpStandardError": 0.0013864005480967738,
+    "BaseBonusTriggerCount": 1251033,
+    "BaseBonusFrequency": 0.01251033,
+    "FreeTriggerCount": 617314,
+    "FreeFrequency": 0.00617314,
+    "SuperFreeTriggerCount": 60618,
+    "SuperFreeFrequency": 0.00060618,
+    "FreeSpinCount": 6913002,
+    "SuperFreeSpinCount": 679018,
+    "BaseBonusVolatilityStatisticsAvailable": true,
+    "BaseBonusConditionalMean": 16.013694442926827,
+    "BaseBonusConditionalStdDev": 37.21852220346588,
+    "BaseBonusConditionalMeanStandardError": 0.03327552496487736,
+    "BaseBonusMax": 5064.2,
+    "Verification": {
+      "RtpComponentsMatch": true,
+      "BaseBonusConditionalMeanMatchesRtp": true,
+      "RunQuantilesPooled": false
+    },
+    "CreatedAtUtc": "2026-10-26T03:45:15.665015+00:00",
+    "SamplerKind": "LocalRulesNativeSampler",
+    "BinaryServerExecuted": false,
+    "RewardSampling": "FullRandom",
+    "StandardErrorInterpretation": "Monte Carlo SE of fully sampled paid-Base-spin returns.",
+    "Project": "/private/tmp/yngg-bonus-types-20261026/candidate_tail_preserved",
+    "TypeIndex": 0,
+    "GeneralIndex": 1,
+    "BaseBet": 100000,
+    "Denominator": "Total paid Base bets, including triggered Free and Super Free sessions and retriggers.",
+    "SpinsPerRun": 25000000,
+    "RunCount": 4,
+    "Workers": 2,
+    "Seeds": [
+      20261026321,
+      20261026322,
+      20261026323,
+      20261026324
+    ],
+    "InputSnapshotUsed": true,
+    "Compiler": "/usr/bin/clang++",
+    "CompilerOptions": [
+      "-std=c++17",
+      "-O3"
+    ],
+    "ConfigFiles": [
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_0.conf",
+        "Sha256": "adf2906f4fc9ed93350a84bd7d0516464d5cd094e8d9018382d2093cacd09d8b"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_12.conf",
+        "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_17.conf",
+        "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_4.conf",
+        "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_8.conf",
+        "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_main.conf",
+        "Sha256": "5856b541e65b8d3d3d330c715b90ae23ce24d44e3208057d4bdc910c0e6d3248"
+      },
+      {
+        "Path": "general_config/base_bull.conf",
+        "Sha256": "cfab5c53fc9d74fc1c92cb171b0331e6608c1283d77009e966aaf12d21518289"
+      },
+      {
+        "Path": "general_config/base_comm.conf",
+        "Sha256": "c3355d0e8039f1c64f70efa35515cb6c2cfc8edbd7dfe50100006e6a6503547b"
+      },
+      {
+        "Path": "general_config/base_level.conf",
+        "Sha256": "f95c816ba008337646b3a69dcaaf37b952831a6caccb5fde26966988ad210274"
+      },
+      {
+        "Path": "general_config/base_text.conf",
+        "Sha256": "2bfae39ffd1af4e09b421b265a5f7a58772ea746d4e251dc29b626a86bf28be8"
+      },
+      {
+        "Path": "general_config/game_achievement.conf",
+        "Sha256": "5e461465770909107d33196396bc41e62650d235604a6806a735fa773d42a099"
+      },
+      {
+        "Path": "general_config/game_act_coin.conf",
+        "Sha256": "5fe3275245d3f656a270dbcf3e911134e8f36eb4de69ad737ecd1ba087e5dfad"
+      },
+      {
+        "Path": "general_config/game_activity.conf",
+        "Sha256": "2a3ea1dd68928934afff681741f02e08f10c36e9567cf20c09f31fa5e92510fd"
+      },
+      {
+        "Path": "general_config/game_card.conf",
+        "Sha256": "39909f62203d79074bb5010af7d880bd28171a799ae588b2197ccb78fbec5d7a"
+      },
+      {
+        "Path": "general_config/game_get_level_exp.conf",
+        "Sha256": "9b41c1f9e96cce935b56708549d126f2b802e4cee575b114d0d3ddb62aee0e0f"
+      },
+      {
+        "Path": "general_config/slot_activity.conf",
+        "Sha256": "d5fd74c8eeac3710124405368eccb98c4b4d12330355c9da0180a47faca51cb5"
+      },
+      {
+        "Path": "general_config/slot_game_activity.conf",
+        "Sha256": "6159698bb3243fad9a3f705ef6dbe663e42d661bf527986cd5dbe4b7e07c8059"
+      },
+      {
+        "Path": "general_config/slot_game_activity2.conf",
+        "Sha256": "f1945cd6c19e56b3c1c78943ef5ec18116907a4ca1efc40a57d48ab1db7adfc5"
+      },
+      {
+        "Path": "general_config/spe_user_event.conf",
+        "Sha256": "c78fdfb705152c8fbfe0dda9d4f9c7d076aeae442514d98fa59d093566e70362"
+      },
+      {
+        "Path": "general_config/spreader_task.conf",
+        "Sha256": "b21af502cab8ffe786514e4daca284e7930a8984a826a011b7241292d3f69e5f"
+      },
+      {
+        "Path": "general_config/yb_double.conf",
+        "Sha256": "ef5ac994e2c509d1cadfd35454e9c787fdd76b6a8c3b4a510187fc50d4db2491"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_0.conf",
+        "Sha256": "dfba5b617aaf6a2462cc858d768c840cc30df660c4811341af2123dc7bf2a193"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_12.conf",
+        "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_17.conf",
+        "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_4.conf",
+        "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_8.conf",
+        "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+      },
+      {
+        "Path": "reel_config/yngg_rand_main.conf",
+        "Sha256": "5856b541e65b8d3d3d330c715b90ae23ce24d44e3208057d4bdc910c0e6d3248"
+      },
+      {
+        "Path": "special/slot_prop_config.conf",
+        "Sha256": "14900fdcb7ad4b002498e5d9b58b2453850aebccbb84c65eb474813a98d362c2"
+      },
+      {
+        "Path": "special/yngg_bonus.conf",
+        "Sha256": "f5449a391fb961e4111de54d9579f1af99db56cff6ccd7b39b66c6c2d8826b37"
+      },
+      {
+        "Path": "special/yngg_control.conf",
+        "Sha256": "3fa61132912bd661c60192c7aa9fd0e2b793ce7cdf439f48e42a60fc3c920179"
+      },
+      {
+        "Path": "special/yngg_game_config.conf",
+        "Sha256": "a7e57d64349479bbf63ecf64104dd5e64d2591fe78ace0c8d231096eb3cc0ae3"
+      },
+      {
+        "Path": "special/yngg_game_server.conf",
+        "Sha256": "e58f4576f65c5b0e0ee0a96001c924637e742928e058fd88da23fb0526dedbd4"
+      },
+      {
+        "Path": "special_config/base_game_name.conf",
+        "Sha256": "7dbf33f0706ddf6a6ffb1ada750607083d010e710e11575b2ecca5044e4d4f12"
+      },
+      {
+        "Path": "special_config/game_server.conf",
+        "Sha256": "0ff9035802784faf6e11ae451b28a0769b0697302980ac5c36ff3e3c55549906"
+      },
+      {
+        "Path": "special_config/slot_control_group.conf",
+        "Sha256": "24cc160cc157d05a36299891665cca8c3193025687f012c1414022407e64f927"
+      }
+    ],
+    "SourceFiles": [
+      {
+        "Path": "/private/tmp/yngg-bonus-types-20261026/candidate_tail_preserved/calibration_sampler.cpp",
+        "Sha256": "3f58c200993dd2875e9c4b5249145ac89120a26d6df556bca9e0c6804dd9413a"
+      },
+      {
+        "Path": "/Users/sunyulu/Desktop/github/HGI/ThemeMath/yngg/calibrate_rtp.py",
+        "Sha256": "4efc2f84ecee1d00bc94c0a177827bb272a1c54dee827c12ec4058ac7fe14857"
+      },
+      {
+        "Path": "/private/tmp/yngg-bonus-types-20261026/candidate_tail_preserved/theme_math.py",
+        "Sha256": "606c2ad5e26ed976ee7f9ef6d81daf8a59899a3e8f3aa51143c31cb5480e654d"
+      },
+      {
+        "Path": "/private/tmp/yngg-bonus-types-20261026/candidate_tail_preserved/simulation.py",
+        "Sha256": "4477a63c9678c54677a345d32f86e9e1805d098fcd15feae0f0599ee514633bd"
+      }
+    ],
+    "Runs": [
+      {
+        "BaseBet": 100000,
+        "BaseSpinCount": 25000000,
+        "RewardSampling": "FullRandom",
+        "ExpectedRewardsIntegrated": false,
+        "BaseClusterRtp": 0.399795135989,
+        "BaseClusterRtpStandardError": 0.000209814310711,
+        "BaseBonusRtp": 0.20033742,
+        "BaseBonusRtpStandardError": 0.000831044518826,
+        "FreeClusterRtp": 0.0904057,
+        "FreeClusterRtpStandardError": 0.000267273558052,
+        "FreeBonusRtp": 0.53478596,
+        "FreeBonusRtpStandardError": 0.00208996639694,
+        "SuperFreeClusterRtp": 0.008829824,
+        "SuperFreeClusterRtpStandardError": 8.34619103481e-05,
+        "SuperFreeBonusRtp": 0.115134684,
+        "SuperFreeBonusRtpStandardError": 0.00131547019874,
+        "Rtp": 1.34928872404,
+        "RtpStandardError": 0.00278875961151,
+        "BaseBonusFrequency": 0.01252684,
+        "FreeFrequency": 0.00617724,
+        "SuperFreeFrequency": 0.00060492,
+        "FreeSpinCount": 1728360,
+        "SuperFreeSpinCount": 169706,
+        "BaseBonusConditionalMean": 15.992654173,
+        "BaseBonusConditionalStdDev": 33.5521886132,
+        "BaseBonusP50": 11.7,
+        "BaseBonusP90": 26.5,
+        "BaseBonusP95": 33.2,
+        "BaseBonusP99": 60,
+        "BaseBonusMax": 5021.7,
+        "Seconds": 107.512293792,
+        "BaseBonusTriggerCount": 313171,
+        "FreeTriggerCount": 154431,
+        "SuperFreeTriggerCount": 15123,
+        "RunIndex": 0,
+        "Seed": 20261026321
+      },
+      {
+        "BaseBet": 100000,
+        "BaseSpinCount": 25000000,
+        "RewardSampling": "FullRandom",
+        "ExpectedRewardsIntegrated": false,
+        "BaseClusterRtp": 0.399612599989,
+        "BaseClusterRtpStandardError": 0.000209417085703,
+        "BaseBonusRtp": 0.200048036,
+        "BaseBonusRtpStandardError": 0.00091112798313,
+        "FreeClusterRtp": 0.090224896,
+        "FreeClusterRtpStandardError": 0.000267511060474,
+        "FreeBonusRtp": 0.528292148,
+        "FreeBonusRtpStandardError": 0.00193138153253,
+        "SuperFreeClusterRtp": 0.008795412,
+        "SuperFreeClusterRtpStandardError": 8.35257835412e-05,
+        "SuperFreeBonusRtp": 0.115503092,
+        "SuperFreeBonusRtpStandardError": 0.00128580224511,
+        "Rtp": 1.34247618403,
+        "RtpStandardError": 0.0026829634311,
+        "BaseBonusFrequency": 0.0124872,
+        "FreeFrequency": 0.00615212,
+        "SuperFreeFrequency": 0.0006052,
+        "FreeSpinCount": 1723086,
+        "SuperFreeSpinCount": 169436,
+        "BaseBonusConditionalMean": 16.0202476136,
+        "BaseBonusConditionalStdDev": 37.5308768992,
+        "BaseBonusP50": 11.7,
+        "BaseBonusP90": 26.5,
+        "BaseBonusP95": 33.2,
+        "BaseBonusP99": 59.9,
+        "BaseBonusMax": 5018.7,
+        "Seconds": 107.251426167,
+        "BaseBonusTriggerCount": 312180,
+        "FreeTriggerCount": 153803,
+        "SuperFreeTriggerCount": 15130,
+        "RunIndex": 1,
+        "Seed": 20261026322
+      },
+      {
+        "BaseBet": 100000,
+        "BaseSpinCount": 25000000,
+        "RewardSampling": "FullRandom",
+        "ExpectedRewardsIntegrated": false,
+        "BaseClusterRtp": 0.399328015989,
+        "BaseClusterRtpStandardError": 0.00020941740882,
+        "BaseBonusRtp": 0.200150972,
+        "BaseBonusRtpStandardError": 0.000924496034343,
+        "FreeClusterRtp": 0.091030184,
+        "FreeClusterRtpStandardError": 0.000268972981152,
+        "FreeBonusRtp": 0.536160128,
+        "FreeBonusRtpStandardError": 0.00202834389526,
+        "SuperFreeClusterRtp": 0.008841828,
+        "SuperFreeClusterRtpStandardError": 8.38344824296e-05,
+        "SuperFreeBonusRtp": 0.11661082,
+        "SuperFreeBonusRtpStandardError": 0.00131959897782,
+        "Rtp": 1.35212194803,
+        "RtpStandardError": 0.00277629579749,
+        "BaseBonusFrequency": 0.01251428,
+        "FreeFrequency": 0.00619112,
+        "SuperFreeFrequency": 0.0006062,
+        "FreeSpinCount": 1734426,
+        "SuperFreeSpinCount": 169736,
+        "BaseBonusConditionalMean": 15.9938064355,
+        "BaseBonusConditionalStdDev": 38.142293118,
+        "BaseBonusP50": 11.7,
+        "BaseBonusP90": 26.5,
+        "BaseBonusP95": 33.2,
+        "BaseBonusP99": 59.4,
+        "BaseBonusMax": 5064.2,
+        "Seconds": 81.033061083,
+        "BaseBonusTriggerCount": 312857,
+        "FreeTriggerCount": 154778,
+        "SuperFreeTriggerCount": 15155,
+        "RunIndex": 2,
+        "Seed": 20261026323
+      },
+      {
+        "BaseBet": 100000,
+        "BaseSpinCount": 25000000,
+        "RewardSampling": "FullRandom",
+        "ExpectedRewardsIntegrated": false,
+        "BaseClusterRtp": 0.399695071989,
+        "BaseClusterRtpStandardError": 0.000209397362705,
+        "BaseBonusRtp": 0.20080998,
+        "BaseBonusRtpStandardError": 0.000950854029404,
+        "FreeClusterRtp": 0.0904454,
+        "FreeClusterRtpStandardError": 0.000267493515762,
+        "FreeBonusRtp": 0.535632164,
+        "FreeBonusRtpStandardError": 0.00211391579292,
+        "SuperFreeClusterRtp": 0.008902108,
+        "SuperFreeClusterRtpStandardError": 8.43149322913e-05,
+        "SuperFreeBonusRtp": 0.116532664,
+        "SuperFreeBonusRtpStandardError": 0.00130648155437,
+        "Rtp": 1.35201738804,
+        "RtpStandardError": 0.00284084685271,
+        "BaseBonusFrequency": 0.012513,
+        "FreeFrequency": 0.00617208,
+        "SuperFreeFrequency": 0.0006084,
+        "FreeSpinCount": 1727130,
+        "SuperFreeSpinCount": 170140,
+        "BaseBonusConditionalMean": 16.0481083673,
+        "BaseBonusConditionalStdDev": 39.3960520039,
+        "BaseBonusP50": 11.7,
+        "BaseBonusP90": 26.5,
+        "BaseBonusP95": 33.2,
+        "BaseBonusP99": 60.3,
+        "BaseBonusMax": 5038.2,
+        "Seconds": 82.030901125,
+        "BaseBonusTriggerCount": 312825,
+        "FreeTriggerCount": 154302,
+        "SuperFreeTriggerCount": 15210,
+        "RunIndex": 3,
+        "Seed": 20261026324
+      }
+    ],
+    "Seconds": 195.66999008300002
+  },
+  "ConditionalExpectation": {
+    "BaseSpinCount": 50000000,
+    "BaseClusterRtp": 0.39944685799999996,
+    "BaseClusterRtpStandardError": 0.00014811055136981994,
+    "BaseBonusRtp": 0.20073837977224998,
+    "BaseBonusRtpStandardError": 0.0002953056163278381,
+    "FreeClusterRtp": 0.09049220599999999,
+    "FreeClusterRtpStandardError": 0.00018947328866902386,
+    "FreeBonusRtp": 0.5340525657747499,
+    "FreeBonusRtpStandardError": 0.0010585078348463305,
+    "SuperFreeClusterRtp": 0.008797806000000002,
+    "SuperFreeClusterRtpStandardError": 5.900918333480958e-05,
+    "SuperFreeBonusRtp": 0.114446589364,
+    "SuperFreeBonusRtpStandardError": 0.0007489178166079575,
+    "Rtp": 1.3479744048975,
+    "RtpStandardError": 0.0015044490912392125,
+    "BaseBonusTriggerCount": 625555,
+    "BaseBonusFrequency": 0.0125111,
+    "FreeTriggerCount": 307958,
+    "FreeFrequency": 0.00615916,
+    "SuperFreeTriggerCount": 30085,
+    "SuperFreeFrequency": 0.0006017,
+    "FreeSpinCount": 3450400,
+    "SuperFreeSpinCount": 336696,
+    "BaseBonusVolatilityStatisticsAvailable": false,
+    "BaseBonusConditionalMean": 16.044822579325018,
+    "Verification": {
+      "RtpComponentsMatch": true,
+      "BaseBonusConditionalMeanMatchesRtp": true,
+      "RunQuantilesPooled": false
+    },
+    "CreatedAtUtc": "2026-10-26T03:43:54.615332+00:00",
+    "SamplerKind": "LocalRulesNativeSampler",
+    "BinaryServerExecuted": false,
+    "RewardSampling": "ConditionalExpectation",
+    "StandardErrorInterpretation": "Monte Carlo SE after integrating independent reward tiers; it does not describe player payout volatility.",
+    "Project": "/private/tmp/yngg-bonus-types-20261026/candidate_tail_preserved",
+    "TypeIndex": 0,
+    "GeneralIndex": 1,
+    "BaseBet": 100000,
+    "Denominator": "Total paid Base bets, including triggered Free and Super Free sessions and retriggers.",
+    "SpinsPerRun": 12500000,
+    "RunCount": 4,
+    "Workers": 2,
+    "Seeds": [
+      20261026331,
+      20261026332,
+      20261026333,
+      20261026334
+    ],
+    "InputSnapshotUsed": true,
+    "Compiler": "/usr/bin/clang++",
+    "CompilerOptions": [
+      "-std=c++17",
+      "-O3"
+    ],
+    "ConfigFiles": [
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_0.conf",
+        "Sha256": "adf2906f4fc9ed93350a84bd7d0516464d5cd094e8d9018382d2093cacd09d8b"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_12.conf",
+        "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_17.conf",
+        "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_4.conf",
+        "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_ex_8.conf",
+        "Sha256": "109e64de018bca0bd9505da9df236ca52e074a96e9158064a128fedf3e766695"
+      },
+      {
+        "Path": "free_reel_config/yngg_free_rand_main.conf",
+        "Sha256": "5856b541e65b8d3d3d330c715b90ae23ce24d44e3208057d4bdc910c0e6d3248"
+      },
+      {
+        "Path": "general_config/base_bull.conf",
+        "Sha256": "cfab5c53fc9d74fc1c92cb171b0331e6608c1283d77009e966aaf12d21518289"
+      },
+      {
+        "Path": "general_config/base_comm.conf",
+        "Sha256": "c3355d0e8039f1c64f70efa35515cb6c2cfc8edbd7dfe50100006e6a6503547b"
+      },
+      {
+        "Path": "general_config/base_level.conf",
+        "Sha256": "f95c816ba008337646b3a69dcaaf37b952831a6caccb5fde26966988ad210274"
+      },
+      {
+        "Path": "general_config/base_text.conf",
+        "Sha256": "2bfae39ffd1af4e09b421b265a5f7a58772ea746d4e251dc29b626a86bf28be8"
+      },
+      {
+        "Path": "general_config/game_achievement.conf",
+        "Sha256": "5e461465770909107d33196396bc41e62650d235604a6806a735fa773d42a099"
+      },
+      {
+        "Path": "general_config/game_act_coin.conf",
+        "Sha256": "5fe3275245d3f656a270dbcf3e911134e8f36eb4de69ad737ecd1ba087e5dfad"
+      },
+      {
+        "Path": "general_config/game_activity.conf",
+        "Sha256": "2a3ea1dd68928934afff681741f02e08f10c36e9567cf20c09f31fa5e92510fd"
+      },
+      {
+        "Path": "general_config/game_card.conf",
+        "Sha256": "39909f62203d79074bb5010af7d880bd28171a799ae588b2197ccb78fbec5d7a"
+      },
+      {
+        "Path": "general_config/game_get_level_exp.conf",
+        "Sha256": "9b41c1f9e96cce935b56708549d126f2b802e4cee575b114d0d3ddb62aee0e0f"
+      },
+      {
+        "Path": "general_config/slot_activity.conf",
+        "Sha256": "d5fd74c8eeac3710124405368eccb98c4b4d12330355c9da0180a47faca51cb5"
+      },
+      {
+        "Path": "general_config/slot_game_activity.conf",
+        "Sha256": "6159698bb3243fad9a3f705ef6dbe663e42d661bf527986cd5dbe4b7e07c8059"
+      },
+      {
+        "Path": "general_config/slot_game_activity2.conf",
+        "Sha256": "f1945cd6c19e56b3c1c78943ef5ec18116907a4ca1efc40a57d48ab1db7adfc5"
+      },
+      {
+        "Path": "general_config/spe_user_event.conf",
+        "Sha256": "c78fdfb705152c8fbfe0dda9d4f9c7d076aeae442514d98fa59d093566e70362"
+      },
+      {
+        "Path": "general_config/spreader_task.conf",
+        "Sha256": "b21af502cab8ffe786514e4daca284e7930a8984a826a011b7241292d3f69e5f"
+      },
+      {
+        "Path": "general_config/yb_double.conf",
+        "Sha256": "ef5ac994e2c509d1cadfd35454e9c787fdd76b6a8c3b4a510187fc50d4db2491"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_0.conf",
+        "Sha256": "dfba5b617aaf6a2462cc858d768c840cc30df660c4811341af2123dc7bf2a193"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_12.conf",
+        "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_17.conf",
+        "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_4.conf",
+        "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+      },
+      {
+        "Path": "reel_config/yngg_rand_ex_8.conf",
+        "Sha256": "b359c865ce88794e8f83275c2e962fddfbd7f743eb4f1c15b22f6299073bb612"
+      },
+      {
+        "Path": "reel_config/yngg_rand_main.conf",
+        "Sha256": "5856b541e65b8d3d3d330c715b90ae23ce24d44e3208057d4bdc910c0e6d3248"
+      },
+      {
+        "Path": "special/slot_prop_config.conf",
+        "Sha256": "14900fdcb7ad4b002498e5d9b58b2453850aebccbb84c65eb474813a98d362c2"
+      },
+      {
+        "Path": "special/yngg_bonus.conf",
+        "Sha256": "f5449a391fb961e4111de54d9579f1af99db56cff6ccd7b39b66c6c2d8826b37"
+      },
+      {
+        "Path": "special/yngg_control.conf",
+        "Sha256": "3fa61132912bd661c60192c7aa9fd0e2b793ce7cdf439f48e42a60fc3c920179"
+      },
+      {
+        "Path": "special/yngg_game_config.conf",
+        "Sha256": "a7e57d64349479bbf63ecf64104dd5e64d2591fe78ace0c8d231096eb3cc0ae3"
+      },
+      {
+        "Path": "special/yngg_game_server.conf",
+        "Sha256": "e58f4576f65c5b0e0ee0a96001c924637e742928e058fd88da23fb0526dedbd4"
+      },
+      {
+        "Path": "special_config/base_game_name.conf",
+        "Sha256": "7dbf33f0706ddf6a6ffb1ada750607083d010e710e11575b2ecca5044e4d4f12"
+      },
+      {
+        "Path": "special_config/game_server.conf",
+        "Sha256": "0ff9035802784faf6e11ae451b28a0769b0697302980ac5c36ff3e3c55549906"
+      },
+      {
+        "Path": "special_config/slot_control_group.conf",
+        "Sha256": "24cc160cc157d05a36299891665cca8c3193025687f012c1414022407e64f927"
+      }
+    ],
+    "SourceFiles": [
+      {
+        "Path": "/private/tmp/yngg-bonus-types-20261026/candidate_tail_preserved/calibration_sampler.cpp",
+        "Sha256": "3f58c200993dd2875e9c4b5249145ac89120a26d6df556bca9e0c6804dd9413a"
+      },
+      {
+        "Path": "/Users/sunyulu/Desktop/github/HGI/ThemeMath/yngg/calibrate_rtp.py",
+        "Sha256": "4efc2f84ecee1d00bc94c0a177827bb272a1c54dee827c12ec4058ac7fe14857"
+      },
+      {
+        "Path": "/private/tmp/yngg-bonus-types-20261026/candidate_tail_preserved/theme_math.py",
+        "Sha256": "606c2ad5e26ed976ee7f9ef6d81daf8a59899a3e8f3aa51143c31cb5480e654d"
+      },
+      {
+        "Path": "/private/tmp/yngg-bonus-types-20261026/candidate_tail_preserved/simulation.py",
+        "Sha256": "4477a63c9678c54677a345d32f86e9e1805d098fcd15feae0f0599ee514633bd"
+      }
+    ],
+    "Runs": [
+      {
+        "BaseBet": 100000,
+        "BaseSpinCount": 12500000,
+        "RewardSampling": "ConditionalExpectation",
+        "ExpectedRewardsIntegrated": true,
+        "BaseClusterRtp": 0.399480048,
+        "BaseClusterRtpStandardError": 0.000296198304785,
+        "BaseBonusRtp": 0.200420939285,
+        "BaseBonusRtpStandardError": 0.000589642903925,
+        "FreeClusterRtp": 0.090199784,
+        "FreeClusterRtpStandardError": 0.000379312512047,
+        "FreeBonusRtp": 0.52980532071,
+        "FreeBonusRtpStandardError": 0.00210726419779,
+        "SuperFreeClusterRtp": 0.008698984,
+        "SuperFreeClusterRtpStandardError": 0.000117060623672,
+        "SuperFreeBonusRtp": 0.113525893718,
+        "SuperFreeBonusRtpStandardError": 0.00148663249575,
+        "Rtp": 1.3421309697,
+        "RtpStandardError": 0.00299472411281,
+        "BaseBonusFrequency": 0.01249112,
+        "FreeFrequency": 0.00612376,
+        "SuperFreeFrequency": 0.00059888,
+        "FreeSpinCount": 857656,
+        "SuperFreeSpinCount": 83830,
+        "BaseBonusConditionalMean": 16.0450735631,
+        "Seconds": 60.49852575,
+        "BaseBonusTriggerCount": 156139,
+        "FreeTriggerCount": 76547,
+        "SuperFreeTriggerCount": 7486,
+        "RunIndex": 0,
+        "Seed": 20261026331
+      },
+      {
+        "BaseBet": 100000,
+        "BaseSpinCount": 12500000,
+        "RewardSampling": "ConditionalExpectation",
+        "ExpectedRewardsIntegrated": true,
+        "BaseClusterRtp": 0.39952112,
+        "BaseClusterRtpStandardError": 0.000296422206256,
+        "BaseBonusRtp": 0.2005964867,
+        "BaseBonusRtpStandardError": 0.000592684704542,
+        "FreeClusterRtp": 0.090125728,
+        "FreeClusterRtpStandardError": 0.00037716676632,
+        "FreeBonusRtp": 0.533843188649,
+        "FreeBonusRtpStandardError": 0.00211436993192,
+        "SuperFreeClusterRtp": 0.008824072,
+        "SuperFreeClusterRtpStandardError": 0.000117922535135,
+        "SuperFreeBonusRtp": 0.114712928555,
+        "SuperFreeBonusRtpStandardError": 0.00149963227234,
+        "Rtp": 1.34762352389,
+        "RtpStandardError": 0.00300707379254,
+        "BaseBonusFrequency": 0.01249536,
+        "FreeFrequency": 0.00615976,
+        "SuperFreeFrequency": 0.00060408,
+        "FreeSpinCount": 862188,
+        "SuperFreeSpinCount": 84514,
+        "BaseBonusConditionalMean": 16.0536780613,
+        "Seconds": 61.037108708,
+        "BaseBonusTriggerCount": 156192,
+        "FreeTriggerCount": 76997,
+        "SuperFreeTriggerCount": 7551,
+        "RunIndex": 1,
+        "Seed": 20261026332
+      },
+      {
+        "BaseBet": 100000,
+        "BaseSpinCount": 12500000,
+        "RewardSampling": "ConditionalExpectation",
+        "ExpectedRewardsIntegrated": true,
+        "BaseClusterRtp": 0.3995446,
+        "BaseClusterRtpStandardError": 0.000296386855692,
+        "BaseBonusRtp": 0.200356444624,
+        "BaseBonusRtpStandardError": 0.000589536148933,
+        "FreeClusterRtp": 0.091217392,
+        "FreeClusterRtpStandardError": 0.000380841381915,
+        "FreeBonusRtp": 0.53824351447,
+        "FreeBonusRtpStandardError": 0.00212839805879,
+        "SuperFreeClusterRtp": 0.008705888,
+        "SuperFreeClusterRtpStandardError": 0.000118177017827,
+        "SuperFreeBonusRtp": 0.112697126251,
+        "SuperFreeBonusRtpStandardError": 0.00149379678328,
+        "Rtp": 1.35076496533,
+        "RtpStandardError": 0.00301673839826,
+        "BaseBonusFrequency": 0.0124864,
+        "FreeFrequency": 0.0062032,
+        "SuperFreeFrequency": 0.00059,
+        "FreeSpinCount": 868346,
+        "SuperFreeSpinCount": 82734,
+        "BaseBonusConditionalMean": 16.0459735892,
+        "Seconds": 46.861227667,
+        "BaseBonusTriggerCount": 156080,
+        "FreeTriggerCount": 77540,
+        "SuperFreeTriggerCount": 7375,
+        "RunIndex": 2,
+        "Seed": 20261026333
+      },
+      {
+        "BaseBet": 100000,
+        "BaseSpinCount": 12500000,
+        "RewardSampling": "ConditionalExpectation",
+        "ExpectedRewardsIntegrated": true,
+        "BaseClusterRtp": 0.399241664,
+        "BaseClusterRtpStandardError": 0.000295876756242,
+        "BaseBonusRtp": 0.20157964848,
+        "BaseBonusRtpStandardError": 0.000590575765052,
+        "FreeClusterRtp": 0.09042592,
+        "FreeClusterRtpStandardError": 0.00037845620456,
+        "FreeBonusRtp": 0.53431823927,
+        "FreeBonusRtpStandardError": 0.00211797514059,
+        "SuperFreeClusterRtp": 0.00896228,
+        "SuperFreeClusterRtpStandardError": 0.000118905919542,
+        "SuperFreeBonusRtp": 0.116850408932,
+        "SuperFreeBonusRtpStandardError": 0.00151117309894,
+        "Rtp": 1.35137816067,
+        "RtpStandardError": 0.00301700101134,
+        "BaseBonusFrequency": 0.01257152,
+        "FreeFrequency": 0.00614992,
+        "SuperFreeFrequency": 0.00061384,
+        "FreeSpinCount": 862210,
+        "SuperFreeSpinCount": 85618,
+        "BaseBonusConditionalMean": 16.0346281499,
+        "Seconds": 47.223990875,
+        "BaseBonusTriggerCount": 157144,
+        "FreeTriggerCount": 76874,
+        "SuperFreeTriggerCount": 7673,
+        "RunIndex": 3,
+        "Seed": 20261026334
+      }
+    ],
+    "Seconds": 113.462691333
+  },
+  "VolatilityComparison": {
+    "Scope": "One independently revealed Base Bonus Feature; reward in multiples of paid Base bet",
+    "GeometrySource": {
+      "PaidBaseSpins": 10000000,
+      "Seed": 20261026201,
+      "CapturedBonusGeometries": 125130,
+      "MasksSha256": "e63cb67c22ccdff227e9ca47d0b08b2df122cac5e371b38f6255d29b2d8b4b1d",
+      "Method": "Actual Base entry geometries sampled with Feature reward draws skipped; identical empirical geometry distribution used before and after. This isolates payout distribution and does not eliminate geometry-sampling uncertainty."
+    },
+    "FullRandomFeatures": {
+      "Before": {
+        "Mode": "sample",
+        "ExpectedRewards": false,
+        "GeometryCount": 125130,
+        "FeatureSamples": 20000000,
+        "Seed": 20261026251,
+        "Mean": 6.4332013154582,
+        "MeanStandardError": 0.0095302615035993,
+        "SecondMoment": 1857.9036748791,
+        "StdDev": 42.620624065279,
+        "Cv": 6.6251034244595,
+        "P50": 3.7,
+        "P90": 8.5,
+        "P99": 26.7,
+        "Max": 25101,
+        "Tail100": 0.0045811,
+        "Tail500": 0.00150915,
+        "Tail1000": 0.00011715,
+        "Tail5000": 3.51e-05,
+        "Tail10000": 2.35e-06,
+        "Under1": 2e-07,
+        "Under5": 0.67661355,
+        "Seconds": 44.685274042
+      },
+      "After": {
+        "Mode": "sample",
+        "ExpectedRewards": false,
+        "GeometryCount": 125130,
+        "FeatureSamples": 20000000,
+        "Seed": 20261026251,
+        "Mean": 16.018677172959,
+        "MeanStandardError": 0.0088830210897161,
+        "SecondMoment": 1834.7592130702,
+        "StdDev": 39.726077011187,
+        "Cv": 2.4799848690533,
+        "P50": 11.7,
+        "P90": 26.5,
+        "P99": 59.9,
+        "Max": 10480.2,
+        "Tail100": 0.00579375,
+        "Tail500": 0.0014877,
+        "Tail1000": 6.48e-05,
+        "Tail5000": 3.345e-05,
+        "Tail10000": 8e-07,
+        "Under1": 0,
+        "Under5": 0.05361195,
+        "Seconds": 44.689916834
+      },
+      "StandardDeviationReduction": 0.06791423442459754,
+      "CoefficientOfVariationReduction": 0.62566850505347,
+      "MedianIncreaseRatio": 3.162162162162162
+    },
+    "ConditionalSecondMomentCheck": {
+      "Before": {
+        "Mode": "moments",
+        "ExpectedRewards": false,
+        "GeometryCount": 125130,
+        "FeatureSamples": 10000000,
+        "Seed": 20261026221,
+        "Mean": 6.4251827504642,
+        "MeanStandardError": 0.0017808566784576,
+        "SecondMoment": 2132.4350682173,
+        "StdDev": 45.729116488737,
+        "Cv": 7.1171697778453,
+        "Seconds": 29.481490917
+      },
+      "After": {
+        "Mode": "moments",
+        "ExpectedRewards": false,
+        "GeometryCount": 125130,
+        "FeatureSamples": 10000000,
+        "Seed": 20261026221,
+        "Mean": 16.018118958798,
+        "MeanStandardError": 0.0030206714370052,
+        "SecondMoment": 1895.2275940624,
+        "StdDev": 40.480210709484,
+        "Cv": 2.5271513349106,
+        "Seconds": 36.642607708
+      },
+      "Method": "Coin, clover and jackpot tier first/second moments integrated conditional on sampled type/reroll paths, retaining shared clover and pot covariance. This measures payout second moments, not the conditional-mean variance of ExpectedRewards mode. Rare type paths and empirical geometry remain sampled.",
+      "StandardDeviationReduction": 0.11478257579163587,
+      "ValidationCases": {
+        "ExpectedMeanAndRandomStateCases": 12000,
+        "ExhaustiveTierEnumerationCases": 300
+      },
+      "AnalysisSourceSha256": "93fa50689a322b93b8b7f9623ef0ec90e9d5170997f7930dd4228c9deb43bc47"
+    },
+    "Tail5000Comparison": {
+      "Before": {
+        "Probability": 3.51e-05,
+        "Count": 702,
+        "Samples": 20000000,
+        "StandardError": 1.3247408801346774e-06,
+        "Approximate95PercentInterval": [
+          3.250350787493603e-05,
+          3.7696492125063966e-05
+        ]
+      },
+      "After": {
+        "Probability": 3.345e-05,
+        "Count": 669,
+        "Samples": 20000000,
+        "StandardError": 1.2932300858219315e-06,
+        "Approximate95PercentInterval": [
+          3.091526903178901e-05,
+          3.598473096821099e-05
+        ]
+      }
+    },
+    "TailInterpretation": "At least 5000x per Base Bonus Feature. Rates are Monte Carlo estimates with overlapping intervals; equality is not proven. At least 1000x and 10000x frequencies may decrease as multiplying types become rarer.",
+    "PaidSpinBonusContributionAtCommonTriggerRate": {
+      "TriggerRate": 0.0125,
+      "Method": "Var(paid bonus return) = p*E[feature^2] - (p*E[feature])^2; geometry empirical and trigger probability held fixed.",
+      "BeforeStandardDeviation": 4.818436402103818,
+      "AfterStandardDeviation": 4.784808953658125,
+      "ConditionalFeatureMetricsAreTheMainBonusVolatilityComparison": true
+    }
+  },
+  "PreservedLargeAwards": {
+    "HighCoinValues": [
+      100,
+      250,
+      500
+    ],
+    "ProbabilityPerHighCoinTierGivenCoinBefore": 0.000185,
+    "ProbabilityPerHighCoinTierGivenCoinAfter": 0.000185,
+    "CloverValuesUnchanged": true,
+    "CloverWeightsUnchanged": true,
+    "JpValuesUnchanged": true,
+    "JpWeightsUnchanged": true,
+    "JpTypeProbabilityBefore": 0.00039478878799842083,
+    "JpTypeProbabilityAfter": 0.0004934859849980261,
+    "JpTypeProbabilityIncrease": 0.25,
+    "AllAwardTiersRetainPositiveProbability": true
+  },
+  "ReplayVerification": {
+    "SamplerKind": "LocalRulesNativeSampler",
+    "BinaryServerExecuted": false,
+    "Project": "/private/tmp/yngg-bonus-types-20261026/candidate_tail_preserved",
+    "BaseBet": 100000,
+    "Seed": 20261026341,
+    "SpinsMatched": 20000,
+    "RandomCallsMatched": 280477,
+    "AllMetricsExactlyMatched": true,
+    "BaseBonusCount": 234,
+    "FreeSessionCount": 123,
+    "SuperFreeSessionCount": 18,
+    "FreeSpinCount": 1388,
+    "SuperFreeSpinCount": 198,
+    "NativeSummary": {
+      "BaseBet": 100000,
+      "BaseSpinCount": 20000,
+      "RewardSampling": "FullRandom",
+      "ExpectedRewardsIntegrated": false,
+      "BaseClusterRtp": 0.407525,
+      "BaseClusterRtpStandardError": 0.00746619253169,
+      "BaseBonusRtp": 0.188075,
+      "BaseBonusRtpStandardError": 0.0284210169141,
+      "FreeClusterRtp": 0.08912,
+      "FreeClusterRtpStandardError": 0.00953845796704,
+      "FreeBonusRtp": 0.552595,
+      "FreeBonusRtpStandardError": 0.0642608900218,
+      "SuperFreeClusterRtp": 0.012685,
+      "SuperFreeClusterRtpStandardError": 0.00336159851201,
+      "SuperFreeBonusRtp": 0.137985,
+      "SuperFreeBonusRtpStandardError": 0.0388499575025,
+      "Rtp": 1.387985,
+      "RtpStandardError": 0.0879963637032,
+      "BaseBonusFrequency": 0.0117,
+      "FreeFrequency": 0.00615,
+      "SuperFreeFrequency": 0.0009,
+      "FreeSpinCount": 1388,
+      "SuperFreeSpinCount": 198,
+      "BaseBonusConditionalMean": 16.0747863248,
+      "BaseBonusConditionalStdDev": 33.5459667566,
+      "BaseBonusP50": 11.7,
+      "BaseBonusP90": 24.7,
+      "BaseBonusP95": 35.1,
+      "BaseBonusP99": 44.8,
+      "BaseBonusMax": 504.2,
+      "Seconds": 0.343556958
+    },
+    "Seconds": 30.621581665999997
+  },
+  "ScopeVerification": {
+    "OnlyProductionConfigChanged": "special/yngg_bonus.conf",
+    "ChangedConfigurationValues": [
+      "[Type0].BonusSymbolTypeProbability",
+      "[Type0].BonusCoinMultipleProbability"
+    ],
+    "Other34ConfigurationFilesByteIdentical": true,
+    "ProductionMathAndSamplerUnchanged": true,
+    "UnitTestsPassed": 103,
+    "ActualNumericParametersMatchFrozenSamplingProject": true,
+    "PublishedBonusConfigSha256": "cce4641f188e6a87b41ee8cc24a852cf306512582a30291f38a21ef039494011"
+  },
+  "Notes": [
+    "All three TYPE 0 modes intentionally share these weights. The measured total RTP is about 134.9%; the historical 95% total and Free/Super Bonus targets do not apply to this selected scheme.",
+    "FullRandom and conditional expectation batches use independent fixed seeds. Feature volatility uses complete tier draws; ExpectedRewards alone is not used to claim lower payout volatility.",
+    "Paired feature results are conditional on the same empirical geometry distribution, rather than a live server binary result. The supplied Linux server was not executed.",
+    "Historical calibration reports retain their original versions and are not overwritten."
+  ],
+  "Reproduction": {
+    "FullRandomCommand": "python3 -B calibrate_rtp.py --spins 25000000 --runs 4 --workers 2 --seed 20261026321 --output /tmp/yngg-bonus-full.json",
+    "ConditionalExpectationCommand": "python3 -B calibrate_rtp.py --spins 12500000 --runs 4 --workers 2 --seed 20261026331 --expected-rewards --output /tmp/yngg-bonus-expected.json",
+    "ReplayCommand": "python3 -B verify_calibration_sampler.py --spins 20000 --seed 20261026341"
+  }
+}
